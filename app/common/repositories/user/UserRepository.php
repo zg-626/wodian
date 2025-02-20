@@ -67,6 +67,26 @@ class UserRepository extends BaseRepository
         return $this->dao->update($uid, ['is_promoter' => 1, 'promoter_time' => date('Y-m-d H:i:s')]);
     }
 
+    public function extendInfoSave(int $uid, array $data = [])
+    {
+        $userInfo = $this->dao->get($uid);
+        if (empty($userInfo)) {
+            throw new ValidateException('用户信息异常');
+        }
+
+    }
+
+    public function changePasswordForm(int $id)
+    {
+        $formData = $this->dao->get($id);
+        if (!$formData) throw new ValidateException('用户不存在');
+        return Elm::createForm(Route::buildUrl('systemUserChangePassword', ['id' => $id])->build(), [
+            Elm::input('account', '账号：', $formData->account)->placeholder('请输入账号')->disabled(true),
+            Elm::password('pwd', '新密码：')->required(),
+            Elm::password('repwd', '确认新密码：')->required(),
+        ])->setTitle('修改密码')->formData([]);
+    }
+
     public function createForm()
     {
         return Elm::createForm(Route::buildUrl('systemUserCreate')->build(), [
@@ -98,27 +118,6 @@ class UserRepository extends BaseRepository
                 ['value' => 1, 'label' => '开启'],
             ])->requiredNum()
         ])->setTitle('添加用户')->formData([]);
-    }
-
-    public function extendInfoSave(int $uid, array $data = [])
-    {
-        $userInfo = $this->dao->get($uid);
-        if (empty($userInfo)) {
-            throw new ValidateException('用户信息异常');
-        }
-
-    }
-
-
-    public function changePasswordForm(int $id)
-    {
-        $formData = $this->dao->get($id);
-        if (!$formData) throw new ValidateException('用户不存在');
-        return Elm::createForm(Route::buildUrl('systemUserChangePassword', ['id' => $id])->build(), [
-            Elm::input('account', '账号：', $formData->account)->placeholder('请输入账号')->disabled(true),
-            Elm::password('pwd', '新密码：')->required(),
-            Elm::password('repwd', '确认新密码：')->required(),
-        ])->setTitle('修改密码')->formData([]);
     }
 
     /**
@@ -475,27 +474,6 @@ class UserRepository extends BaseRepository
         });
     }
 
-    /**
-     * @param $password
-     * @return false|string|null
-     * @author xaboy
-     * @day 2020/6/22
-     */
-    public function encodePassword($password)
-    {
-        return password_hash($password, PASSWORD_BCRYPT);
-    }
-
-    public function userType($type)
-    {
-        if ($type === 'apple') {
-            return 'app';
-        }
-        if (!$type)
-            return 'h5';
-        return $type;
-    }
-
     public function syncBaseAuth(array $auth, User $user)
     {
         $wechatUser = app()->make(WechatUserRepository::class)->get($auth['id']);
@@ -561,7 +539,7 @@ class UserRepository extends BaseRepository
     public function create(string $type, array $userInfo)
     {
         $extend_info = [];
-        if(isset($userInfo['extend_info'])){
+        if (isset($userInfo['extend_info'])) {
             $extend_info = $userInfo['extend_info'];
             unset($userInfo['extend_info']);
         }
@@ -581,6 +559,61 @@ class UserRepository extends BaseRepository
         return $user;
     }
 
+    public function userType($type)
+    {
+        if ($type === 'apple') {
+            return 'app';
+        }
+        if (!$type)
+            return 'h5';
+        return $type;
+    }
+
+    /**
+     * 保存或者编辑扩展字段
+     * @param int $uid
+     * @param array $extend_info
+     * @return true
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function saveFields(int $uid, array $extend_info = [])
+    {
+        // 组合数据
+        $save_data = [];
+        foreach ($extend_info as $item) {
+            $save_data[] = [
+                'field' => $item['field'],
+                'value' => $item['value'],
+            ];
+        }
+        return app()->make(UserFieldsRepository::class)->save($uid, $save_data, false);
+    }
+
+    /**
+     * @param $password
+     * @return false|string|null
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function encodePassword($password)
+    {
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+
+    /**
+     * 更新用户组
+     * @param User $user
+     * @throws DbException
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function updateUserGroup(User $user)
+    {
+        $this->dao->update($user['uid'], ['group_id' => 1]);
+    }
+
     /**
      * @param User $user
      * @return array
@@ -597,6 +630,17 @@ class UserRepository extends BaseRepository
     }
 
     /**
+     * @param string $token
+     * @param int $exp
+     * @author xaboy
+     * @day 2020-04-29
+     */
+    public function cacheToken(string $token, int $exp)
+    {
+        Cache::store('file')->set('user_' . $token, time() + $exp, $exp);
+    }
+
+    /**
      * //TODO 登录成功后
      * @param User $user
      * @author xaboy
@@ -608,19 +652,6 @@ class UserRepository extends BaseRepository
         $user->last_ip = request()->ip();
         $user->save();
     }
-
-
-    /**
-     * @param string $token
-     * @param int $exp
-     * @author xaboy
-     * @day 2020-04-29
-     */
-    public function cacheToken(string $token, int $exp)
-    {
-        Cache::store('file')->set('user_' . $token, time() + $exp, $exp);
-    }
-
 
     /**
      * @param string $token
@@ -638,7 +669,6 @@ class UserRepository extends BaseRepository
             throw new AuthException('token 已过期');
     }
 
-
     /**
      * @param string $token
      * @author xaboy
@@ -648,7 +678,6 @@ class UserRepository extends BaseRepository
     {
         Cache::store('file')->set('user_' . $token, time(), intval(Config::get('admin.user_token_valid_exp', 15)) * 24 * 60 * 60);
     }
-
 
     /**
      * @param string $token
@@ -680,7 +709,6 @@ class UserRepository extends BaseRepository
         //删除code
         Cache::delete('am_captcha' . $key);
     }
-
 
     /**
      * @param string $code
@@ -918,24 +946,33 @@ class UserRepository extends BaseRepository
         Cache::zadd($moneyKey, $brokerage, $uid);
     }
 
-    /**
-     * TODO 删除排行榜中的个人排行
-     * @param $uid
-     * @author Qinii
-     * @day 2022/10/18
-     */
-    public function delBrokerageTop($uid)
-    {
-        $moneyKey = 'b_top_' . date('Y-m');
-        $weekKey = 'b_top_' . monday();
-        Cache::zrem($weekKey, $uid);
-        Cache::zrem($moneyKey, $uid);
-    }
-
     public function brokerageWeekTop($uid, $page, $limit)
     {
         $key = 'b_top_' . monday();
         return $this->topList($key, $page, $limit) + ['position' => $this->userPosition($key, $uid)];
+    }
+
+    public function topList($key, $page, $limit)
+    {
+        $res = Cache::zrevrange($key, ($page - 1) * $limit, $limit, true);
+        $ids = array_keys($res);
+        $count = Cache::zcard($key);
+        $list = count($ids) ? $this->dao->users($ids, 'uid,avatar,nickname')->toArray() : [];
+        foreach ($list as $k => $v) {
+            $list[$k]['count'] = $res[$v['uid']] ?? 0;
+        }
+        $sort = array_column($list, 'count');
+        array_multisort($sort, SORT_DESC, $list);
+        return compact('count', 'list');
+    }
+
+    public function userPosition($key, $uid)
+    {
+        $index = Cache::zrevrank($key, $uid);
+        if ($index === false)
+            return 0;
+        else
+            return $index + 1;
     }
 
     public function brokerageMonthTop($uid, $page, $limit)
@@ -991,29 +1028,6 @@ class UserRepository extends BaseRepository
             app()->make(UserBrokerageRepository::class)->incMemberValue($spreadUid, 'member_share_num', 0);
             event('user.spread', compact('user', 'spreadUid'));
         }
-    }
-
-    public function userPosition($key, $uid)
-    {
-        $index = Cache::zrevrank($key, $uid);
-        if ($index === false)
-            return 0;
-        else
-            return $index + 1;
-    }
-
-    public function topList($key, $page, $limit)
-    {
-        $res = Cache::zrevrange($key, ($page - 1) * $limit, $limit, true);
-        $ids = array_keys($res);
-        $count = Cache::zcard($key);
-        $list = count($ids) ? $this->dao->users($ids, 'uid,avatar,nickname')->toArray() : [];
-        foreach ($list as $k => $v) {
-            $list[$k]['count'] = $res[$v['uid']] ?? 0;
-        }
-        $sort = array_column($list, 'count');
-        array_multisort($sort, SORT_DESC, $list);
-        return compact('count', 'list');
     }
 
     public function spreadWeekTop($page, $limit)
@@ -1371,7 +1385,7 @@ class UserRepository extends BaseRepository
         if (!$has) throw new ValidateException('等级不存在');
         Db::transaction(function () use ($id, $data, $field, $user, $type) {
             $user->$field = $data[$field];
-            if ($type){
+            if ($type) {
                 app()->make(UserBillRepository::class)->decBill($user->uid, 'sys_members', 'platform_clearing', [
                     'number' => $user->member_value,
                     'title' => '平台修改等级',
@@ -1436,6 +1450,20 @@ class UserRepository extends BaseRepository
             Cache::zrem('s_top_' . monday(), $uid);
             app()->make(CommunityRepository::class)->destoryByUid($uid);
         });
+    }
+
+    /**
+     * TODO 删除排行榜中的个人排行
+     * @param $uid
+     * @author Qinii
+     * @day 2022/10/18
+     */
+    public function delBrokerageTop($uid)
+    {
+        $moneyKey = 'b_top_' . date('Y-m');
+        $weekKey = 'b_top_' . monday();
+        Cache::zrem($weekKey, $uid);
+        Cache::zrem($moneyKey, $uid);
     }
 
     public function svipForm(int $id)
@@ -1553,7 +1581,6 @@ class UserRepository extends BaseRepository
             ] + $append_info;
     }
 
-
     /**
      * 获取用户等级下拉列表
      * @return array
@@ -1586,7 +1613,6 @@ class UserRepository extends BaseRepository
         return compact('count', 'list');
     }
 
-
     /**
      * 更新用户内容数
      * @return bool
@@ -1612,28 +1638,6 @@ class UserRepository extends BaseRepository
         // 添加用户扩展信息
         $info['extend_info'] = app()->make(UserFieldsRepository::class)->info((int)$uid, false)['extend_info'];
         return $info;
-    }
-
-    /**
-     * 保存或者编辑扩展字段
-     * @param int $uid
-     * @param array $extend_info
-     * @return true
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
-     */
-    public function saveFields(int $uid, array $extend_info = [])
-    {
-        // 组合数据
-        $save_data = [];
-        foreach ($extend_info as $item) {
-            $save_data[] = [
-                'field' => $item['field'],
-                'value' => $item['value'],
-            ];
-        }
-        return app()->make(UserFieldsRepository::class)->save($uid, $save_data, false);
     }
 
     /**

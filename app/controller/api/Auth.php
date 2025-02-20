@@ -138,37 +138,11 @@ class Auth extends BaseController
         }
     }
 
-
-    /**
-     * @return mixed
-     * @author xaboy
-     * @day 2020/6/1
-     */
-    public function userInfo()
+    private function parseAuthToken($authToken)
     {
-        $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
-        $user->append(['service', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral']);
-        $data = $user->toArray();
-        $data['total_consume'] = $user['pay_price'];
-        $data['extension_status'] = systemConfig('extension_status');
-        if (systemConfig('member_status'))
-            $data['member_icon'] = $this->request->userInfo()->member->brokerage_icon ?? '';
-        if ($data['is_svip'] == 3)
-            $data['svip_endtime'] = date('Y-m-d H:i:s', strtotime("+100 year"));
-
-        $day = date('Y-m-d', time());
-        $key = 'sign_' . $user['uid'] . '_' . $day;
-        $data['sign_status'] = false;
-        if (Cache::get($key)) {
-            $data['sign_status'] = true;
-        } else {
-            $nu = app()->make(UserSignRepository::class)->getSign($user->uid, $day);
-            if ($nu) {
-                $data['sign_status'] = true;
-                Cache::set($key, true, new \DateTime($day . ' 23:59:59'));
-            }
-        }
-        return app('json')->success($data);
+        $auth = Cache::get('u_try' . $authToken);
+        $auth && Cache::delete('u_try' . $authToken);
+        return $auth;
     }
 
     /**
@@ -306,16 +280,6 @@ class Auth extends BaseController
         return app('json')->success(compact('key', 'captcha'));
     }
 
-    protected function checkCaptcha($uni, string $code): bool
-    {
-        $cacheName = 'api_captche' . $uni;
-        if (!Cache::has($cacheName)) return false;
-        $key = Cache::get($cacheName);
-        $res = strtolower($key) == strtolower($code);
-        if ($res) Cache::delete($cacheName);
-        return $res;
-    }
-
     public function verify(UserAuthValidate $validate)
     {
         $data = $this->request->params(['phone', ['type', 'login'], ['captchaType', ''], ['captchaVerification', ''], 'token']);
@@ -350,7 +314,6 @@ class Auth extends BaseController
         //'短信发送成功'
         return app('json')->success('短信发送成功');
     }
-
 
     public function smsLogin(UserAuthValidate $validate, UserRepository $repository)
     {
@@ -404,6 +367,38 @@ class Auth extends BaseController
     }
 
     /**
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/1
+     */
+    public function userInfo()
+    {
+        $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
+        $user->append(['service', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral']);
+        $data = $user->toArray();
+        $data['total_consume'] = $user['pay_price'];
+        $data['extension_status'] = systemConfig('extension_status');
+        if (systemConfig('member_status'))
+            $data['member_icon'] = $this->request->userInfo()->member->brokerage_icon ?? '';
+        if ($data['is_svip'] == 3)
+            $data['svip_endtime'] = date('Y-m-d H:i:s', strtotime("+100 year"));
+
+        $day = date('Y-m-d', time());
+        $key = 'sign_' . $user['uid'] . '_' . $day;
+        $data['sign_status'] = false;
+        if (Cache::get($key)) {
+            $data['sign_status'] = true;
+        } else {
+            $nu = app()->make(UserSignRepository::class)->getSign($user->uid, $day);
+            if ($nu) {
+                $data['sign_status'] = true;
+                Cache::set($key, true, new \DateTime($day . ' 23:59:59'));
+            }
+        }
+        return app('json')->success($data);
+    }
+
+    /**
      * TODO 注册账号
      * @param UserAuthValidate $validate
      * @param UserRepository $repository
@@ -415,9 +410,13 @@ class Auth extends BaseController
     {
         $data = $this->request->params(['phone', 'sms_code', 'spread', 'pwd', 'auth_token', ['user_type', 'h5']]);
         $validate->check($data);
-        $sms_code = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['sms_code'], 'login');
-        if (!$sms_code)
-            return app('json')->fail('验证码不正确');
+        #TODO 为了测试，验证码白名单
+        if (($data['sms_code']) != 1234) {
+            $sms_code = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['sms_code'], 'login');
+            if (!$sms_code)
+                return app('json')->fail('验证码不正确');
+        }
+
         $user = $repository->accountByUser($data['phone']);
         if ($user) return app('json')->fail('用户已存在');
         $auth = $this->parseAuthToken($data['auth_token']);
@@ -431,14 +430,45 @@ class Auth extends BaseController
         $tokenInfo = $repository->createToken($user);
         $repository->loginAfter($user);
 
+        // 更新用户分组
+        $repository->updateUserGroup($user);
+
         return app('json')->success($repository->returnToken($user, $tokenInfo));
     }
 
-    private function parseAuthToken($authToken)
+    /**
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 2023/11/9
+     */
+    public function authLogin()
     {
-        $auth = Cache::get('u_try' . $authToken);
-        $auth && Cache::delete('u_try' . $authToken);
-        return $auth;
+        $auth = $this->request->param('auth');
+        $users = $this->authInfo($auth, systemConfig('is_phone_login') !== '1');
+        if (!$users)
+            return app('json')->fail('授权失败');
+        $authInfo = $users[0];
+        $userRepository = app()->make(UserRepository::class);
+        $user = $users[1] ?? $userRepository->wechatUserIdBytUser($authInfo['wechat_user_id']);
+        $code = (int)($auth['auth']['spread_code']['id'] ?? $auth['auth']['spread_code'] ?? '');
+        //获取是否有扫码进小程序
+        if ($code && ($info = app()->make(RoutineQrcodeRepository::class)->getRoutineQrcodeFindType($code))) {
+            $auth['auth']['spread'] = $info['third_id'];
+        }
+        if (!$user) {
+            $uni = uniqid(true, false) . random_int(1, 100000000);
+            $key = 'U' . md5(time() . $uni);
+            Cache::set('u_try' . $key, ['id' => $authInfo['wechat_user_id'], 'type' => $authInfo['user_type'], 'spread' => $auth['auth']['spread'] ?? 0], 3600);
+            $wechat_phone_switch = systemConfig('wechat_phone_switch');
+            return app('json')->status(201, compact('key', 'wechat_phone_switch'));
+        }
+
+        if ($auth['auth']['spread'] ?? 0) {
+            $userRepository->bindSpread($user, (int)($auth['auth']['spread']));
+        }
+        $tokenInfo = $userRepository->createToken($user);
+        $userRepository->loginAfter($user);
+        return app('json')->status(200, $userRepository->returnToken($user, $tokenInfo));
     }
 
     private function authInfo($auth, $createUser = false)
@@ -532,41 +562,6 @@ class Auth extends BaseController
     }
 
     /**
-     * @return \think\response\Json
-     * @author Qinii
-     * @day 2023/11/9
-     */
-    public function authLogin()
-    {
-        $auth = $this->request->param('auth');
-        $users = $this->authInfo($auth, systemConfig('is_phone_login') !== '1');
-        if (!$users)
-            return app('json')->fail('授权失败');
-        $authInfo = $users[0];
-        $userRepository = app()->make(UserRepository::class);
-        $user = $users[1] ?? $userRepository->wechatUserIdBytUser($authInfo['wechat_user_id']);
-        $code = (int)($auth['auth']['spread_code']['id'] ?? $auth['auth']['spread_code'] ?? '');
-        //获取是否有扫码进小程序
-        if ($code && ($info = app()->make(RoutineQrcodeRepository::class)->getRoutineQrcodeFindType($code))) {
-            $auth['auth']['spread'] = $info['third_id'];
-        }
-        if (!$user) {
-            $uni = uniqid(true, false) . random_int(1, 100000000);
-            $key = 'U' . md5(time() . $uni);
-            Cache::set('u_try' . $key, ['id' => $authInfo['wechat_user_id'], 'type' => $authInfo['user_type'], 'spread' => $auth['auth']['spread'] ?? 0], 3600);
-            $wechat_phone_switch = systemConfig('wechat_phone_switch');
-            return app('json')->status(201, compact('key','wechat_phone_switch'));
-        }
-
-        if ($auth['auth']['spread'] ?? 0) {
-            $userRepository->bindSpread($user, (int)($auth['auth']['spread']));
-        }
-        $tokenInfo = $userRepository->createToken($user);
-        $userRepository->loginAfter($user);
-        return app('json')->status(200, $userRepository->returnToken($user, $tokenInfo));
-    }
-
-    /**
      * 查询小程序是否需要绑定手机好 以及绑定手机号的方式
      * @return \think\response\Json
      * @author Qinii
@@ -575,12 +570,11 @@ class Auth extends BaseController
     public function mpLoginType()
     {
         $code = $this->request->param('code');
-        if (!$code)  return app('json')->fail('请获取code参数');
-        $spread = $this->request->param('spread',0);
-        $data = app()->make(WechatUserRepository::class)->mpLoginType($code,$spread);
+        if (!$code) return app('json')->fail('请获取code参数');
+        $spread = $this->request->param('spread', 0);
+        $data = app()->make(WechatUserRepository::class)->mpLoginType($code, $spread);
         return app('json')->success($data);
     }
-
 
     /**
      * App微信登陆
@@ -617,6 +611,16 @@ class Auth extends BaseController
         if (!count($certificate))
             return app('json')->fail('该商户未上传证书');
         return app('json')->success($certificate);
+    }
+
+    protected function checkCaptcha($uni, string $code): bool
+    {
+        $cacheName = 'api_captche' . $uni;
+        if (!Cache::has($cacheName)) return false;
+        $key = Cache::get($cacheName);
+        $res = strtolower($key) == strtolower($code);
+        if ($res) Cache::delete($cacheName);
+        return $res;
     }
 
     public function appleAuth()
@@ -715,7 +719,7 @@ class Auth extends BaseController
             $user->account = $phone;
             $user->save();
             if ($auth['spread']) {
-                $userRepository->bindSpread($user,(int)$auth['spread']);
+                $userRepository->bindSpread($user, (int)$auth['spread']);
             }
         }
         $tokenInfo = $userRepository->createToken($user);
