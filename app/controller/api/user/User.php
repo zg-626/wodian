@@ -21,6 +21,7 @@ use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserBrokerageRepository;
 use app\common\repositories\user\UserRepository;
+use app\common\repositories\user\UserGroupApplyRepository;
 use app\common\repositories\user\UserVisitRepository;
 use app\validate\api\UserBaseInfoValidate;
 use crmeb\basic\BaseController;
@@ -537,4 +538,14 @@ class User extends BaseController
         return app('json')->success('修改成功');
     }
 
+    // 代理申请
+    public function agentApply()
+    {
+        $data = $this->request->params([['type',0], 'content', 'realname', 'contact',['status',0]]);
+        //$validate->check($data);
+        $data['uid'] = $this->request->uid();
+        $userGroupApply=app()->make(UserGroupApplyRepository::class);
+        $info=$userGroupApply->create($data);
+        return app('json')->success('申请成功');
+    }
 }

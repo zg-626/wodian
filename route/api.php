@@ -124,6 +124,10 @@ Route::group('api/', function () {
             Route::post('/feedback', 'Feedback/feedback');
             Route::get('/feedback/list', 'Feedback/feedbackList');
             Route::get('/feedback/detail/:id', 'Feedback/detail');
+
+            // 申请代理
+            Route::post('/apply_agent', 'User/applyAgent');
+
             //充值
             Route::post('/recharge', 'UserRecharge/recharge');
             Route::post('/recharge/brokerage', 'UserRecharge/brokerage');
