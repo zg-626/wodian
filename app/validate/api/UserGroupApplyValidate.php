@@ -11,31 +11,19 @@
 // +----------------------------------------------------------------------
 
 
-namespace app\common\model\user;
+namespace app\validate\api;
 
+use think\Validate;
 
-use app\common\model\BaseModel;
-
-class UserGroupApply extends BaseModel
+class UserGroupApplyValidate extends Validate
 {
+    protected $failException = true;
 
-    /**
-     * @return string
-     * @author xaboy
-     * @day 2020-03-30
-     */
-    public static function tablePk(): string
-    {
-        return 'id';
-    }
+    protected $rule = [
+        'group_id|分组' => 'require',
+    ];
 
-    /**
-     * @return string
-     * @author xaboy
-     * @day 2020-03-30
-     */
-    public static function tableName(): string
-    {
-        return 'user_group_apply';
-    }
+    protected $scene = [
+        'take' => ['real_name', 'phone']
+    ];
 }

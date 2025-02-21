@@ -16,7 +16,7 @@ namespace app\common\dao\user;
 
 use app\common\dao\BaseDao;
 use app\common\model\BaseModel;
-use app\common\model\user\UserGroupApply;
+use app\common\model\user\UserGroupApply as model;
 use think\db\BaseQuery;
 
 /**
@@ -27,36 +27,28 @@ use think\db\BaseQuery;
  */
 class UserGroupApplyDao extends BaseDao
 {
-
     /**
-     * @return BaseModel
-     * @author xaboy
-     * @day 2020-03-30
+     * @return string
+     * @author Qinii
      */
     protected function getModel(): string
     {
-        return UserGroupApply::class;
+        return model::class;
     }
 
 
-    /**
-     * @param array $where
-     * @return BaseQuery
-     * @author xaboy
-     * @day 2020-05-06
-     */
-    public function search(array $where = [])
+    public function userFieldExists($field, $value,$uid): bool
     {
-        return UserGroupApply::getDB();
+        return (($this->getModel()::getDB())->where('uid',$uid)->where($field,$value)->count()) > 0;
     }
 
-    /**
-     * @return array
-     * @author xaboy
-     * @day 2020-05-07
-     */
-    public function allOptions()
+    public function changeDefault(int $uid)
     {
-        return UserGroupApply::getDB()->column('group_name', 'group_id');
+        return ($this->getModel()::getDB())->where('uid',$uid)->update(['is_default' => 0]);
+    }
+
+    public function getAll(int $uid)
+    {
+        return (($this->getModel()::getDB())->where('uid',$uid));
     }
 }

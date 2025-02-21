@@ -13,88 +13,110 @@
 
 namespace app\common\repositories\user;
 
-
-use app\common\dao\user\UserGroupApplyDao;
 use app\common\repositories\BaseRepository;
-use FormBuilder\Exception\FormBuilderException;
-use FormBuilder\Factory\Elm;
-use FormBuilder\Form;
-use think\db\exception\DataNotFoundException;
-use think\db\exception\DbException;
-use think\db\exception\ModelNotFoundException;
-use think\facade\Route;
+use app\common\dao\user\UserGroupApplyDao as dao;
+use app\common\repositories\store\shipping\CityRepository;
 
 /**
- * Class UserGroupRepository
+ * Class UserGroupApplyRepository
  * @package app\common\repositories\user
- * @author xaboy
- * @day 2020-05-07
- * @mixin UserGroupApplyDao
+ * @day 2020/6/3
+ * @mixin dao
  */
 class UserGroupApplyRepository extends BaseRepository
 {
     /**
-     * @var UserGroupApplyDao
+     * @var dao
      */
     protected $dao;
 
+
     /**
-     * UserGroupRepository constructor.
-     * @param UserGroupApplyDao $dao
+     * UserGroupApplyRepository constructor.
+     * @param dao $dao
      */
-    public function __construct(UserGroupApplyDao $dao)
+    public function __construct(dao $dao)
     {
         $this->dao = $dao;
     }
 
+
     /**
-     * @param array $where
-     * @param $page
-     * @param $limit
-     * @return array
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
-     * @author xaboy
-     * @day 2020-05-07
+     * @param int $id
+     * @param int $uid
+     * @return bool
+     * @author Qinii
      */
-    public function getList(array $where, $page, $limit)
+    public function fieldExists(int $id,int $uid)
     {
-        $query = $this->dao->search($where);
-        $count = $query->count($this->dao->getPk());
-        $list = $query->page($page, $limit)->select();
-        return compact('count', 'list');
+        return $this->dao->userFieldExists($this->dao->getPk(),$id,$uid);
     }
 
     /**
-     * @param null $id
-     * @param array $formData
-     * @return Form
-     * @throws FormBuilderException
-     * @author xaboy
-     * @day 2020-05-07
+     * @param int $uid
+     * @return bool
+     * @author Qinii
      */
-    public function form($id = null, array $formData = [])
+    public function defaultExists(int $uid)
     {
-        $isCreate = is_null($id);
-        $action = Route::buildUrl($isCreate ? 'systemUserGroupCreate' : 'systemUserGroupUpdate', $isCreate ? [] : compact('id'))->build();
-        return Elm::createForm($action, [
-            Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required()
-        ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
+        return $this->dao->userFieldExists('is_default',1,$uid);
+    }
+
+    /**
+     * @param int $id
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author Qinii
+     */
+    public function checkDefault(int $id)
+    {
+        $res = $this->dao->getWhere([$this->dao->getPk() => $id]);
+        return $res['is_default'];
+    }
+
+    /**
+     * @param $province
+     * @param $city
+     * @return mixed
+     * @author Qinii
+     */
+    public function getCityId($province,$city)
+    {
+        $make = app()->make(CityRepository::class);
+        $provinceData = $make->getWhere(['name' => $province]);
+        $cityData = $make->getWhere(['name' => $city,'parent_id' => $provinceData['city_id']]);
+        if(!$cityData)$cityData = $make->getWhere([['name','like','直辖'.'%'],['parent_id' ,'=', $provinceData['city_id']]]);
+        return $cityData['city_id'];
+    }
+
+    /**
+     * @param $uid
+     * @param $page
+     * @param $limit
+     * @return array
+     * @author Qinii
+     */
+    public function getList($uid,$page, $limit)
+    {
+        $query = $this->dao->getAll($uid);
+        $count = $query->count();
+        $list = $query->page($page, $limit)->order('id desc')->select();
+        return compact('count','list');
     }
 
     /**
      * @param $id
-     * @return Form
-     * @throws FormBuilderException
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
-     * @author xaboy
-     * @day 2020-05-07
+     * @param $uid
+     * @return array|\think\Model|null
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author Qinii
      */
-    public function updateForm($id)
+    public function get($id,$uid)
     {
-        return $this->form($id, $this->dao->get($id)->toArray());
+        return $this->dao->getWhere(['id' => $id,'uid' => $uid]);
     }
 }

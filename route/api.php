@@ -125,9 +125,6 @@ Route::group('api/', function () {
             Route::get('/feedback/list', 'Feedback/feedbackList');
             Route::get('/feedback/detail/:id', 'Feedback/detail');
 
-            // 申请代理
-            Route::post('/apply_agent', 'User/applyAgent');
-
             //充值
             Route::post('/recharge', 'UserRecharge/recharge');
             Route::post('/recharge/brokerage', 'UserRecharge/brokerage');
@@ -137,6 +134,12 @@ Route::group('api/', function () {
             Route::get('/address/detail/:id', 'UserAddress/detail');
             Route::post('/address/update/:id', 'UserAddress/editDefault');
             Route::post('/address/delete/:id', 'UserAddress/delete');
+            //代理申请
+            Route::get('/group/lst', 'UserGroupApply/lst');
+            Route::post('/group/create', 'UserGroupApply/create');
+            Route::get('/group/detail/:id', 'UserGroupApply/detail');
+            Route::post('/group/update/:id', 'UserGroupApply/update');
+            Route::post('/group/delete/:id', 'UserGroupApply/delete');
 
             //分销海报
             Route::get('/spread_image', 'User/spread_image');

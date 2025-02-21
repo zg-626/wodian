@@ -537,15 +537,4 @@ class User extends BaseController
         $this->repository->updateBaseInfo($data,$user);
         return app('json')->success('修改成功');
     }
-
-    // 代理申请
-    public function agentApply()
-    {
-        $data = $this->request->params([['type',0], 'content', 'realname', 'contact',['status',0]]);
-        //$validate->check($data);
-        $data['uid'] = $this->request->uid();
-        $userGroupApply=app()->make(UserGroupApplyRepository::class);
-        $info=$userGroupApply->create($data);
-        return app('json')->success('申请成功');
-    }
 }

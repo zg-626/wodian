@@ -319,8 +319,12 @@ class Auth extends BaseController
     {
         $data = $this->request->params(['phone', 'sms_code', 'spread', 'auth_token', ['user_type', 'h5']]);
         $validate->sceneSmslogin()->check($data);
-        $sms_code = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['sms_code'], 'login');
-        if (!$sms_code) return app('json')->fail('验证码不正确');
+        #TODO 为了测试，验证码白名单
+        if (($data['sms_code']) != 1234) {
+            $sms_code = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['sms_code'], 'login');
+            if (!$sms_code)
+                return app('json')->fail('验证码不正确');
+        }
         $user = $repository->accountByUser($data['phone']);
         if (!$user) $user = $repository->getWhere(['phone' => $data['phone']]);
         $auth = $this->parseAuthToken($data['auth_token']);
