@@ -566,6 +566,18 @@ class User extends BaseController
         return app('json')->success(formToData($this->repository->changeSpreadForm($id)));
     }
 
+    /**
+     * @param $id
+     * @return mixed
+     * @desc 修改上级
+     **/
+    public function superiorForm($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        return app('json')->success(formToData($this->repository->changeSuperiorForm($id)));
+    }
+
     public function spread($id)
     {
         if (!$this->repository->exists((int)$id))
@@ -577,6 +589,20 @@ class User extends BaseController
         if ($spid && !$this->repository->exists($spid))
             return app('json')->fail('推荐人不存在');
         $this->repository->changeSpread($id, $spid, $this->request->adminId());
+        return app('json')->success('修改成功');
+    }
+
+    public function superior($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        $spid = $this->request->param('spid');
+        $spid = (int)($spid['id'] ?? $spid);
+        if ($spid == $id)
+            return app('json')->fail('不能选自己');
+        if ($spid && !$this->repository->exists($spid))
+            return app('json')->fail('上级不存在');
+        $this->repository->changeSuperior($id, $spid, $this->request->adminId());
         return app('json')->success('修改成功');
     }
 

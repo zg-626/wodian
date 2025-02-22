@@ -239,6 +239,11 @@
                     <span>{{ row.spread ? row.spread.nickname + ' / ' + row.spread.uid : '-'  }}</span>
                 </template>
             </el-table-column>
+            <el-table-column label="上级" min-width="140">
+                <template slot-scope="{row}">
+                    <span>{{ row.spread ? row.spread.nickname + ' / ' + row.spread.uid : '-'  }}</span>
+                </template>
+            </el-table-column>
             <el-table-column label="用户类型" min-width="100">
                 <template slot-scope="{row}">
                 <span>{{ row.user_type === 'routine' ? '小程序' : row.user_type === 'wechat' ? '公众号' : row.user_type === 'app' || row.user_type === 'App' ? 'App' : row.user_type === 'pc' ? 'PC' : 'H5' }}</span>

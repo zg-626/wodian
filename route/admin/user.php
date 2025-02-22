@@ -150,8 +150,17 @@ Route::group(function () {
             '_auth' => false,
             '_form' => 'systemUserSpreadChange',
         ]);
+        Route::get('change_superior_form/:id', '/superiorForm')->name('systemUserSuperiorChangeForm')->option([
+            '_alias' => '修改上级表单',
+            '_auth' => false,
+            '_form' => 'systemUserSuperiorChange',
+        ]);
         Route::post('change_spread/:id', '/spread')->name('systemUserSpreadChange')->option([
             '_alias' => '修改推荐人',
+        ]);
+
+        Route::post('change_superior/:id', '/superior')->name('systemUserSuperiorChange')->option([
+            '_alias' => '修改上级',
         ]);
 
         Route::get('/member/:id/form', '/memberForm')->name('systemUserMemberForm')->option([
