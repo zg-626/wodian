@@ -1348,7 +1348,7 @@ class UserRepository extends BaseRepository
     {
         $spreadLogRepository = app()->make(UserSpreadLogRepository::class);
         $user = $this->dao->get($uid);
-        if ($user->spread_uid == $superior_uid)
+        if ($user->superior_uid == $superior_uid)
             return;
         $config = systemConfig(['extension_limit', 'extension_limit_day']);
         Db::transaction(function () use ($config, $user, $spreadLogRepository, $superior_uid, $admin) {
