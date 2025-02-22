@@ -1,0 +1,665 @@
+<template>
+  <div class="divBox">
+    <div class="selCard">
+      <el-form :model="tableFrom" ref="searchForm" inline size="small" label-width="85px">
+        <el-form-item label="审核状态：" prop="product_status">
+          <el-select
+            v-model="tableFrom.product_status"
+            clearable
+            placeholder="请选择"
+            class="selWidth"
+            @change="getList(1)"
+          >
+            <el-option label="全部" value="" />
+            <el-option label="待审核" value="0" />
+            <el-option label="已审核" value="1" />
+            <el-option label="审核失败" value="-1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="活动状态：" prop="type">
+          <el-select
+            v-model="tableFrom.type"
+            placeholder="请选择"
+            class="selWidth"
+            clearable
+            @change="getList(1)"
+          >
+            <el-option
+              v-for="item in preSaleStatusList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="显示状态：" prop="us_status">
+          <el-select
+            v-model="tableFrom.us_status"
+            placeholder="请选择"
+            class="selWidth"
+            clearable
+            @change="getList"
+          >
+            <el-option
+              v-for="item in productStatusList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="商户类别：" prop="is_trader">
+          <el-select
+            v-model="tableFrom.is_trader"
+            clearable
+            placeholder="请选择"
+            class="selWidth"
+            @change="getList(1)"
+          >
+            <el-option label="自营" value="1" />
+            <el-option label="非自营" value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="商户名称：" prop="mer_id">
+          <el-select
+            v-model="tableFrom.mer_id"
+            clearable
+            filterable
+            placeholder="请选择"
+            class="selWidth"
+            @change="getList(1)"
+          >
+            <el-option
+              v-for="item in merSelect"
+              :key="item.mer_id"
+              :label="item.mer_name"
+              :value="item.mer_id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="推荐级别：" prop="star">
+          <el-select
+            v-model="tableFrom.star"
+            placeholder="请选择"
+            class="selWidth"
+            clearable
+            @change="getList(1)"
+          >
+            <el-option
+              v-for="item in recommendedLevelStatus"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="标签：" prop="sys_labels">
+          <el-select v-model="tableFrom.sys_labels" placeholder="请选择" class="selWidth" clearable filterable @change="getList(1)">
+            <el-option v-for="item in labelList" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>               
+        </el-form-item>
+        <el-form-item label="关键字：" prop="keyword">
+          <el-input v-model="tableFrom.keyword" @keyup.enter.native="getList(1)" placeholder="请输入预售商品名称/ID" clearable class="selWidth" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" @click="getList(1)">搜索</el-button>
+          <el-button size="small" @click="searchReset()">重置</el-button> 
+        </el-form-item>
+      </el-form>
+    </div>
+    <el-card class="mt14">
+      <div class="mb10">
+        <el-tabs v-model="tableFrom.presell_type" @tab-click="getList(1)">
+          <el-tab-pane v-for="(item,index) in headeNum" :key="index" :name="item.presell_type.toString()" :label="item.title +'('+item.count +')' " />
+        </el-tabs>
+      </div>
+      <el-table v-loading="listLoading" :data="tableData.data" size="small">
+        <el-table-column prop="product_presell_id" label="ID" min-width="50" />
+        <el-table-column label="商户名称" min-width="150">
+          <template slot-scope="scope">
+            <span>{{ scope.row.merchant ? scope.row.merchant.mer_name : '' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="store_name" label="商品名称" min-width="120" />
+        <el-table-column prop="mer_name" label="商户类别" min-width="90">
+          <template slot-scope="scope">
+            <span v-if="scope.row.merchant" class="spBlock">{{ scope.row.merchant .is_trader ? '自营' : '非自营' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="商品图" min-width="80">
+          <template slot-scope="scope">
+            <div class="demo-image__preview">
+              <el-image :src="scope.row.product.image" :preview-src-list="[scope.row.product.image]" />
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="price" label="预售价" min-width="90" />
+        <el-table-column label="预售活动状态" min-width="90">
+          <template slot-scope="scope">
+            <span>{{ scope.row.presell_status === 0 ? '未开始' :  (scope.row.presell_status === 1 ? '进行中' : '已结束') }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="预售活动日期" min-width="160">
+          <template slot-scope="scope">
+            <div>开始日期：{{ scope.row.start_time && scope.row.start_time ? scope.row.start_time.slice(0,10) : "" }}</div>
+            <div>结束日期：{{ scope.row.end_time && scope.row.end_time ? scope.row.end_time.slice(0,10) : "" }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="tableFrom.presell_type === '1'" label="成功/参与人数"  min-width="90" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.tattend_one && scope.row.tattend_one.pay }} / {{ scope.row.tattend_one && scope.row.tattend_one.all }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="tableFrom.presell_type === '2'" :label="'第一阶段 | 成功/参与人次'" :render-header="renderheader" min-width="90" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.tattend_one && scope.row.tattend_one.pay }} / {{ scope.row.tattend_one && scope.row.tattend_one.all }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="tableFrom.presell_type === '2'" :label="'第二阶段 | 成功/参与人次'" :render-header="renderheader" min-width="90" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.tattend_two && scope.row.tattend_two.pay }} / {{ scope.row.tattend_two && scope.row.tattend_two.all }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="seles" label="已售商品数" min-width="90" />
+        <el-table-column prop="stock_count" label="限量" min-width="90" />
+        <el-table-column prop="stock" label="限量剩余" min-width="90" />
+        <el-table-column prop="status" label="显示状态" min-width="100">
+          <template slot-scope="scope">
+            <el-switch
+              v-model="scope.row.status"
+              :active-value="1"
+              :inactive-value="0"
+              active-text="显示"
+              inactive-text="隐藏"
+              @change="onchangeIsShow(scope.row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="推荐级别"  min-width="150">
+          <template slot-scope="scope">
+            <!-- <span>{{ scope.row.star+'星推荐' }} </span> -->
+            <el-rate
+            disabled
+            v-model="scope.row.star"
+            :colors="colors">
+           </el-rate>
+          </template>
+        </el-table-column>
+        <el-table-column prop="stock" label="商品状态" min-width="90">
+          <template slot-scope="scope">
+            <span>{{ scope.row.us_status | productStatusFilter }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="stock" label="标签" min-width="90">
+          <template slot-scope="scope">
+            <div v-for="(item,index) in scope.row.sys_labels" :key="index" class="label-list">{{ item.name }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="排序" min-width="50">
+          <template slot-scope="scope">
+            <span>{{ scope.row.product.rank }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核状态" min-width="90">
+          <template slot-scope="scope">
+            <span>{{ scope.row.product_status === 0 ? "待审核" : scope.row.product_status === 1 ? "审核通过" : "审核失败"}}</span>
+            <span v-if="scope.row.product_status === -1 || scope.row.product_status === -2" style="font-size: 12px;">
+              <br />
+              原因：{{ scope.row.refusal }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" min-width="180" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="onEdit(scope.row.product_presell_id)">编辑</el-button>
+            <el-button type="text" size="small" @click="handlePreview(scope.row.product_presell_id)">预览</el-button>
+            <el-button type="text" size="small" @click="onEditLabel(scope.row)">编辑标签</el-button>
+            <el-button v-if="scope.row.product_status === 1" type="text" size="small" @click="toOff(scope.row.product_presell_id)">强制下架</el-button>
+            <el-button type="text" size="small" @click="goDetail(scope.row.product_presell_id)">详情</el-button>
+            <el-button v-if="scope.row.product_status === 0" type="text" size="small" @click="toReview(scope.row.product_presell_id)">审核</el-button>            
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="block">
+        <el-pagination
+          background
+          :page-size="tableFrom.limit"
+          :current-page="tableFrom.page"
+          layout="total, prev, pager, next, jumper"
+          :total="tableData.total"
+          @size-change="handleSizeChange"
+          @current-change="pageChange"
+        />
+      </div>
+    </el-card>
+    <!--商品编辑-->
+    <el-dialog
+      title="商品编辑"
+      :visible.sync="dialogVisible"
+      width="900px"
+      :before-close="handleClose"
+    >
+      <el-form ref="formValidate" v-loading="fullscreenLoading" size="small" class="formValidate mt20" :rules="ruleValidate" :model="formValidate" label-width="120px" @submit.native.prevent>
+        <el-form-item label="商品名称：" prop="store_name">
+          <el-input v-model="formValidate.store_name" placeholder="请输入商品名称" />
+        </el-form-item>
+        <el-form-item label="活动列表推荐：">
+           <el-rate class="rate_star"
+            v-model="formValidate.star"
+            :colors="colors" style="margin-top: 4px;">
+           </el-rate>
+           <span style="margin-top: 4px; font-size: 12px;">备注：5星为最高推荐级别，1星为最低推荐级别，设置后会在商城商品列表、搜索商品列表中体现。</span>
+        </el-form-item>
+        <el-form-item label="排序：">
+          <el-input-number v-model="formValidate.rank" placeholder="请输入排序序号" style="width: 200px;" />
+        </el-form-item>
+        <el-col :span="24">
+          <el-form-item label="商品详情：">
+            <ueditor-from v-model="formValidate.content" :content="formValidate.content" />
+          </el-form-item>
+        </el-col>
+        <el-form-item style="margin-top:30px;">
+          <el-button type="primary" class="submission" size="small" @click="handleSubmit('formValidate')">提交</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+    <!--商品审核-->
+    <info-from ref="infoFrom" :is-show="isShow" @subSuccess="subSuccess" />
+    <!--查看详情-->
+    <details-data ref="detailsData" :is-show="isShowDetail"/>
+     <!--预览商品-->
+    <div v-if="previewVisible">
+      <div class="bg" @click.stop="previewVisible = false" />
+      <preview-box v-if="previewVisible" ref="previewBox" :goods-id="goodsId" :product-type="2" :preview-key="previewKey" />
+    </div>
+    <!--编辑标签-->
+    <el-dialog
+      v-if="dialogLabel"
+      title="选择标签"
+      :visible.sync="dialogLabel"
+      width="470px"
+      :before-close="handleClose"
+    >
+      <el-form ref="labelForm" :model="labelForm" size="small" @submit.native.prevent>
+        <el-form-item>
+          <el-select v-model="labelForm.sys_labels" clearable filterable multiple placeholder="请选择" class="width100">
+            <el-option
+              v-for="item in labelList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id.toString()"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="small" @click="dialogLabel=false">取消</el-button>
+        <el-button type="primary" size="small" @click="submitForm('labelForm')">提交</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+<script>
+// +----------------------------------------------------------------------
+// | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
+// +----------------------------------------------------------------------
+// | Copyright (c) 2016~2024 https://www.crmeb.com All rights reserved.
+// +----------------------------------------------------------------------
+// | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
+// +----------------------------------------------------------------------
+// | Author: CRMEB Team <admin@crmeb.com>
+// +----------------------------------------------------------------------
+import {
+  preSaleProListApi,
+  presellStatusApi,
+  presellProductStatusApi,
+  preSaleProDetailApi,
+  presellUpdateApi,
+  merSelectApi,
+  getProductLabelApi,
+  updatetPresellLabel
+} from '@/api/product'
+import { roterPre } from "@/settings";
+import ueditorFrom from '@/components/ueditorFrom'
+import infoFrom from './info'
+import detailsData from './detail'
+import previewBox from '@/components/previewBox/index'
+
+export default {
+  name: "preSaleProductList",
+  components: { infoFrom, ueditorFrom, detailsData, previewBox },
+  data() {
+    return {
+     colors: ['#99A9BF', '#F7BA2A', '#FF9900'],
+      headeNum: [
+        {
+          count: 0,
+          presell_type: 1,
+          title: "全款预售"
+        },
+        {
+          count: 0,
+          presell_type: 2,
+          title: "定金预售"
+        }
+      ],
+      props: {
+        emitPath: false,
+      },
+      roterPre: roterPre,
+      listLoading: true,
+      tableData: {
+        data: [],
+        total: 0,
+      },
+      preSaleStatusList: [
+        { label: "未开始", value: 0 },
+        { label: "进行中", value: 1 },
+        { label: "已结束", value: 2 },
+      ],
+      productStatusList: [
+        { label: "上架显示", value: 1 },
+        { label: "下架", value: 0 },
+        { label: "平台关闭", value: -1 },
+      ],
+      recommendedLevelStatus: [
+        { label: "全部", value: "" },
+        { label: "5星", value: 5 },
+        { label: "4星", value: 4 },
+        { label: "3星", value: 3 },
+        { label: "2星", value: 2 },
+        { label: "1星", value: 1 }
+      ],
+      tableFrom: {
+        page: 1,
+        limit: 20,
+        keyword: "",
+        product_status: this.$route.query.status ? this.$route.query.status : '',
+        status: '',
+        type: '',
+        is_trader: '',
+        mer_id: '',
+        presell_type: this.$route.query.type ? this.$route.query.type : '1',
+        us_status: "",
+        sys_labels: "",
+        star: "",
+        product_presell_id: this.$route.query.id ? this.$route.query.id : "",
+      },
+      product_presell_id: this.$route.query.id ? this.$route.query.id : "",
+      product_id: '',
+      modals: false,
+      dialogVisible: false,
+      loading: false,
+      formValidate: {
+        is_hot: 0,
+        is_best: 0,
+        is_new: 0,
+        is_benefit: 0,
+        ficti: 0,
+        content: '',
+        store_name: '',
+        rank: '',
+        star: 0
+      },
+      fullscreenLoading: true,
+      isShow: false,
+      isShowDetail: false,
+      checkboxGroup: [],
+      merSelect: [],
+      ruleValidate: {
+        store_name: [
+          { required: true, message: "请输入商品名称", trigger: "blur" },
+        ]
+      },
+      previewVisible: false,
+      goodsId: '',
+      previewKey: '',
+      labelList: [],
+      dialogLabel: false,
+      labelForm: {}
+    };
+  },
+  watch: {
+    product_presell_id(newName, oldName) {
+     this.getList("");
+    }
+  },
+  mounted() {
+    this.getList('');
+    this.getMerSelect();
+    this.getLabelLst()
+  },
+  methods: {
+    /**重置 */
+    searchReset(){
+      this.$refs.searchForm.resetFields()
+      this.getList(1)
+    },
+    onChangeGroup() {
+      this.checkboxGroup.includes('is_benefit') ? this.formValidate.is_benefit = 1 : this.formValidate.is_benefit = 0 && this.checkboxGroup.remove('is_benefit')
+      this.checkboxGroup.includes('is_best') ? this.formValidate.is_best = 1 : this.formValidate.is_best = 0 && this.checkboxGroup.remove('is_best')
+      this.checkboxGroup.includes('is_new') ? this.formValidate.is_new = 1 : this.formValidate.is_new = 0 && this.checkboxGroup.remove('is_new')
+      this.checkboxGroup.includes('is_hot') ? this.formValidate.is_hot = 1 : this.formValidate.is_hot = 0 && this.checkboxGroup.remove('is_hot')
+    },
+    handleClose() {
+      this.dialogVisible = false
+      this.dialogLabel = false
+    },
+    // 表头换行
+    renderheader(h, { column, $index }) {
+      return h('span', {}, [
+        h('span', {}, column.label.split('|')[0]),
+        h('br'),
+        h('span', {}, column.label.split('|')[1])
+      ]);
+    },
+    subSuccess() {
+      this.getList('')
+    },
+    // 获取标签项
+    getLabelLst() {
+      getProductLabelApi().then(res => {
+        this.labelList = res.data
+      })
+        .catch(res => {
+          this.$message.error(res.message)
+        })
+    },
+    // 编辑标签
+    onEditLabel(row) {
+      this.dialogLabel = true
+      this.product_id = row.product_presell_id
+      this.labelForm = {
+        sys_labels: row.sys_labels
+      }
+    },
+    submitForm(name) {
+      this.$refs[name].validate(valid => {
+        if (valid) {
+          updatetPresellLabel(this.product_id, this.labelForm).then(({ message }) => {
+            this.$message.success(message)
+            this.getList('')
+            this.dialogLabel = false
+          })
+        } else {
+          return
+        }
+      })
+    },
+    // 编辑
+    onEdit(id){
+      this.productId = id
+      this.getInfo(id)
+      this.dialogVisible = true
+    },
+    // 审核
+    toReview(id) {
+      this.$refs.infoFrom.dialogVisible = true
+      this.isShow = true
+      this.$refs.infoFrom.getInfo(id)
+    },
+    // 预览
+    handlePreview(id) {
+        this.previewVisible = true
+        this.goodsId = id
+        this.previewKey = ''
+    },
+    // 查看详情
+    goDetail(id){
+      this.$refs.detailsData.dialogVisible = true
+      this.isShowDetail = true
+      this.$refs.detailsData.getInfo(id)
+    },
+    // 商户列表；
+    getMerSelect() {
+      merSelectApi()
+        .then((res) => {
+          this.merSelect = res.data;
+        })
+        .catch((res) => {
+          this.$message.error(res.message);
+        });
+    },
+    // 下架
+    toOff(id) {
+      this.$prompt('强制下架', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputErrorMessage: '请输入强制下架原因',
+        inputType: 'textarea',
+        inputPlaceholder: '请输入强制下架原因',
+        inputValidator: (value) => {
+          if (!value) {
+            return '请输入强制下架原因'
+          }
+        }
+      }).then(({ value }) => {
+        presellProductStatusApi({ id: id, status: -2, refusal: value }).then(res => {
+          this.$message({
+            type: 'success',
+            message: '提交成功'
+          })
+          this.getList('')
+        }).catch((res) => {
+          this.$message.error(res.message)
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        })
+      })
+    },
+    getInfo(id) {
+      this.fullscreenLoading = true
+      this.checkboxGroup = [];
+      preSaleProDetailApi(id).then(res => {
+        const info = res.data
+        this.formValidate = {
+          is_hot: info.is_hot,
+          is_best: info.is_best,
+          is_new: info.is_new,
+          is_benefit: info.is_benefit,
+          ficti: info.ficti,
+          content: info.content,
+          store_name: info.store_name,
+          rank: info.rank,
+          star: info.star ? info.star : 1
+        }
+        if (info.is_benefit === 1) this.checkboxGroup.push('is_benefit')
+        if (info.is_hot === 1) this.checkboxGroup.push('is_hot')
+        if (info.is_best === 1) this.checkboxGroup.push('is_best')
+        if (info.is_new === 1) this.checkboxGroup.push('is_new')
+        this.fullscreenLoading = false
+        console.log(this.formValidate)
+      }).catch(res => {
+        this.$message.error(res.message)
+        this.fullscreenLoading = false
+      })
+    },
+    // 列表
+    getList(num) {
+      this.listLoading = true;
+      this.tableFrom.page = num ? num : this.tableFrom.page;
+      preSaleProListApi(this.tableFrom)
+        .then((res) => {
+          this.tableData.data = res.data.list;
+          this.tableData.total = res.data.count;
+          this.headeNum[0]['count'] = res.data.stat.all;
+          this.headeNum[1]['count'] = res.data.stat.down;
+          console.log(this.headeNum);
+          this.listLoading = false;
+        })
+        .catch((res) => {
+          this.listLoading = false;
+          this.$message.error(res.message);
+        });
+    },
+    pageChange(page) {
+      this.tableFrom.page = page;
+      this.getList('');
+    },
+    handleSizeChange(val) {
+      this.tableFrom.limit = val;
+      this.getList('');
+    },
+    onchangeIsShow(row) {
+      presellStatusApi(row.product_presell_id, row.status)
+        .then(({ message }) => {
+          this.$message.success(message);
+          this.getList('');
+        })
+        .catch(({ message }) => {
+          this.$message.error(message);
+        });
+    },
+    // 提交
+    handleSubmit(name) {
+      this.$refs[name].validate((valid) => {
+        if (valid) {
+          presellUpdateApi(this.productId, this.formValidate).then(async res => {
+            this.fullscreenLoading = false
+            this.$message.success(res.message)
+            this.dialogVisible = false
+            this.getList()
+          }).catch(res => {
+            this.fullscreenLoading = false
+            this.$message.error(res.message)
+          })
+        } else {
+          return false
+        }
+      })
+    },
+  },
+};
+</script>
+
+<style scoped lang="scss">
+::v-deep .el-select-dropdown__item{
+  max-width: 350px;
+}
+.bg {
+  z-index: 100;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+}
+.rate_star{
+  position: relative; top: 5px;
+}
+.el-table .cell{
+  white-space: pre-line;
+}
+.add {
+  font-style: normal;
+  position: relative;
+  top: -1.2px;
+}
+.scollhide::-webkit-scrollbar {
+  display: none; /* Chrome Safari */
+}
+</style>

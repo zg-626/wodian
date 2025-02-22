@@ -1,0 +1,41 @@
+::v-deep .el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--prev-color-primary);
+  border-color: var(--prev-color-primary);
+}
+::v-deep .el-radio__input.is-checked+.el-radio__label{
+  color: var(--prev-color-primary)
+}
+::v-deep .el-switch.is-checked .el-switch__core {
+  border-color: var(--prev-color-primary);
+  background-color: var(--prev-color-primary);
+}
+::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--prev-color-primary);
+  border-color: var(--prev-color-primary);
+}
+::v-deep .el-checkbox__input.is-checked .el-checkbox__inner,
+::v-deep .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background-color: var(--prev-color-primary);
+  border-color: var(--prev-color-primary);
+} 
+::v-deep .el-tabs__item.is-active,
+::v-deep .el-tabs__item:hover,
+::v-deep .el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active,
+::v-deep .el-tabs--border-card>.el-tabs__header .el-tabs__item:not(.is-disabled):hover {
+  color: var(--prev-color-primary) !important;
+}
+::v-deep .el-tabs__active-bar {
+  background-color: var(--prev-color-primary) !important;
+}
+::v-deep .el-tag {
+  color: var(--prev-color-primary);
+  background-color: var(--prev-color-primary-light-8);
+  border-color: var(--prev-color-primary-light-6);
+}
+::v-deep .el-tag .el-tag__close {
+  color: var(--prev-color-primary);
+  &:hover {
+    color: var(--prev-color-text-white);
+    background-color: var(--prev-color-primary);
+  }
+}
