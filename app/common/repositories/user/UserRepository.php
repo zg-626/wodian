@@ -1286,38 +1286,6 @@ class UserRepository extends BaseRepository
         return $form->setTitle('修改推荐人');
     }
 
-    public function changeSuperiorForm($id)
-    {
-        $user = $this->dao->get($id);
-        $form = Elm::createForm(Route::buildUrl('systemUserSuperiorChange', compact('id'))->build());
-        $form->setRule(
-            [
-                [
-                    'type' => 'span',
-                    'title' => '用户昵称：',
-                    'native' => false,
-                    'children' => [$user->nickname]
-                ],
-                [
-                    'type' => 'span',
-                    'title' => '上级推荐人 Id：',
-                    'native' => false,
-                    'children' => [$user->spread ? (string)$user->spread->uid : '无']
-                ],
-                [
-                    'type' => 'span',
-                    'title' => '上级推荐人昵称：',
-                    'native' => false,
-                    'children' => [$user->spread ? (string)$user->spread->nickname : '无']
-                ],
-                Elm::frameImage('spid', '上级推荐人：', '/' . config('admin.admin_prefix') . '/setting/referrerList?field=spid')->prop('srcKey', 'src')->value($user->spread ? [
-                    'src' => $user->spread->avatar,
-                    'id' => $user->spread->uid,
-                ] : [])->icon('el-icon-camera')->modal(['modal' => false])->width('1000px')->height('600px'),
-            ]);
-        return $form->setTitle('修改推荐人');
-    }
-
     public function changeSpread($uid, $spread_id, $admin = 0)
     {
         $spreadLogRepository = app()->make(UserSpreadLogRepository::class);
@@ -1341,32 +1309,6 @@ class UserRepository extends BaseRepository
             if ($old) {
                 $this->dao->decSpreadCount($old);
             }
-            $user->save();
-        });
-    }
-    public function changeSuperior($uid, $superior_uid, $admin = 0)
-    {
-        $spreadLogRepository = app()->make(UserSpreadLogRepository::class);
-        $user = $this->dao->get($uid);
-        if ($user->superior_uid == $superior_uid)
-            return;
-        $config = systemConfig(['extension_limit', 'extension_limit_day']);
-        Db::transaction(function () use ($config, $user, $spreadLogRepository, $superior_uid, $admin) {
-            $old = $user->superior_uid ?: 0;
-            //$spreadLogRepository->add($user->uid, $superior_uid, $old, $admin);
-            /*$user->spread_time = $superior_uid ? date('Y-m-d H:i:s') : null;
-            if ($superior_uid && $config['extension_limit'] && $config['extension_limit_day']) {
-                $user->spread_limit = date('Y-m-d H:i:s', strtotime('+ ' . $config['extension_limit_day'] . ' day'));
-            } else {
-                $user->spread_limit = null;
-            }*/
-            $user->superior_uid = $superior_uid;
-            /*if ($superior_uid) {
-                $this->dao->incSpreadCount($superior_uid);
-            }
-            if ($old) {
-                $this->dao->decSpreadCount($old);
-            }*/
             $user->save();
         });
     }

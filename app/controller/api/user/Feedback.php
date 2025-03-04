@@ -30,7 +30,7 @@ class Feedback extends BaseController
 
     /**
      * @param FeedbackValidate $validate
-     * @param FeedbackRepository $repository
+     * @param FeedbackRepository `$repository`
      * @return mixed
      * @author xaboy
      * @day 2020/5/28

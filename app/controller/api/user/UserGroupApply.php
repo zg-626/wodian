@@ -97,6 +97,8 @@ class UserGroupApply extends BaseController
     {
         if (!$this->repository->fieldExists($id, $this->request->uid()))
             return app('json')->fail('信息不存在');
+        if ($this->repository->checkDefault($id))
+            return app('json')->fail('默认地址不能删除');
         $this->repository->delete($id);
         return app('json')->success('删除成功');
     }
