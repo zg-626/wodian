@@ -275,9 +275,9 @@ class MerchantRepository extends BaseRepository
      */
     public function getList($where, $page, $limit, $userInfo)
     {
-        $field = 'care_count,is_trader,type_id,mer_id,mer_banner,mini_banner,mer_name, mark,mer_avatar,product_score,service_score,postage_score,sales,status,is_best,create_time,long,lat,is_margin';
+        $field = 'care_count,mer_state,mer_address,integral,is_trader,type_id,mer_id,mer_banner,mini_banner,mer_name, mark,mer_avatar,product_score,service_score,postage_score,sales,status,is_best,create_time,long,lat,is_margin';
         $where['status'] = 1;
-        $where['mer_state'] = 1;
+        //$where['mer_state'] = 1;
         $where['is_del'] = 0;
         if (isset($where['location'])) {
             $data = @explode(',', (string)$where['location']);
@@ -311,6 +311,8 @@ class MerchantRepository extends BaseRepository
                     }
                     $item['distance'] = $distance;
                 }
+                // 评分平均数
+                $item['score'] = round(($item['product_score'] + $item['service_score'] + $item['postage_score']) / 3, 1);
                 $item['recommend'] = isset($where['delivery_way']) ? $item['CityRecommend'] : $item['AllRecommend'];
                 return  $item;
             });
