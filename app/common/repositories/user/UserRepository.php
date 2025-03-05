@@ -1286,6 +1286,38 @@ class UserRepository extends BaseRepository
         return $form->setTitle('修改推荐人');
     }
 
+    public function changeSuperiorForm($id)
+    {
+        $user = $this->dao->get($id);
+        $form = Elm::createForm(Route::buildUrl('systemUserSuperiorChange', compact('id'))->build());
+        $form->setRule(
+            [
+                [
+                    'type' => 'span',
+                    'title' => '用户昵称：',
+                    'native' => false,
+                    'children' => [$user->nickname]
+                ],
+                [
+                    'type' => 'span',
+                    'title' => '上级 Id：',
+                    'native' => false,
+                    'children' => [$user->superior ? (string)$user->superior->uid : '无']
+                ],
+                [
+                    'type' => 'span',
+                    'title' => '上级昵称：',
+                    'native' => false,
+                    'children' => [$user->superior ? (string)$user->superior->nickname : '无']
+                ],
+                Elm::frameImage('spid', '上级：', '/' . config('admin.admin_prefix') . '/setting/referrerList?field=spid')->prop('srcKey', 'src')->value($user->superior ? [
+                    'src' => $user->superior->avatar,
+                    'id' => $user->superior->uid,
+                ] : [])->icon('el-icon-camera')->modal(['modal' => false])->width('1000px')->height('600px'),
+            ]);
+        return $form->setTitle('修改上级');
+    }
+
     public function changeSpread($uid, $spread_id, $admin = 0)
     {
         $spreadLogRepository = app()->make(UserSpreadLogRepository::class);
@@ -1308,6 +1340,29 @@ class UserRepository extends BaseRepository
             }
             if ($old) {
                 $this->dao->decSpreadCount($old);
+            }
+            $user->save();
+        });
+    }
+
+    public function changeSuperior($uid, $superior_id, $admin = 0)
+    {
+        $superiorLogRepository = app()->make(UserSuperiorLogRepository::class);
+        $user = $this->dao->get($uid);
+        if ($user->superior_uid == $superior_id)
+            return;
+        $config = systemConfig(['extension_limit', 'extension_limit_day']);
+        Db::transaction(function () use ($config, $user, $superiorLogRepository, $superior_id, $admin) {
+            $old = $user->superior_uid ?: 0;
+            $superiorLogRepository->add($user->uid, $superior_id, $old, $admin);
+            $user->superior_time = $superior_id ? date('Y-m-d H:i:s') : null;
+
+            $user->superior_uid = $superior_id;
+            if ($superior_id) {
+                $this->dao->incSuperiorCount($superior_id);
+            }
+            if ($old) {
+                $this->dao->decSuperiorCount($old);
             }
             $user->save();
         });

@@ -388,4 +388,18 @@ class UserDao extends BaseDao
             'spread_count' => Db::raw('spread_count - 1')
         ]);
     }
+
+    public function incSuperiorCount($uid)
+    {
+        User::getDB()->where('uid', $uid)->update([
+            'superior_count' => Db::raw('superior_count + 1')
+        ]);
+    }
+
+    public function decSuperiorCount($uid)
+    {
+        User::getDB()->where('uid', $uid)->where('superior_count','>',0)->update([
+            'superior_count' => Db::raw('superior_count - 1')
+        ]);
+    }
 }

@@ -192,6 +192,11 @@ class User extends BaseModel
         return $this->hasOne(User::class, 'uid', 'spread_uid');
     }
 
+    public function superior()
+    {
+        return $this->hasOne(User::class, 'uid', 'superior_uid');
+    }
+
     public function brokerage()
     {
         return $this->hasOne(UserBrokerage::class, 'brokerage_level', 'brokerage_level')->where('type', 0);

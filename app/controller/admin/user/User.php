@@ -575,7 +575,7 @@ class User extends BaseController
     {
         if (!$this->repository->exists((int)$id))
             return app('json')->fail('数据不存在');
-        return app('json')->success(formToData($this->repository->changeSpreadForm($id)));
+        return app('json')->success(formToData($this->repository->changeSuperiorForm($id)));
     }
 
     public function spread($id)
