@@ -1,5 +1,7 @@
 /.idea
 
 *.log
-
+.user.ini
+.env
+.example.env
 runtime/*
