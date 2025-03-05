@@ -134,14 +134,14 @@
     </div>
     <el-card class="mt14">
         <div>
-            <el-tabs v-model="user_type" @tab-click="changeSearch(1)" class="mb5">
+            <!-- <el-tabs v-model="user_type" @tab-click="changeSearch(1)" class="mb5">
                 <el-tab-pane label="全部用户" name="" />
                 <el-tab-pane label="微信用户" name="wechat" />
                 <el-tab-pane label="小程序用户" name="routine" />
                 <el-tab-pane label="H5用户" name="h5" />
                 <el-tab-pane label="APP" name="app" />
                 <el-tab-pane label="PC" name="pc" />
-            </el-tabs>
+            </el-tabs> -->
             <div class="mb20">
                 <el-button type="primary" size="small" @click="createUser">创建用户</el-button>             
                 <el-button v-show="user_type === 'wechat'" size="small" @click="sendNews">发送图文消息</el-button>
@@ -218,11 +218,11 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column prop="is_svip" label="付费会员" min-width="120">
+            <!-- <el-table-column prop="is_svip" label="付费会员" min-width="120">
                     <template slot-scope="{row}">
                     <span>{{row.is_svip > 0 ? "是" : "否"}}</span>
                 </template>
-            </el-table-column>
+            </el-table-column> -->
             <el-table-column prop="phone" label="手机号" min-width="120" />
             <el-table-column label="等级" min-width="100">
                 <template slot-scope="{row}">
@@ -241,14 +241,14 @@
             </el-table-column>
             <el-table-column label="上级" min-width="140">
                 <template slot-scope="{row}">
-                    <span>{{ row.spread ? row.spread.nickname + ' / ' + row.spread.uid : '-'  }}</span>
+                    <span>{{ row.superior ? row.superior.nickname + ' / ' + row.superior.uid : '-'  }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="用户类型" min-width="100">
+            <!-- <el-table-column label="用户类型" min-width="100">
                 <template slot-scope="{row}">
                 <span>{{ row.user_type === 'routine' ? '小程序' : row.user_type === 'wechat' ? '公众号' : row.user_type === 'app' || row.user_type === 'App' ? 'App' : row.user_type === 'pc' ? 'PC' : 'H5' }}</span>
                 </template>
-            </el-table-column>
+            </el-table-column> -->
             <el-table-column prop="now_money" label="余额" sortable min-width="100" :sort-method="(a,b)=>{return a.now_money - b.now_money}"/>
             <el-table-column prop="integral" label="当前可用积分" min-width="100" />
             <el-table-column label="操作" min-width="150" fixed="right">

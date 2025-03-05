@@ -187,6 +187,9 @@ class UserRepository extends BaseRepository
             'spread' => function ($query) {
                 $query->field('uid,nickname,spread_uid');
             },
+            'superior' => function ($query) {
+                $query->field('uid,nickname,superior_uid');
+            },
             'member' => function ($query) {
                 $query->field('user_brokerage_id,brokerage_level,brokerage_name,brokerage_icon');
             },
