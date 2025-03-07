@@ -531,6 +531,48 @@ class MerchantRepository extends BaseRepository
         }
     }
 
+    public function addMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
+    {
+        if ($integral <= 0) return;
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        app()->make(UserBillRepository::class)->incBill($merId, 'mer_integral', $orderType, [
+            'link_id' => $orderId,
+            'mer_id' => $merId,
+            'status' => 1,
+            'title' => '商户增加积分',
+            'number' => $integral,
+            'mark' => '用户成功消费,增加积分' . $integral,
+
+            'balance' => $merchant->integral+$integral
+        ]);
+
+        $this->dao->addIntegral($merId, $integral);
+
+    }
+
+    public function subMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
+    {
+        if ($integral <= 0) return;
+        $make = app()->make(UserBillRepository::class);
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        //$bill = $make->search(['category' => 'mer_lock_money', 'type' => $orderType, 'mer_id' => $merId, 'link_id' => ($orderType === 'order' ? 1 : 2) . $orderId, 'status' => 0])->find();
+
+        $make->decBill($merId, 'mer_refund_integral', $orderType, [
+            'link_id' => $orderId,
+            'mer_id' => $merId,
+            'status' => 1,
+            'title' => '扣除商户赠送积分',
+            'number' => $integral,
+            'mark' => '订单退款扣除积分' . intval($integral),
+            'balance' => $merchant->integral-$integral
+        ]);
+        $this->dao->subIntegral($merId, $integral);
+
+
+    }
+
     public function checkCrmebNum(int $merId, string $type)
     {
         $merchant = $this->dao->get($merId);

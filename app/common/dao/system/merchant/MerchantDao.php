@@ -253,6 +253,42 @@ class MerchantDao extends BaseDao
     }
 
     /**
+     * TODO 增加商户积分
+     * @param int $merId
+     * @param float $num
+     * @author esc
+     * @day 3/06/2025
+     */
+    public function addIntegral(int $merId, float $num)
+    {
+        $field = 'integral';
+        $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
+        if ($merchant) {
+            $mer_integral = bcadd($merchant[$field], $num, 2);
+            $merchant[$field] = $mer_integral;
+            $merchant->save();
+        }
+    }
+
+    /**
+     * TODO 减少商户积分
+     * @param int $merId
+     * @param float $num
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function subIntegral(int $merId, float $num)
+    {
+        $field = 'integral';
+        $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
+        if ($merchant) {
+            $integral = bcsub($merchant[$field], $num, 2);
+            $merchant[$field] = $integral;
+            $merchant->save();
+        }
+    }
+
+    /**
      * TODO 减少商户余额
      * @param int $merId
      * @param float $num

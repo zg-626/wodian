@@ -1189,7 +1189,7 @@ class StoreRefundOrderRepository extends BaseRepository
         if ($refundOrder->refund_price > 0 && $refundOrder->order->pay_price > 0) {
             $userBillRepository = app()->make(UserBillRepository::class);
             $bill = $userBillRepository->getWhere(['category' => 'integral', 'type' => 'lock', 'link_id' => $refundOrder->order->group_order_id]);
-            if ($bill && $bill->status != 1) {
+            if ($bill && $bill->status != 0) {
 
                 if ($refundOrder->order->status == -1) {
                     $number = bcsub($bill->number, $userBillRepository->refundIntegral($refundOrder->order->group_order_id, $bill->uid), 0);
@@ -1207,6 +1207,39 @@ class StoreRefundOrderRepository extends BaseRepository
                     'mark' => '订单退款扣除赠送积分' . intval($number),
                     'balance' => $refundOrder->user->integral
                 ]);
+            }
+        }
+    }
+
+    public function refundMerGiveIntegral(StoreRefundOrder $refundOrder)
+    {
+        if ($refundOrder->refund_price > 0 && $refundOrder->order->pay_price > 0) {
+            $userBillRepository = app()->make(UserBillRepository::class);
+            $bill = $userBillRepository->getWhere(['category' => 'mer_integral', 'type' => 'lock', 'link_id' => $refundOrder->order->group_order_id]);
+            if ($bill && $bill->status != 1) {
+
+                /*if ($refundOrder->order->status == -1) {
+                    $number = bcsub($bill->number, $userBillRepository->refundIntegral($refundOrder->order->group_order_id, $bill->uid), 0);
+                } else {
+                    $number = ($refundOrder['refund_price'] / $refundOrder->order->pay_price) * $refundOrder->order->give_integral;
+//                    $number = bcmul(bcdiv($refundOrder['refund_price'], $refundOrder->order->pay_price, 3), $refundOrder->order->give_integral, 0);
+                }*/
+                //if ($number <= 0) return;
+
+                //$merchant = $this->dao->search(['mer_id' => $bill->uid])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+
+                // 当前表uid=mer_id
+                /*$userBillRepository->decBill($bill->uid, 'mer_integral', 'refund_lock', [
+                    'link_id' => $refundOrder->order->group_order_id,
+                    'status' => 1,
+                    'title' => '扣除赠送积分',
+                    'number' => $number,
+                    'mark' => '订单退款扣除积分' . intval($number),
+                    'balance' => $merchant->integral-$number
+                ]);*/
+                app()->make(MerchantRepository::class)->subMerIntegral($refundOrder->mer_id, 'mer_integral', $refundOrder->order->order_id, $bill->number);
+
             }
         }
     }
@@ -1349,6 +1382,8 @@ class StoreRefundOrderRepository extends BaseRepository
 
         //退还赠送积分
         $this->refundGiveIntegral($refundOrder);
+        // 退还商家赠送积分
+        $this->refundMerGiveIntegral($refundOrder);
 
         app()->make(FinancialRecordRepository::class)->dec([
             'order_id' => $refundOrder->refund_order_id,

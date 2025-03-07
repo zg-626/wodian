@@ -12,6 +12,7 @@
 namespace app\common\repositories\store\order;
 
 use app\common\dao\store\order\StoreOrderDao;
+use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\user\User;
@@ -384,6 +385,7 @@ class StoreOrderRepository extends BaseRepository
                         $_payPrice = bcadd($_payPrice, $order->platform_coupon_price, 2);
                     }
                     if (!$is_combine) {
+                        // 商户增加余额
                         app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $_payPrice);
                     }
                 }
@@ -419,7 +421,12 @@ class StoreOrderRepository extends BaseRepository
                 'pay_price' => Db::raw('pay_price+' . $groupOrder->pay_price),
                 'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
             ]);
+            // 赠送积分
             $this->giveIntegral($groupOrder);
+            // 赠送商户积分
+            //$this->giveMerIntegral($order->mer_id,$groupOrder);
+            app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $groupOrder->give_integral);
+
             if (count($profitsharing)) {
                 $storeOrderProfitsharingRepository->insertAll($profitsharing);
             }
@@ -659,6 +666,17 @@ class StoreOrderRepository extends BaseRepository
                 'mark' => '成功消费' . floatval($groupOrder['pay_price']) . '元,赠送积分' . floatval($groupOrder->give_integral),
                 'balance' => $groupOrder->user->integral
             ]);
+        }
+    }
+
+    public function giveMerIntegral($mer_id, $groupOrder)
+    {
+        if ($groupOrder->give_integral > 0) {
+            /**
+             * @var MerchantDao $merchant
+             */
+            $merchant = app()->make(MerchantDao::class);
+            $merchant->addIntegral($mer_id, $groupOrder->give_integral);
         }
     }
 
