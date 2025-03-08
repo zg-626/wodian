@@ -75,6 +75,9 @@ Route::group('api/', function () {
             Route::get('verify_code/:id', '/verifyCode');
             Route::post('receipt/:id', '/createReceipt');
             Route::get('delivery/:id', '/getOrderDelivery');
+            //Route::post('check', 'PointsOrder/beforCheck');
+            Route::post('/offline/create', 'Offline/createOrder');
+            Route::get('/offline/list', 'Offline/getList');
         })->prefix('api.store.order.StoreOrder');
 
         // 预售
@@ -530,6 +533,7 @@ Route::group('api/', function () {
             Route::get('/lst/:cid', 'Article/lst');
             Route::get('/list', 'Article/list');
             Route::get('detail/:id', 'Article/detail');
+            Route::get('test', 'Article/test');
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 

@@ -12,6 +12,7 @@
 
 namespace app\controller\api\article;
 
+use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\services\SwooleTaskService;
 use think\App;
@@ -69,5 +70,15 @@ class Article extends BaseController
     {
         $where = ['status' => 1];
         return app('json')->success($this->repository->search(0,$where, 1, 9));
+    }
+
+    // 测试接口
+    public function test()
+    {
+        $userBillRepository = app()->make(UserBillRepository::class);
+        $bill = $userBillRepository->getWhere(['category' => 'mer_integral', 'type' => 'lock', 'link_id' => 56]);
+        echo "<pre>";
+        print_r($bill);
+        return app('json')->success('测试成功');
     }
 }
