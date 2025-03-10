@@ -346,6 +346,8 @@ class MerchantRepository extends BaseRepository
         ]);
         $merchant->append(['type_name', 'isset_certificate', 'services_type']);
         $merchant['care'] = false;
+        // 评分平均数
+        $merchant['score'] = round(($merchant['product_score'] + $merchant['service_score'] + $merchant['postage_score']) / 3,1);
         if ($userInfo)
             $merchant['care'] = $this->getCareByUser($id, $userInfo->uid);
         return $merchant;
