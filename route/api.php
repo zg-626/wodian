@@ -537,6 +537,12 @@ Route::group('api/', function () {
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 
+        // 分红
+        Route::group('dividend', function () {
+            Route::get('/dividend', 'Dividend/dividend');
+            Route::get('test', 'Dividend/test');
+        })->prefix('api.dividend.');
+
         Route::post('upload/video', 'merchant.Common/uploadVideo');
         Route::get('excel/download/:id', 'merchant.store.order.Order/download');
         //申请商户
