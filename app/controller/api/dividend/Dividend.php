@@ -10,7 +10,7 @@
 // | Author: CRMEB Team <admin@crmeb.com>
 // +----------------------------------------------------------------------
 
-namespace app\controller\api\Dividend;
+namespace app\controller\api\dividend;
 
 use app\common\repositories\article\ArticleRepository as repository;
 use app\common\repositories\user\BonusService;

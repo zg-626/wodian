@@ -18,6 +18,7 @@ use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\system\notice\SystemNoticeConfigRepository;
+use app\common\repositories\user\UserInfoRepository;
 use app\common\repositories\user\UserOrderRepository;
 use app\common\repositories\user\UserRechargeRepository;
 use app\common\repositories\user\UserRepository;
@@ -25,6 +26,7 @@ use app\common\repositories\user\UserSignRepository;
 use app\common\repositories\wechat\RoutineQrcodeRepository;
 use app\common\repositories\wechat\WechatUserRepository;
 use app\validate\api\ChangePasswordValidate;
+use app\validate\api\FriendsValidate;
 use app\validate\api\UserAuthValidate;
 use crmeb\basic\BaseController;
 use crmeb\services\MiniProgramService;
@@ -355,6 +357,32 @@ class Auth extends BaseController
         $user->pwd = $repository->encodePassword($data['pwd']);
         $user->save();
         return app('json')->success('修改成功');
+    }
+
+    /**
+     * @param FriendsValidate $validate
+     * @param UserRepository $repository
+     * @return mixed
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+
+    public function findFriends(FriendsValidate $validate, UserRepository $repository)
+    {
+        $data = $this->request->params(['phone']);
+        $validate->check($data);
+        $user = $repository->accountByUser($data['phone']);
+        if (!$user) return app('json')->fail('用户不存在');
+        $user=$user->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
+
+        $arr=[
+            //'avatar' => $user['avatar'],
+            'nickname' => $user['nickname'],
+            'phone' => $user['phone'],
+            'uid' => $user['uid']
+        ];
+        return app('json')->success($arr);
     }
 
     public function spread(UserRepository $userRepository)

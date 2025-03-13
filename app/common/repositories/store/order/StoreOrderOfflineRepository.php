@@ -107,6 +107,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'mer_id'     => $mer_id,
             'gieve_integral' => $total_give_integral,
             'other'     => 0,
+            'to_uid'=>$params['to_uid']?:0
         ];
         $body = [
             'order_sn' => $order_sn,

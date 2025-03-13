@@ -669,6 +669,8 @@ Route::group('api/', function () {
     Route::post('auth/apple', 'api.Auth/appleAuth');
     //修改密码
     Route::post('user/change_pwd', 'api.Auth/changePassword');
+    // 查询好友
+    Route::get('user/find_friends', 'api.Auth/findFriends');
     //验证码
     Route::post('auth/verify', 'api.Auth/verify');
     //微信配置
