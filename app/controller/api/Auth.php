@@ -377,7 +377,7 @@ class Auth extends BaseController
         $user=$user->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
 
         $arr=[
-            //'avatar' => $user['avatar'],
+            'avatar' => $user['avatar'],
             'nickname' => $user['nickname'],
             'phone' => $user['phone'],
             'uid' => $user['uid']
