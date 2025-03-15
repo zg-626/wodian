@@ -182,17 +182,31 @@ class DataScreenRepository extends BaseRepository
                 // 区、县代理商
                 case 22:
                     // 查询所属区域id
-                    $province_id = $user['province_id'];
-                    $city_id = $user['city_id'];
                     $district_id = $user['district_id'];
                     // 查询当前区域的商户
                     $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,$city_id,$district_id);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 23:
+                    // 查询所属区域id
+                    $city_id = $user['city_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 24:
+                    // 查询所属区域id
+                    $province_id = $user['province_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
                     $mewhere=['mer_id','in',$merchantIds];
                     break;
             }
-            //$mewhere=['mer_id','in',$merchantIds];
-
 
         }
 

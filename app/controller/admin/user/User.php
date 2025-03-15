@@ -222,7 +222,7 @@ class User extends BaseController
      */
     public function update($id, UserValidate $validate, UserLabelRepository $labelRepository, UserGroupRepository $groupRepository)
     {
-        $data = $this->request->params(['phone', 'card_id', 'mark', 'group_id', ['label_id', []], ['is_promoter', 0], ['status', 0], ['member_level', ''], ['extend_info', []]]);
+        $data = $this->request->params(['phone', 'card_id','province_id','city_id','district_id','mark', 'group_id', ['label_id', []], ['is_promoter', 0], ['status', 0], ['member_level', ''], ['extend_info', []]]);
         $extend_info = $data['extend_info'];
         unset($data['extend_info']);
         $validate->check($data);
@@ -232,7 +232,7 @@ class User extends BaseController
             return app('json')->fail('分组不存在');
         // 特定分组支持区域编辑
         if ($data['group_id'] != 4) {
-            $data['province'] = $data['city'] = $data['area'] = '';
+            $data['province_id'] = $data['city_id'] = $data['district_id'] = '';
         }
         $label_id = (array)$data['label_id'];
         foreach ($label_id as $k => $value) {

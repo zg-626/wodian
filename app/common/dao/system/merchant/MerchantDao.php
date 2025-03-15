@@ -353,10 +353,17 @@ class MerchantDao extends BaseDao
         return Merchant::getDB()->whereIn('salesman_id', $salesman_id)->column('mer_id');
     }
 
-    public function cityIdByMerchants($province_id, $city_id, $district_id)
+    public function cityIdByMerchants($city_id, $number)
     {
-        return Merchant::getDB()->where('province_id', $province_id)->whereOr('city_id', $city_id)
-            ->whereOr('district_id', $district_id)->column('mer_id');
+        switch ($number) {
+            case 22:
+                return Merchant::getDB()->where('district_id', $city_id)->column('mer_id');
+            case 23:
+                return Merchant::getDB()->whereOr('city_id', $city_id)->column('mer_id');
+            case 24:
+                return Merchant::getDB()->whereOr('province_id', $city_id)->column('mer_id');
+        }
+
     }
 
 }
