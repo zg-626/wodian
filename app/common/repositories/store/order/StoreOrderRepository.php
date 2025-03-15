@@ -740,6 +740,10 @@ class StoreOrderRepository extends BaseRepository
             //                'number' => $order->extension_two,
             //            ], $order->mer_id);
         }
+        // TODO 添加推广佣金
+        /** @var MerchantRepository $merchantRepository */
+        $merchantRepository=app()->make(MerchantRepository::class);
+        //$merchantRepository->addCommission($order->mer_id,$order,$user);
     }
 
     /**

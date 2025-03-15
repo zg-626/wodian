@@ -37,6 +37,7 @@ class AutoUnLockBrokerageListen extends TimerService implements ListenerInterfac
                     if ($bill->number > 0 && $bill->user) {
                         $brokerage = bcsub($bill->number, $userBill->refundBrokerage($bill->link_id, $bill->uid), 2);
                         if ($brokerage > 0) {
+                            //$bill->user->integral = bcadd($bill->user->brokerage_price, $brokerage, 2);// 佣金改积分
                             $bill->user->brokerage_price = bcadd($bill->user->brokerage_price, $brokerage, 2);
                             $bill->user->save();
                         }

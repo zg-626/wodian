@@ -492,7 +492,9 @@ class Common extends BaseController
     public function data_screen($key)
     {
         $param['pid'] = $this->request->param('pid', 0);
-        $data = app()->make(DataScreenRepository::class)->dataScreen($key, $param);
+        /** @var DataScreenRepository $data */
+        $data = app()->make(DataScreenRepository::class);
+        $data = $data->dataScreen($key, $param);
         return app('json')->success($data);
     }
 }

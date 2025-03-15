@@ -342,4 +342,21 @@ class MerchantDao extends BaseDao
         ]);
     }
 
+
+    public function salesmanIdByMerchant($salesman_id)
+    {
+        return Merchant::getDB()->where('salesman_id', $salesman_id)->column('mer_id');
+    }
+
+    public function salesmanIdByMerchants($salesman_id)
+    {
+        return Merchant::getDB()->whereIn('salesman_id', $salesman_id)->column('mer_id');
+    }
+
+    public function cityIdByMerchants($province_id, $city_id, $district_id)
+    {
+        return Merchant::getDB()->where('province_id', $province_id)->whereOr('city_id', $city_id)
+            ->whereOr('district_id', $district_id)->column('mer_id');
+    }
+
 }

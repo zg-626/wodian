@@ -18,17 +18,17 @@ use app\common\middleware\LogMiddleware;
 Route::group(function () {
 
     //商户分类
-    Route::group('system/merchant', function () {
+    Route::group('system/merchants', function () {
         Route::get('category/lst', '/lst')->name('systemMerchantCategoryLst')->option([
             '_alias' => '商户分类列表',
-            ]);
+        ]);
         Route::get('category_lst', '/lst')->option([
             '_alias' => '商户分类列表',
             '_auth'  => false,
         ]);
         Route::post('category', '/create')->name('systemMerchantCategoryCreate')->option([
             '_alias' => '商户分类添加',
-            ]);
+        ]);
         Route::get('category/form', '/createForm')->name('systemMerchantCategoryCreateForm')->option([
             '_alias' => '商户分类添加表单',
             '_auth' => false,
@@ -36,10 +36,10 @@ Route::group(function () {
         ]);
         Route::delete('category/:id', '/delete')->name('systemMerchantCategoryDelete')->option([
             '_alias' => '商户分类删除',
-            ]);
+        ]);
         Route::post('category/:id', '/update')->name('systemMerchantCategoryUpdate')->option([
             '_alias' => '商户分类编辑',
-            ]);
+        ]);
         Route::get('category/form/:id', '/updateForm')->name('systemMerchantCategoryUpdateForm')->option([
             '_alias' => '商户分类编辑表单',
             '_auth' => false,
@@ -86,19 +86,23 @@ Route::group(function () {
     ]);
 
     //商户管理
-    Route::group('system/merchant', function () {
+    Route::group('system/merchants', function () {
         Route::get('create/form', '.Merchant/createForm')->name('systemMerchantCreateForm')->option([
             '_alias' => '商户列表',
-            ]);
+        ]);
+        Route::get('city/lst/:pid', '.Merchant/lstV2')->option([
+            '_alias' => '列表',
+            //'_auth' => false,
+        ]);
         Route::get('count', '.Merchant/count')->name('systemMerchantCount')->option([
             '_alias' => '商户列表统计',
         ]);
         Route::get('lst', '.Merchant/lst')->name('systemMerchantLst')->option([
             '_alias' => '商户列表',
-            ]);
+        ]);
         Route::post('create', '.Merchant/create')->name('systemMerchantCreate')->option([
             '_alias' => '商户添加',
-            ]);
+        ]);
         Route::get('update/form/:id', '.Merchant/updateForm')->name('systemMerchantUpdateForm')->option([
             '_alias' => '商户编辑表单',
             '_auth' => false,
@@ -106,13 +110,13 @@ Route::group(function () {
         ]);
         Route::post('update/:id', '.Merchant/update')->name('systemMerchantUpdate')->option([
             '_alias' => '商户编辑',
-            ]);
+        ]);
         Route::post('status/:id', '.Merchant/switchStatus')->name('systemMerchantStatus')->option([
             '_alias' => '商户修改推荐',
-            ]);
+        ]);
         Route::post('close/:id', '.Merchant/switchClose')->name('systemMerchantClose')->option([
             '_alias' => '商户开启/关闭',
-            ]);
+        ]);
         Route::get('delete/:id/form', '.Merchant/deleteForm')->name('systemMerchantDeleteForm')->option([
             '_alias' => '商户删除',
             '_auth' => false,
@@ -120,10 +124,10 @@ Route::group(function () {
         ]);
         Route::post('delete/:id', '.Merchant/delete')->name('systemMerchantDelete')->option([
             '_alias' => '商户删除',
-            ]);
+        ]);
         Route::post('password/:id', '.MerchantAdmin/password')->name('systemMerchantAdminPassword')->option([
             '_alias' => '商户修改密码',
-            ]);
+        ]);
         Route::get('password/form/:id', '.MerchantAdmin/passwordForm')->name('systemMerchantAdminPasswordForm')->option([
             '_alias' => '商户修改密码表单',
             '_auth' => false,
@@ -131,7 +135,7 @@ Route::group(function () {
         ]);
         Route::post('login/:id', '.Merchant/login')->name('systemMerchantLogin')->option([
             '_alias' => '商户登录',
-            ]);
+        ]);
         Route::get('changecopy/:id/form', '.Merchant/changeCopyNumForm')->name('systemMerchantChangeCopyForm')->option([
             '_alias' => '修改采集商品次数表单',
             '_auth' => false,
@@ -139,7 +143,7 @@ Route::group(function () {
         ]);
         Route::post('changecopy/:id', '.Merchant/changeCopyNum')->name('systemMerchantChangeCopy')->option([
             '_alias' => '修改采集商品次数',
-            ]);
+        ]);
         Route::get('detail/:id', '.Merchant/detail')->name('systemMerchantDetail')->option([
             '_alias' => '详情',
         ]);
@@ -165,7 +169,7 @@ Route::group(function () {
         ]
     ]);
 
-    Route::group('merchant/type', function () {
+    Route::group('merchants/type', function () {
         Route::get('lst', '/lst')->name('systemMerchantTypeLst')->option([
             '_alias' => '列表',
         ]);
@@ -208,28 +212,28 @@ Route::group(function () {
     Route::group('margin', function () {
         //缴纳记录
         Route::get('lst', 'merchant.MerchantMargin/lst')->name('systemMerchantMarginLst')->option([
-                '_alias' => '缴纳记录',
-            ]);
+            '_alias' => '缴纳记录',
+        ]);
         //扣费记录
         Route::get('list/:id', 'merchant.MerchantMargin/getMarginLst')->name('systemMarginList')->option([
-                '_alias' => '扣费记录',
-            ]);
+            '_alias' => '扣费记录',
+        ]);
         //扣除保证金
         Route::get('set/:id/form', 'merchant.MerchantMargin/setMarginForm')->name('systemMarginSetForm')->option([
             '_alias' => '扣除保证金表单',
             '_auth' => false,
             '_form' => 'systemMarginSet',
-            ]);
+        ]);
         Route::post('set', 'merchant.MerchantMargin/setMargin')->name('systemMarginSet')->option([
-                '_alias' => '扣除保证金',
-            ]);
+            '_alias' => '扣除保证金',
+        ]);
         //退款申请
         Route::get('refund/lst', 'financial.Financial/getMarginLst')->name('systemMarginRefundList')->option([
-                '_alias' => '退款申请列表',
-            ]);
+            '_alias' => '退款申请列表',
+        ]);
         Route::get('refund/show/:id', 'financial.Financial/refundShow')->name('systemMarginRefundShow')->option([
-                '_alias' => '退款申请详情',
-            ]);
+            '_alias' => '退款申请详情',
+        ]);
         //审核
         Route::get('refund/status/:id/form', 'financial.Financial/statusForm')->name('systemMarginRefundSwitchStatusForm')->option([
             '_alias' => '审核表单',
@@ -237,8 +241,8 @@ Route::group(function () {
             '_form' => 'systemMarginRefundSwitchStatus',
         ]);
         Route::post('refund/status/:id', 'financial.Financial/switchStatus')->name('systemMarginRefundSwitchStatus')->append(['type' => 1])->option([
-                '_alias' => '审核',
-            ]);
+            '_alias' => '审核',
+        ]);
         //备注
         Route::get('refund/mark/:id/form', 'financial.Financial/markMarginForm')->name('systemMarginRefundMarkForm')->option([
             '_alias' => '备注表单',
@@ -247,7 +251,7 @@ Route::group(function () {
         ]);
         Route::post('refund/mark/:id', 'financial.Financial/mark')->name('systemMarginRefundMark')->option([
             '_alias' => '备注',
-            ]);
+        ]);
         Route::get('make_up', 'merchant.Merchant/makeUpMarginLst')->name('systemMarginMakeUpMarginLst')->option([
             '_alias' => '待缴列表',
         ]);

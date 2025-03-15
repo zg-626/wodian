@@ -133,6 +133,28 @@ class CityAreaRepository extends BaseRepository
     }
 
     /**
+     * @return array
+     * @author xaboy
+     * @day 2020/7/22
+     */
+    public function getAddressChildList()
+    {
+        $res = $this->dao->options();
+        /*echo "<pre>";
+        print_r($res);exit();*/
+        //$res = formatCascaderData($res, 'name',4,'parent_id');
+        $res = $this->tree($res);
+        //$res = formatCategory($res, 'name','parent_id');
+        /*foreach ($res as $k => $v) {
+            if (!isset($v['children']) || !count($v['children']))
+                unset($res[$k]);
+        }*/
+        echo "<pre>";
+        print_r($res);exit();
+        return array_values($res);
+    }
+
+    /**
      *  循环整理地址信息
      * @param $data
      * @param $pid

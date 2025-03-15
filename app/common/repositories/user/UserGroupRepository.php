@@ -14,8 +14,11 @@
 namespace app\common\repositories\user;
 
 
+use app\common\dao\store\StoreCategoryDao;
 use app\common\dao\user\UserGroupDao;
 use app\common\repositories\BaseRepository;
+use app\common\repositories\store\CityAreaRepository;
+use app\common\repositories\store\StoreBrandCategoryRepository;
 use FormBuilder\Exception\FormBuilderException;
 use FormBuilder\Factory\Elm;
 use FormBuilder\Form;
@@ -78,9 +81,18 @@ class UserGroupRepository extends BaseRepository
     {
         $isCreate = is_null($id);
         $action = Route::buildUrl($isCreate ? 'systemUserGroupCreate' : 'systemUserGroupUpdate', $isCreate ? [] : compact('id'))->build();
-        return Elm::createForm($action, [
-            Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required()
-        ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
+        if($id==1){
+            return
+                Elm::createForm($action, [
+                    Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
+                    //Elm::input('extension', '佣金比例：'),
+                ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
+        }
+        return
+            Elm::createForm($action, [
+            Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
+            Elm::input('extension', '佣金比例：'),
+            ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
     }
 
     /**

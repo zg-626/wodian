@@ -14,6 +14,7 @@
 namespace app\controller\admin\system\merchant;
 
 
+use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\product\ProductCopyRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
 use app\common\repositories\system\merchant\MerchantTypeRepository;
@@ -164,6 +165,10 @@ class Merchant extends BaseController
 
         $this->repository->update($id, $data);
         return app('json')->success('编辑成功');
+    }
+    public function lstV2($pid)
+    {
+        return app('json')->success(app()->make(CityAreaRepository::class)->getChildren(intval($pid)));
     }
 
     /**

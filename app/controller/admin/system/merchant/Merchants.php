@@ -14,6 +14,7 @@
 namespace app\controller\admin\system\merchant;
 
 
+use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\product\ProductCopyRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
 use app\common\repositories\system\merchant\MerchantTypeRepository;
@@ -55,6 +56,11 @@ class Merchants extends BaseController
     {
         parent::__construct($app);
         $this->repository = $repository;
+    }
+
+    public function lstV2($pid)
+    {
+        return app('json')->success(app()->make(CityAreaRepository::class)->getChildren(intval($pid)));
     }
 
     public function count()

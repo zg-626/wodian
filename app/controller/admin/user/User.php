@@ -230,6 +230,10 @@ class User extends BaseController
             return app('json')->fail('数据不存在');
         if ($data['group_id'] && !$groupRepository->exists($data['group_id']))
             return app('json')->fail('分组不存在');
+        // 特定分组支持区域编辑
+        if ($data['group_id'] != 4) {
+            $data['province'] = $data['city'] = $data['area'] = '';
+        }
         $label_id = (array)$data['label_id'];
         foreach ($label_id as $k => $value) {
             $label_id[$k] = (int)$value;

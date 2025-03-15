@@ -68,4 +68,14 @@ class CityAreaDao extends BaseDao
         $lst[] = $city;
         return $lst;
     }
+
+    /**
+     * @return array
+     * @author xaboy
+     * @day 2020/7/22
+     */
+    public function options()
+    {
+        return CityArea::getDB()->where('level','in',[1,2,3])->order('id asc')->select();
+    }
 }

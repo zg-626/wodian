@@ -32,7 +32,9 @@ use app\common\repositories\system\attachment\AttachmentRepository;
 use app\common\repositories\system\operate\OperateLogRepository;
 use app\common\repositories\system\serve\ServeOrderRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRelationRepository;
+use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use app\common\repositories\wechat\RoutineQrcodeRepository;
 use crmeb\jobs\ChangeMerchantStatusJob;
@@ -531,6 +533,36 @@ class MerchantRepository extends BaseRepository
         } else {
             $this->dao->addMoney($merId, $money);
         }
+    }
+
+    // 添加推广佣金
+    public function addCommission(int $merId, $order,$user)
+    {
+        if ($order['pay_price'] <= 0) return;
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        // 如果没有业务员，则没有佣金
+        if ($merchant->salesman_id===0) return;
+        // 查询业务员信息
+        $salesman = app()->make(UserRepository::class)->get($merchant->salesman_id);
+        // 查询业务员分组
+        $commission = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
+        // 佣金比例
+        $commission = $commission->extension;
+        // 平台抽取的手续费
+        $commission_rate = $order->commission_rate;
+        // 业务员的佣金
+        //$money=$commission_rate*0.6*$commission;
+        $money=bcmul(0.6,$commission_rate,3);
+        $userBillRepository = app()->make(UserBillRepository::class);
+        $userBillRepository->incBill($merchant->salesman_id, 'brokerage', 'order_one', [
+            'link_id' => $order['order_id'],
+            'status' => 0,
+            'title' => '获得推广佣金',
+            'number' => $order->extension_one,
+            'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_one),
+            'balance' => 0
+        ]);
     }
 
     public function addMerIntegral(int $merId, string $orderType, int $orderId, float $integral)

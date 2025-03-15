@@ -255,6 +255,17 @@ class UserDao extends BaseDao
 
     /**
      * @param $uid
+     * @return array
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function getSupIds($uid)
+    {
+        return User::getDB()->where('superior_uid', $uid)->column('uid');
+    }
+
+    /**
+     * @param $uid
      * @return int
      * @author xaboy
      * @day 2020/6/22

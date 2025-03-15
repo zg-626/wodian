@@ -10,6 +10,8 @@
 // +----------------------------------------------------------------------
 
 // 事件定义文件
+use crmeb\listens\DividendTaskListen;
+
 return [
     'bind' => [],
 
@@ -30,32 +32,33 @@ return [
         'swoole.workerError' => [\crmeb\listens\SwooleWorkerExitListen::class],
         'swoole.workerStop' => [\crmeb\listens\SwooleWorkerExitListen::class],
         'create_timer' => env('INSTALLED', false) ? [
-             \crmeb\listens\AutoOrderProfitsharingListen::class,
-             \crmeb\listens\AuthTakeOrderListen::class,
-             \crmeb\listens\AutoCancelGroupOrderListen::class,
-             \crmeb\listens\AuthCancelPresellOrderListen::class,
-             \crmeb\listens\AutoUnLockBrokerageListen::class,
-             \crmeb\listens\AutoSendPayOrderSmsListen::class,
-             \crmeb\listens\SyncSmsResultCodeListen::class,
-             \crmeb\listens\SyncBroadcastStatusListen::class, //直播间同步监听，未开启可删除次行
-             \crmeb\listens\RefundOrderAgreeListen::class,
-             \crmeb\listens\SeckillTImeCheckListen::class,
-             \crmeb\listens\AutoOrderReplyListen::class,
-             \crmeb\listens\ProductPresellStatusListen::class,
-             \crmeb\listens\ProductGroupStatusCheckListen::class,
-             \crmeb\listens\SyncSpreadStatusListen::class,
-             \crmeb\listens\GuaranteeCountListen::class,
-             \crmeb\listens\AutoUnLockIntegralListen::class,
-             \crmeb\listens\AutoClearIntegralListen::class,
-             \crmeb\listens\MerchantApplyMentsCheckListen::class,
-             \crmeb\listens\AutoUnlockMerchantMoneyListen::class,
-             \crmeb\listens\SumCountListen::class,
-             \crmeb\listens\SyncHotRankingListen::class,
-             \crmeb\listens\AuthCancelActivityListen::class,
-             \crmeb\listens\CloseUserSvipListen::class,
-             \crmeb\listens\SendSvipCouponListen::class,
-             \crmeb\listens\SyncMerchantMarginStatusListen::class,
-             \crmeb\listens\SyncQueueStatusListen::class,
+            \crmeb\listens\AutoOrderProfitsharingListen::class,
+            \crmeb\listens\AuthTakeOrderListen::class,
+            \crmeb\listens\AutoCancelGroupOrderListen::class,
+            \crmeb\listens\AuthCancelPresellOrderListen::class,
+            \crmeb\listens\AutoUnLockBrokerageListen::class,
+            \crmeb\listens\AutoSendPayOrderSmsListen::class,
+            \crmeb\listens\SyncSmsResultCodeListen::class,
+            \crmeb\listens\SyncBroadcastStatusListen::class, //直播间同步监听，未开启可删除次行
+            \crmeb\listens\RefundOrderAgreeListen::class,
+            \crmeb\listens\SeckillTImeCheckListen::class,
+            \crmeb\listens\AutoOrderReplyListen::class,
+            \crmeb\listens\ProductPresellStatusListen::class,
+            \crmeb\listens\ProductGroupStatusCheckListen::class,
+            \crmeb\listens\SyncSpreadStatusListen::class,
+            \crmeb\listens\GuaranteeCountListen::class,
+            \crmeb\listens\AutoUnLockIntegralListen::class,
+            \crmeb\listens\AutoClearIntegralListen::class,
+            \crmeb\listens\MerchantApplyMentsCheckListen::class,
+            \crmeb\listens\AutoUnlockMerchantMoneyListen::class,
+            \crmeb\listens\SumCountListen::class,
+            \crmeb\listens\SyncHotRankingListen::class,
+            \crmeb\listens\AuthCancelActivityListen::class,
+            \crmeb\listens\CloseUserSvipListen::class,
+            \crmeb\listens\SendSvipCouponListen::class,
+            \crmeb\listens\SyncMerchantMarginStatusListen::class,
+            \crmeb\listens\SyncQueueStatusListen::class,
+            DividendTaskListen::class,
         ] : [],
         'pay_success_user_recharge' => [\crmeb\listens\pay\UserRechargeSuccessListen::class],
         'pay_success_user_order' => [\crmeb\listens\pay\UserOrderSuccessListen::class],
@@ -63,7 +66,7 @@ return [
         'pay_success_presell' => [\crmeb\listens\pay\PresellPaySuccessListen::class],
         'pay_success_meal' => [\crmeb\listens\pay\MealSuccessListen::class],
         //数据大屏
-        'data.screen.send' =>[\crmeb\listens\DataScreenListen::class],
+        'data.screen.send' => [\crmeb\listens\DataScreenListen::class],
         //操作日志
         'create_operate_log' => [\crmeb\listens\CreateOperateLogListen::class],  // 操作日志事件
         'mini_order_shipping' => [\crmeb\listens\MiniOrderShippingListen::class],  // 小程序发货管理事件

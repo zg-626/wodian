@@ -12,7 +12,11 @@
 
 namespace app\controller\api\article;
 
+use app\common\dao\system\merchant\MerchantDao;
+use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserGroupRepository;
+use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\services\SwooleTaskService;
 use think\App;
@@ -75,10 +79,21 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
-        $userBillRepository = app()->make(UserBillRepository::class);
-        $bill = $userBillRepository->getWhere(['category' => 'mer_integral', 'type' => 'lock', 'link_id' => 56]);
+        /** @var CityAreaRepository $cityArea */
+        $cityArea= app()->make(CityAreaRepository::class);
+        print_r($cityArea->getAddressChildList());
+        /*$MerchantDao = app()->make(MerchantDao::class); // MerchantDao
+        $merchant = $MerchantDao->search(['mer_id' => 78])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        // 如果没有业务员，则没有佣金
+        if ($merchant->salesman_id===0) return;
+        // 查询业务员信息
+        $salesman = app()->make(UserRepository::class)->get($merchant->salesman_id);
+        // 根据业务员分组查询佣金比例
+        $commission = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
+        $commission = $commission->extension;
         echo "<pre>";
-        print_r($bill);
+        print_r($commission);*/
         return app('json')->success('测试成功');
     }
 }

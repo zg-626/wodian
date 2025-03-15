@@ -20,6 +20,7 @@ use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderProductRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\services\SwooleTaskService;
@@ -52,6 +53,8 @@ class DataScreenRepository extends BaseRepository
     {
         $this->dao = $dao;
         $this->cache_key = env('APP_KEY','merchant').'_data_screen';
+        // 当前管理员
+        $this->adminInfo=request()->adminInfo();
     }
 
     protected function cache($fn)
@@ -135,8 +138,8 @@ class DataScreenRepository extends BaseRepository
 
         $today_pay_count_number['visit_num'] = (int)$userVisitRepository->dateVisitNum($date);
         $today_pay_count_number['visit_user_num'] = (int)$userVisitRepository->dateVisitUserNum($date);
-//        $today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
-//        $today_pay_count_number['today_pay_product'] = $this->today_pay_product();
+        $today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
+        $today_pay_count_number['today_pay_product'] = $this->today_pay_product();
         $today_pay_count_number['today_pay_user_first'] = (int)app()->make(UserRepository::class)->newUserNum($date);
         $today_pay_count_number['today_pay_number'] = (int)$this->today_pay_number()['count'];
         return $today_pay_count_number;
@@ -149,10 +152,54 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant($params = [])
     {
-        return $this->cache(function() use($params) {
+        $mewhere = [];
+        $adminInfo = $this->adminInfo;
+        // 当前管理员账号
+        $account=$adminInfo->account;
+        // 查询用户信息
+        /** @var UserRepository $usrerRepository */
+        $usrerRepository = app()->make(UserRepository::class);
+        $user = $usrerRepository->accountByUser(18513130164);
+        $salesman_id = $user['uid'];
+        if($adminInfo->roles!==1 ||$adminInfo->roles!==26){
+            /** @var  MerchantRepository $merchantRepository */
+            switch ($adminInfo->roles){
+                // 业务员
+                case 20:
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区域经理
+                case 21:
+                    // 查询区域经理绑定的业务员
+                    $yewuIds= $usrerRepository->getSubIds(18513130164);
+                    // 查询业务员绑定的商家
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 22:
+                    // 查询所属区域id
+                    $province_id = $user['province_id'];
+                    $city_id = $user['city_id'];
+                    $district_id = $user['district_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,$city_id,$district_id);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+            }
+            //$mewhere=['mer_id','in',$merchantIds];
+
+
+        }
+
+        return $this->cache(function() use($params,$mewhere) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
             $query = $storeOrderRepository->getSearch([]);
-            $today_pay_merchant = $query->whereDay('create_time')->where('paid',1)->group('mer_id')->count();
+            $today_pay_merchant = $query->whereDay('create_time')->where($mewhere)->where('paid',1)->group('mer_id')->count();
             return $today_pay_merchant;
         });
     }
