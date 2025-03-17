@@ -38,7 +38,7 @@ class MerchantIntentionRepository extends BaseRepository
     {
         $query = $this->dao->search($where);
         $count = $query->count();
-        $list = $query->page($page, $limit)->order('create_time DESC , status ASC')->with(['merchantCategory', 'merchantType'])->select();
+        $list = $query->page($page, $limit)->order('create_time DESC , status ASC')->with(['merchantCategory', 'merchantType','user'])->select();
 
         return compact('count', 'list');
     }

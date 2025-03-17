@@ -53,8 +53,6 @@ class DataScreenRepository extends BaseRepository
     {
         $this->dao = $dao;
         $this->cache_key = env('APP_KEY','merchant').'_data_screen';
-        // 当前管理员
-        $this->adminInfo=request()->adminInfo();
     }
 
     protected function cache($fn)
@@ -152,64 +150,7 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant($params = [])
     {
-        $mewhere = [];
-        $adminInfo = $this->adminInfo;
-        // 当前管理员账号
-        $account=$adminInfo->account;
-        // 查询用户信息
-        /** @var UserRepository $usrerRepository */
-        $usrerRepository = app()->make(UserRepository::class);
-        $user = $usrerRepository->accountByUser(18513130164);
-        $salesman_id = $user['uid'];
-        if($adminInfo->roles!==1 ||$adminInfo->roles!==26){
-            /** @var  MerchantRepository $merchantRepository */
-            switch ($adminInfo->roles){
-                // 业务员
-                case 20:
-                    $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    break;
-                // 区域经理
-                case 21:
-                    // 查询区域经理绑定的业务员
-                    $yewuIds= $usrerRepository->getSubIds(18513130164);
-                    // 查询业务员绑定的商家
-                    $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    break;
-                // 区、县代理商
-                case 22:
-                    // 查询所属区域id
-                    $district_id = $user['district_id'];
-                    // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    break;
-                // 区、县代理商
-                case 23:
-                    // 查询所属区域id
-                    $city_id = $user['city_id'];
-                    // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    break;
-                // 区、县代理商
-                case 24:
-                    // 查询所属区域id
-                    $province_id = $user['province_id'];
-                    // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
-                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    break;
-            }
-
-        }
-
+        $mewhere = $this->adminQuery();
         return $this->cache(function() use($params,$mewhere) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
             $query = $storeOrderRepository->getSearch([]);
@@ -226,9 +167,11 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_product($params = [])
     {
-        return $this->cache(function() use($params) {
+        $mewhere = $this->adminQuery();
+
+        return $this->cache(function() use($params,$mewhere) {
             $query = StoreOrder::alias('O')->join('StoreOrderProduct OP','O.order_id = OP.order_id');
-            $today_pay_product = $query->whereDay('O.create_time')
+            $today_pay_product = $query->whereDay('O.create_time')->where($mewhere)
                 ->where('paid',1)
                 ->group('OP.product_id')
                 ->count();
@@ -341,7 +284,9 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant_rank($params = [])
     {
-        return $this->cache(function() use($params) {
+        $mewhere = $this->adminQuery();
+
+        return $this->cache(function() use($params,$mewhere) {
             $date = systemConfig('sys_pay_merchant_rank') ?: 'today';
             if (systemConfig('sys_pay_merchant_rank_type')) {
                 $today_pay_merchant_rank['type'] = '个';
@@ -357,6 +302,7 @@ class DataScreenRepository extends BaseRepository
                     getModelTime($query, $date,'StoreOrder.create_time');
                 });
             $query->whereDay('StoreOrder.create_time')
+                ->where($mewhere)
                 ->setOption('field',[])
                 ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
                 ->group('StoreOrder.mer_id');
@@ -377,9 +323,12 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_number($params = [])
     {
-        return $this->cache(function() use($params) {
+        $mewhere = $this->adminQuery();
+
+        return $this->cache(function() use($params,$mewhere) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
             $query = $storeOrderRepository->getSearch([])
+                ->where($mewhere)
                 ->whereDay('create_time')
                 ->where('paid', 1);
             $list = $query->field("sum(pay_price) as number,count(*) as count,paid,order_id")
@@ -523,5 +472,69 @@ class DataScreenRepository extends BaseRepository
             $pay_product_rank = $storeOrderProductRepository->getProductRate(0, $date, $type, 20);
             return $pay_product_rank;
         });
+    }
+
+    // 管理员查询条件
+    public function adminQuery()
+    {
+        $mewhere = [];
+        $adminInfo = request()->adminInfo();
+        // 当前管理员账号
+        $account=$adminInfo->account;
+        // 查询用户信息
+        /** @var UserRepository $usrerRepository */
+        $usrerRepository = app()->make(UserRepository::class);
+        $user = $usrerRepository->accountByUser($account);
+        $salesman_id = $user['uid'];
+        if($adminInfo->roles!==1 ||$adminInfo->roles!==26){
+            /** @var  MerchantRepository $merchantRepository */
+            switch ($adminInfo->roles){
+                // 业务员
+                case 20:
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区域经理
+                case 21:
+                    // 查询区域经理绑定的业务员
+                    $yewuIds= $usrerRepository->getSubIds(18513130164);
+                    // 查询业务员绑定的商家
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 22:
+                    // 查询所属区域id
+                    $district_id = $user['district_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 23:
+                    // 查询所属区域id
+                    $city_id = $user['city_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+                // 区、县代理商
+                case 24:
+                    // 查询所属区域id
+                    $province_id = $user['province_id'];
+                    // 查询当前区域的商户
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
+                    $mewhere=['mer_id','in',$merchantIds];
+                    break;
+            }
+
+        }
+
+        return $mewhere;
     }
 }

@@ -1340,7 +1340,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         }
         Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_CREATE', 'id' => $group->group_order_id]);
         if ($addressId)
-            app()->make(RecordRepository::class)->addRecord(RecordRepository::TYPE_ADDRESS_RECORD,['address_id' => $addressId,'num' => count($orderList)]);
+            app()->make(RecordRepository::class)->addRecord(RecordRepository::TYPE_ADDRESS_RECORD,['address_id' => $addressId,'num' => count($orderList),'uid' => $uid]);
         return $group;
     }
 

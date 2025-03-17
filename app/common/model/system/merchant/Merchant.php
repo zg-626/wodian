@@ -24,6 +24,7 @@ use app\common\model\store\service\StoreService;
 use app\common\model\system\config\SystemConfigValue;
 use app\common\model\system\financial\Financial;
 use app\common\model\system\serve\ServeOrder;
+use app\common\model\user\User;
 use app\common\repositories\store\StoreActivityRepository;
 
 class Merchant extends BaseModel
@@ -213,6 +214,10 @@ class Merchant extends BaseModel
         return $this->hasOne(MerchantAdmin::class, 'mer_id', 'mer_id')->where('level', 0);
     }
 
+    public function user()
+    {
+        return $this->hasOne(User::class, 'uid', 'salesman_id')->field('uid,avatar,nickname');
+    }
 
     public function searchKeywordAttr($query, $value)
     {

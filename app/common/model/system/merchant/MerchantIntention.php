@@ -13,6 +13,8 @@
 namespace app\common\model\system\merchant;
 
 use app\common\model\BaseModel;
+use app\common\model\user\User;
+use think\model\relation\HasOne;
 
 class MerchantIntention extends BaseModel
 {
@@ -54,5 +56,10 @@ class MerchantIntention extends BaseModel
     public function merchantType()
     {
         return $this->hasOne(MerchantType::class, 'mer_type_id', 'mer_type_id')->bind(['type_name']);
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'uid', 'salesman_id')->field('uid,avatar,nickname');
     }
 }
