@@ -13,16 +13,16 @@
 namespace app\controller\admin\user;
 
 
-use app\validate\admin\UseruserActingValidate;
+use app\validate\admin\UserActingValidate;
 use crmeb\basic\BaseController;
 use think\App;
-use app\common\repositories\user\FeedbackRepository as repository;
+use app\common\repositories\user\UserActingRepository as repository;
 use think\db\exception\DbException;
 
 class UserActing extends BaseController
 {
     /**
-     * @var UserRepository
+     * @var UserActingRepository
      */
     protected $repository;
 
@@ -43,7 +43,7 @@ class UserActing extends BaseController
      */
     public function lst()
     {
-        $where = $this->request->params(['keyword', 'type', 'status', 'realname', ['is_del', 0]]);
+        $where = $this->request->params(['keyword', 'group_id', 'status', 'real_name', ['is_del', 0]]);
         [$page, $limit] = $this->getPage();
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
@@ -121,13 +121,13 @@ class UserActing extends BaseController
 
     /**
      * @param $id
-     * @param UseruserActingValidate $validate
+     * @param UserActingValidate $validate
      * @return mixed
      * @throws DbException
      * @author xaboy
      * @day 2020-05-07
      */
-    public function status($id, UseruserActingValidate $validate)
+    public function status($id, UserActingValidate $validate)
     {
         $data = $this->checkParams($validate);
         if (!$this->repository->exists($id))
@@ -138,12 +138,12 @@ class UserActing extends BaseController
     }
 
     /**
-     * @param UseruserActingValidate $validate
+     * @param UserActingValidate $validate
      * @return array
      * @author xaboy
      * @day 2020-05-07
      */
-    protected function checkParams(UseruserActingValidate $validate)
+    protected function checkParams(UserActingValidate $validate)
     {
         $data = $this->request->params(['group_id']);
         $validate->check($data);

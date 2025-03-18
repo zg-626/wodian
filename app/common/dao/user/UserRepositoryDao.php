@@ -11,41 +11,36 @@
 // +----------------------------------------------------------------------
 
 
-namespace app\common\model\user;
+namespace app\common\dao\user;
 
 
-use app\common\model\BaseModel;
+use app\common\dao\BaseDao;
+use app\common\model\user\UserAddress as model;
 
-class UserGroupApply extends BaseModel
+class UserRepositoryDao extends BaseDao
 {
-
     /**
      * @return string
-     * @author xaboy
-     * @day 2020-03-30
+     * @author Qinii
      */
-    public static function tablePk(): string
+    protected function getModel(): string
     {
-        return 'id';
+        return model::class;
     }
 
-    /**
-     * @return string
-     * @author xaboy
-     * @day 2020-03-30
-     */
-    public static function tableName(): string
+
+    public function userFieldExists($field, $value,$uid): bool
     {
-        return 'user_group_apply';
+        return (($this->getModel()::getDB())->where('uid',$uid)->where($field,$value)->count()) > 0;
     }
 
-    public function user()
+    public function changeDefault(int $uid)
     {
-        return $this->hasOne(User::class,'uid','uid');
+        return ($this->getModel()::getDB())->where('uid',$uid)->update(['is_default' => 0]);
     }
 
-    public function group()
+    public function getAll(int $uid)
     {
-        return $this->hasOne(UserGroup::class,'group_id','group_id');
+        return (($this->getModel()::getDB())->where('uid',$uid));
     }
 }

@@ -16,7 +16,7 @@ namespace app\validate\admin;
 
 use think\Validate;
 
-class UseruserActingValidate extends Validate
+class UserActingValidate extends Validate
 {
     protected $failException = true;
 
