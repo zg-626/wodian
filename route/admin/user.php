@@ -325,6 +325,35 @@ Route::group(function () {
         '_auth' => true,
     ]);
 
+    // 用户代理申请
+    Route::group('user/acting', function () {
+        Route::get('lst', '/lst')->name('userActingLst')->option([
+            '_alias' => '用户代理申请列表',
+        ]);
+        Route::delete(':id', '/delete')->name('userActingDelete')->option([
+            '_alias' => '用户代理删除',
+        ]);
+        Route::post(':id', '/status')->name('userActingStatus')->option([
+            '_alias' => '用户代理编辑',
+        ]);
+        Route::get('form/:id', '/statusForm')->name('userActingStatusForm')->option([
+            '_alias' => '用户代理编辑表单',
+            '_auth' => false,
+            '_form' => 'userActingStatus',
+        ]);
+        Route::get('mark/:id/form', '/form')->name('userActingMarkForm')->option([
+            '_alias' => '备注',
+            '_auth' => false,
+            '_form' => 'userActingMark',
+        ]);
+        Route::post('mark/:id', '/mark')->name('userActingMark')->option([
+            '_alias' => '备注',
+        ]);
+    })->prefix('admin.user.UserActing')->option([
+        '_path' => '/user/acting',
+        '_auth' => true,
+    ]);
+
     //用户反馈
     Route::group('user/feedback', function () {
         Route::get('category/lst', '/lst')->name('systemUserFeedBackCategoryLst')->option([
