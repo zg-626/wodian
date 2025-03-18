@@ -125,6 +125,8 @@ class MerchantIntentionRepository extends BaseRepository
                 'category_id' => $intention['merchant_category_id'],
                 'type_id' => $intention['mer_type_id'],
                 'real_name' => $intention['name'],
+                'is_online' => $intention['is_online'],
+                'salesman_id' => $intention['salesman_id'],
                 'status' => 1,
                 'is_audit' => 1,
                 'is_bro_room' => $config['broadcast_room_type'] == 1 ? 0 : 1,

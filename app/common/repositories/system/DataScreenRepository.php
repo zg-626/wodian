@@ -27,6 +27,7 @@ use crmeb\services\SwooleTaskService;
 use think\exception\ValidateException;
 use think\facade\Cache;
 use think\facade\Db;
+use think\facade\Log;
 
 class DataScreenRepository extends BaseRepository
 {
@@ -130,6 +131,7 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_count_number($params = [])
     {
+        /** @var  UserVisitRepository $userVisitRepository */
         // visitNum 浏览量
         $userVisitRepository = app()->make(UserVisitRepository::class);
         $date = 'today';
@@ -137,9 +139,9 @@ class DataScreenRepository extends BaseRepository
         $today_pay_count_number['visit_num'] = (int)$userVisitRepository->dateVisitNum($date);
         $today_pay_count_number['visit_user_num'] = (int)$userVisitRepository->dateVisitUserNum($date);
         $today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
-        $today_pay_count_number['today_pay_product'] = $this->today_pay_product();
+        $today_pay_count_number['today_pay_product'] = 0;
         $today_pay_count_number['today_pay_user_first'] = (int)app()->make(UserRepository::class)->newUserNum($date);
-        $today_pay_count_number['today_pay_number'] = (int)$this->today_pay_number()['count'];
+        $today_pay_count_number['today_pay_number'] = 0;
         return $today_pay_count_number;
     }
 
@@ -150,11 +152,11 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant($params = [])
     {
-        $mewhere = $this->adminQuery();
-        return $this->cache(function() use($params,$mewhere) {
+        $merchantIds = $this->adminQuery();
+        return $this->cache(function() use($params,$merchantIds) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
-            $query = $storeOrderRepository->getSearch([]);
-            $today_pay_merchant = $query->whereDay('create_time')->where($mewhere)->where('paid',1)->group('mer_id')->count();
+            $query = $storeOrderRepository;
+            $today_pay_merchant = StoreOrder::getDB()->whereDay('create_time')->whereIn('mer_id',$merchantIds)->where('paid',1)->group('mer_id')->count();
             return $today_pay_merchant;
         });
     }
@@ -167,11 +169,11 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_product($params = [])
     {
-        $mewhere = $this->adminQuery();
-
-        return $this->cache(function() use($params,$mewhere) {
+        $merchantIds = $this->adminQuery();
+        $mewhere=['mer_id','in',$merchantIds];
+        return $this->cache(function() use($params,$merchantIds) {
             $query = StoreOrder::alias('O')->join('StoreOrderProduct OP','O.order_id = OP.order_id');
-            $today_pay_product = $query->whereDay('O.create_time')->where($mewhere)
+            $today_pay_product = $query->whereDay('O.create_time')->whereIn('O.mer_id',$merchantIds)
                 ->where('paid',1)
                 ->group('OP.product_id')
                 ->count();
@@ -186,9 +188,12 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_user_first($params = [])
     {
-        return $this->cache(function() use($params) {
+        $orderIds = $this->orderQuery();
+        $orderwhere=['order_id','in',$orderIds];
+        return $this->cache(function() use($params,$orderwhere) {
             $storeGroupOrderRepository = app()->make(StoreGroupOrderRepository::class);
             $today_pay_user_first = $storeGroupOrderRepository->search(['paid' => 1])
+                ->where($orderwhere)
                 ->whereDay('create_time')
                 ->where('is_first',1)
                 ->count();
@@ -203,9 +208,12 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_first_number($params = [])
     {
-        return $this->cache(function() use($params) {
+        $orderIds = $this->orderQuery();
+        $orderwhere=['order_id','in',$orderIds];
+        return $this->cache(function() use($params,$orderwhere) {
             $storeGroupOrderRepository = app()->make(StoreGroupOrderRepository::class);
             $query = $storeGroupOrderRepository->search(['paid' => 1])
+                ->where($orderwhere)
                 ->whereDay('create_time')
                 ->where('is_first',1);
             $pay_price = $query->sum('pay_price');
@@ -222,6 +230,8 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_new_old($params = [])
     {
+//        $orderIds = $this->orderQuery();
+//        $orderwhere=['order_id','in',$orderIds];
         return $this->cache(function() use($params) {
 //            $new_number = 0;
 //            $old_number = 0;
@@ -229,6 +239,7 @@ class DataScreenRepository extends BaseRepository
             $newQuery = StoreGroupOrder::alias('g')
                 ->join('user u','u.uid = g.uid')
                 ->where('paid',1)
+                //->where($orderwhere)
                 ->whereDay('g.create_time')
                 ->whereDay('u.create_time')
 //                ->field("sum(g.pay_price + g.pay_postage) as number,g.uid")
@@ -246,6 +257,7 @@ class DataScreenRepository extends BaseRepository
             $oldQuery = StoreGroupOrder::alias('g')
                 ->join('user u','u.uid = g.uid')
                 ->where('paid',1)
+                //->where($orderwhere)
                 ->whereDay('g.create_time')
                 ->whereTime('u.create_time','<',date('Y-m-d'))
 //                ->field("sum(g.pay_price + g.pay_postage) as number,g.uid")
@@ -284,9 +296,9 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant_rank($params = [])
     {
-        $mewhere = $this->adminQuery();
-
-        return $this->cache(function() use($params,$mewhere) {
+        $merchantIds = $this->adminQuery();
+        $mewhere=['mer_id','in',$merchantIds];
+        return $this->cache(function() use($params,$merchantIds) {
             $date = systemConfig('sys_pay_merchant_rank') ?: 'today';
             if (systemConfig('sys_pay_merchant_rank_type')) {
                 $today_pay_merchant_rank['type'] = '个';
@@ -302,7 +314,7 @@ class DataScreenRepository extends BaseRepository
                     getModelTime($query, $date,'StoreOrder.create_time');
                 });
             $query->whereDay('StoreOrder.create_time')
-                ->where($mewhere)
+                ->whereIn('StoreOrder.mer_id', $merchantIds)
                 ->setOption('field',[])
                 ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
                 ->group('StoreOrder.mer_id');
@@ -323,12 +335,12 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_number($params = [])
     {
-        $mewhere = $this->adminQuery();
-
-        return $this->cache(function() use($params,$mewhere) {
+        $merchantIds = $this->adminQuery();
+        $mewhere=['mer_id','in',$merchantIds];
+        return $this->cache(function() use($params,$merchantIds) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
             $query = $storeOrderRepository->getSearch([])
-                ->where($mewhere)
+                ->whereIn('mer_id', $merchantIds)
                 ->whereDay('create_time')
                 ->where('paid', 1);
             $list = $query->field("sum(pay_price) as number,count(*) as count,paid,order_id")
@@ -377,6 +389,8 @@ class DataScreenRepository extends BaseRepository
      */
     public function month_pay_count($params = [])
     {
+//        $orderIds = $this->orderQuery();
+//        $orderwhere=['order_id','in',$orderIds];
         return $this->cache(function() use($params) {
             $dates = getDatesBetweenTwoDays(getStartModelTime('month'), date('Y-m-d'), 'd');
             $storeGroupOrderRepository = app()->make(StoreGroupOrderRepository::class);
@@ -402,7 +416,9 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_count($params = [])
     {
-        return $this->cache(function() use($params) {
+        $merchantIds = $this->adminQuery();
+        $mewhere=['mer_id','in',$merchantIds];
+        return $this->cache(function() use($params,$merchantIds) {
             $h = date('H');
             $j = ($h <= 12) ? 0 : 1;
             $i = '0';
@@ -413,7 +429,7 @@ class DataScreenRepository extends BaseRepository
             } while ($h >= $i);
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
             $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%H\') as hours,count(order_id) order_count,count(distinct uid) as user_count');
-            $query = $storeOrderRepository->getSearch([])->where('paid',1)->whereDay('create_time');
+            $query = $storeOrderRepository->getSearch([])->where('paid',1)->whereIn('mer_id', $merchantIds)->whereDay('create_time');
             $orderList = $query->field($field)->order('hours ASC')->group('hours')->select()->toArray();
             $orderList = array_combine(array_column($orderList, 'hours'), $orderList);
 
@@ -451,9 +467,11 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_info($params = [])
     {
-        return $this->cache(function() use($params) {
+        $merchantIds = $this->adminQuery();
+        return $this->cache(function() use($params,$merchantIds) {
+            /** @var StoreOrderProductRepository $storeOrderProductRepository */
             $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
-            $today_pay_info = $storeOrderProductRepository->getProductRate(0, 'today', 'paytime', 10, false);
+            $today_pay_info = $storeOrderProductRepository->getProductRate(0, 'today', 'paytime', 10, $merchantIds,false);
             return $today_pay_info;
         });
     }
@@ -465,19 +483,88 @@ class DataScreenRepository extends BaseRepository
      */
     public function pay_product_rank($params = [])
     {
-        return $this->cache(function() use($params) {
+        $merchantIds = $this->adminQuery();
+        return $this->cache(function() use($params,$merchantIds) {
             $date = systemConfig('sys_pay_product_rank') ?: 'today';
             $type =systemConfig('sys_pay_product_rank_type') == 0 ? 'number' : 'count';
+            /** @var StoreOrderProductRepository $storeOrderProductRepository */
             $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
-            $pay_product_rank = $storeOrderProductRepository->getProductRate(0, $date, $type, 20);
+            $pay_product_rank = $storeOrderProductRepository->getProductRate(0, $date, $type, 20,$merchantIds);
             return $pay_product_rank;
         });
     }
 
-    // 管理员查询条件
     public function adminQuery()
     {
+        $merchantIds='';
+        $adminInfo = request()->adminInfo();
+
+        // 当前管理员账号
+        $account = $adminInfo->account;
+
+        // 查询用户信息
+        /** @var UserRepository $userRepository */
+        $userRepository = app()->make(UserRepository::class);
+        $user = $userRepository->accountByUser($account);
+        $salesman_id = $user['uid'];
+
+        // 获取roles数组第一个值
+        $roleId=$adminInfo->roles[0];
+        // 如果不是超级管理员或管理员，则进入逻辑
+        if ($roleId != 1) {
+
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository = app()->make(MerchantRepository::class);
+            switch ($roleId){
+                // 业务员
+                case 20:
+                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
+                    //$mewhere = ['mer_id', 'in', $merchantIds];
+                    break;
+                // 区域经理
+                case 21:
+                    // 查询区域经理绑定的业务员
+                    $yewuIds = $userRepository->getSubIds(18513130164);
+                    // 查询业务员绑定的商家
+                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
+                    //$mewhere = ['mer_id', 'in', $merchantIds];
+                    break;
+                // 区、县代理商
+                case 22:
+                    // 查询所属区域id
+                    $district_id = $user['district_id'];
+                    // 查询当前区域的商户
+                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
+                    //$mewhere = ['mer_id', 'in', $merchantIds];
+                    break;
+                // 区、县代理商
+                case 23:
+                    // 查询所属区域id
+                    $city_id = $user['city_id'];
+                    // 查询当前区域的商户
+                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
+                    //$mewhere = ['mer_id', 'in', $merchantIds];
+                    break;
+                // 区、县代理商
+                case 24:
+                    // 查询所属区域id
+                    $province_id = $user['province_id'];
+                    // 查询当前区域的商户
+                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
+                    //$mewhere = ['mer_id', 'in', $merchantIds];
+                    break;
+            }
+        }
+
+        return $merchantIds;
+    }
+
+
+    // 管理员查询条件(订单id)
+    public function orderQuery()
+    {
         $mewhere = [];
+        $orderwhere = [];
         $adminInfo = request()->adminInfo();
         // 当前管理员账号
         $account=$adminInfo->account;
@@ -486,55 +573,77 @@ class DataScreenRepository extends BaseRepository
         $usrerRepository = app()->make(UserRepository::class);
         $user = $usrerRepository->accountByUser($account);
         $salesman_id = $user['uid'];
-        if($adminInfo->roles!==1 ||$adminInfo->roles!==26){
-            /** @var  MerchantRepository $merchantRepository */
-            switch ($adminInfo->roles){
+
+        // 获取roles数组第一个值
+        $roleId=$adminInfo->roles[0];
+        // 如果不是超级管理员或管理员，则进入逻辑
+        if($roleId!==1 ||$roleId!==26){
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository = app()->make(MerchantRepository::class);
+            /** @var StoreOrderRepository $storeOrderRepository */
+            $storeOrderRepository = app()->make(StoreOrderRepository::class);
+            switch ($roleId){
                 // 业务员
                 case 20:
-                    $merchantRepository = app()->make(MerchantRepository::class);
                     $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
                     $mewhere=['mer_id','in',$merchantIds];
+                    // 订单ids
+                    $query = $storeOrderRepository->getSearch([]);
+                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                    $orderwhere=['order_id','in',$orderIds];
                     break;
                 // 区域经理
                 case 21:
                     // 查询区域经理绑定的业务员
-                    $yewuIds= $usrerRepository->getSubIds(18513130164);
+                    $yewuIds= $usrerRepository->getSubIds($account);
                     // 查询业务员绑定的商家
-                    $merchantRepository = app()->make(MerchantRepository::class);
                     $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
                     $mewhere=['mer_id','in',$merchantIds];
+                    // 订单ids
+                    $query = $storeOrderRepository->getSearch([]);
+                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                    $orderwhere=['order_id','in',$orderIds];
                     break;
                 // 区、县代理商
                 case 22:
                     // 查询所属区域id
                     $district_id = $user['district_id'];
                     // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
                     $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
                     $mewhere=['mer_id','in',$merchantIds];
+                    // 订单ids
+                    $query = $storeOrderRepository->getSearch([]);
+                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                    $orderwhere=['order_id','in',$orderIds];
                     break;
                 // 区、县代理商
                 case 23:
                     // 查询所属区域id
                     $city_id = $user['city_id'];
                     // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
                     $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
                     $mewhere=['mer_id','in',$merchantIds];
+                    // 订单ids
+                    $query = $storeOrderRepository->getSearch([]);
+                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                    $orderwhere=['order_id','in',$orderIds];
                     break;
                 // 区、县代理商
                 case 24:
                     // 查询所属区域id
                     $province_id = $user['province_id'];
                     // 查询当前区域的商户
-                    $merchantRepository = app()->make(MerchantRepository::class);
                     $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
                     $mewhere=['mer_id','in',$merchantIds];
+                    // 订单ids
+                    $query = $storeOrderRepository->getSearch([]);
+                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                    $orderwhere=['order_id','in',$orderIds];
                     break;
             }
 
         }
 
-        return $mewhere;
+        return $orderwhere;
     }
 }

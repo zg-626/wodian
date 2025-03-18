@@ -38,7 +38,7 @@ class MerchantIntention extends BaseController
     public function lst()
     {
         [$page, $limit] = $this->getPage();
-        $where = $this->request->params(['mer_name', 'status', 'date', 'keyword', 'mer_intention_id', 'category_id', 'type_id']);
+        $where = $this->request->params(['mer_name', 'status', 'date', 'keyword', 'mer_intention_id', 'category_id', 'type_id','is_online']);
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
 
