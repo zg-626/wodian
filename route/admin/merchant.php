@@ -108,7 +108,7 @@ Route::group(function () {
             '_auth' => false,
             '_form' => 'systemMerchantUpdate',
         ]);
-        Route::post('update/:id', '.Merchants/update')->name('systemMerchantUpdate')->option([
+        Route::post('update/:id', '.Merchants/update')->name('systemMerchantsUpdate')->option([
             '_alias' => '商户编辑',
         ]);
         Route::post('status/:id', '.Merchants/switchStatus')->name('systemMerchantStatus')->option([
