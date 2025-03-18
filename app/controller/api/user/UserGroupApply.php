@@ -64,7 +64,7 @@ class UserGroupApply extends BaseController
         $data = $this->checkParams($validate);
 
         if ($data['group_id']) {
-            if ($this->repository->fieldExists($data['group_id'], $this->request->uid()))
+            if ($this->repository->fieldExists($data['group_id'], $this->request->uid())>0)
                 return app('json')->fail('请勿重复申请');
         };
         $data['uid'] = $this->request->uid();
@@ -110,7 +110,7 @@ class UserGroupApply extends BaseController
      */
     public function checkParams(validate $validate)
     {
-        $data = $this->request->params(['group_id']);
+        $data = $this->request->params(['group_id','real_name', 'phone']);
         $validate->check($data);
 
         return $data;

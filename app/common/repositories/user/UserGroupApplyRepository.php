@@ -49,7 +49,7 @@ class UserGroupApplyRepository extends BaseRepository
      */
     public function fieldExists(int $id,int $uid)
     {
-        return $this->dao->userFieldExists($this->dao->getPk(),$id,$uid);
+        return $this->dao->userFieldExists($id,$uid);
     }
 
     /**

@@ -37,9 +37,9 @@ class UserGroupApplyDao extends BaseDao
     }
 
 
-    public function userFieldExists($field, $value,$uid): bool
+    public function userFieldExists($value,$uid): bool
     {
-        return (($this->getModel()::getDB())->where('uid',$uid)->where($field,$value)->count()) > 0;
+        return (($this->getModel()::getDB())->where('uid',$uid)->where('group_id',$value)->count());
     }
 
     public function changeDefault(int $uid)
