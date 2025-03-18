@@ -87,42 +87,42 @@ Route::group(function () {
 
     //商户管理
     Route::group('system/merchants', function () {
-        Route::get('create/form', '.Merchant/createForm')->name('systemMerchantCreateForm')->option([
+        Route::get('create/form', '.Merchants/createForm')->name('systemMerchantCreateForm')->option([
             '_alias' => '商户列表',
         ]);
-        Route::get('city/lst/:pid', '.Merchant/lstV2')->option([
+        Route::get('city/lst/:pid', '.Merchants/lstV2')->option([
             '_alias' => '列表',
             //'_auth' => false,
         ]);
-        Route::get('count', '.Merchant/count')->name('systemMerchantCount')->option([
+        Route::get('count', '.Merchants/count')->name('systemMerchantCount')->option([
             '_alias' => '商户列表统计',
         ]);
-        Route::get('lst', '.Merchant/lst')->name('systemMerchantLst')->option([
+        Route::get('lst', '.Merchants/lst')->name('systemMerchantLst')->option([
             '_alias' => '商户列表',
         ]);
-        Route::post('create', '.Merchant/create')->name('systemMerchantCreate')->option([
+        Route::post('create', '.Merchants/create')->name('systemMerchantCreate')->option([
             '_alias' => '商户添加',
         ]);
-        Route::get('update/form/:id', '.Merchant/updateForm')->name('systemMerchantUpdateForm')->option([
+        Route::get('update/form/:id', '.Merchants/updateForm')->name('systemMerchantUpdateForm')->option([
             '_alias' => '商户编辑表单',
             '_auth' => false,
             '_form' => 'systemMerchantUpdate',
         ]);
-        Route::post('update/:id', '.Merchant/update')->name('systemMerchantUpdate')->option([
+        Route::post('update/:id', '.Merchants/update')->name('systemMerchantUpdate')->option([
             '_alias' => '商户编辑',
         ]);
-        Route::post('status/:id', '.Merchant/switchStatus')->name('systemMerchantStatus')->option([
+        Route::post('status/:id', '.Merchants/switchStatus')->name('systemMerchantStatus')->option([
             '_alias' => '商户修改推荐',
         ]);
-        Route::post('close/:id', '.Merchant/switchClose')->name('systemMerchantClose')->option([
+        Route::post('close/:id', '.Merchants/switchClose')->name('systemMerchantClose')->option([
             '_alias' => '商户开启/关闭',
         ]);
-        Route::get('delete/:id/form', '.Merchant/deleteForm')->name('systemMerchantDeleteForm')->option([
+        Route::get('delete/:id/form', '.Merchants/deleteForm')->name('systemMerchantDeleteForm')->option([
             '_alias' => '商户删除',
             '_auth' => false,
             '_form' => 'systemMerchantDelete',
         ]);
-        Route::post('delete/:id', '.Merchant/delete')->name('systemMerchantDelete')->option([
+        Route::post('delete/:id', '.Merchants/delete')->name('systemMerchantDelete')->option([
             '_alias' => '商户删除',
         ]);
         Route::post('password/:id', '.MerchantAdmin/password')->name('systemMerchantAdminPassword')->option([
@@ -133,21 +133,21 @@ Route::group(function () {
             '_auth' => false,
             '_form' => 'systemMerchantAdminPassword',
         ]);
-        Route::post('login/:id', '.Merchant/login')->name('systemMerchantLogin')->option([
+        Route::post('login/:id', '.Merchants/login')->name('systemMerchantLogin')->option([
             '_alias' => '商户登录',
         ]);
-        Route::get('changecopy/:id/form', '.Merchant/changeCopyNumForm')->name('systemMerchantChangeCopyForm')->option([
+        Route::get('changecopy/:id/form', '.Merchants/changeCopyNumForm')->name('systemMerchantChangeCopyForm')->option([
             '_alias' => '修改采集商品次数表单',
             '_auth' => false,
             '_form' => 'systemMerchantChangeCopy',
         ]);
-        Route::post('changecopy/:id', '.Merchant/changeCopyNum')->name('systemMerchantChangeCopy')->option([
+        Route::post('changecopy/:id', '.Merchants/changeCopyNum')->name('systemMerchantChangeCopy')->option([
             '_alias' => '修改采集商品次数',
         ]);
-        Route::get('detail/:id', '.Merchant/detail')->name('systemMerchantDetail')->option([
+        Route::get('detail/:id', '.Merchants/detail')->name('systemMerchantDetail')->option([
             '_alias' => '详情',
         ]);
-        Route::get('get_operate_list/:merchant_id', '.Merchant/getOperateList')->name('systemMerchantOperateList')->option([
+        Route::get('get_operate_list/:merchant_id', '.Merchants/getOperateList')->name('systemMerchantOperateList')->option([
             '_alias' => '操作日志',
         ]);
     })->prefix('admin.system.merchant')->option([
