@@ -31,6 +31,9 @@ class CityAreaRepository extends BaseRepository
 
     public function getChildren($pid)
     {
+        if($pid==0){
+            return $this->search(['pid' => $pid])->where('snum','>',0)->select();
+        }
         return $this->search(['pid' => $pid])->select();
     }
 
