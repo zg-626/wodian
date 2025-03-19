@@ -116,7 +116,7 @@ class UserActing extends BaseController
     {
         if (!$this->repository->exists($id))
             return app('json')->fail('数据不存在');
-        return app('json')->success(formToData($this->repository->updateForm($id)));
+        return app('json')->success(formToData($this->repository->statusForm($id)));
     }
 
     /**
@@ -127,14 +127,14 @@ class UserActing extends BaseController
      * @author xaboy
      * @day 2020-05-07
      */
-    public function status($id, UserActingValidate $validate)
+    public function switchStatus($id, UserActingValidate $validate)
     {
-        $data = $this->checkParams($validate);
-        if (!$this->repository->exists($id))
+        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
             return app('json')->fail('数据不存在');
-        $this->repository->update($id, $data);
-
-        return app('json')->success('编辑成功');
+        $data = $this->request->params(['status', 'fail_msg', 'create_mer']);
+        $data['status'] = $data['status'] == 1 ? 1 : 2;
+        $this->repository->updateStatus($id, $data);
+        return app('json')->success('修改成功');
     }
 
     /**
@@ -148,5 +148,21 @@ class UserActing extends BaseController
         $data = $this->request->params(['group_id']);
         $validate->check($data);
         return $data;
+    }
+
+    public function form($id)
+    {
+        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
+            return app('json')->fail('数据不存在');
+        return app('json')->success(formToData($this->repository->markForm($id)));
+    }
+
+    public function mark($id)
+    {
+        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
+            return app('json')->fail('数据不存在');
+        $data = $this->request->param('mark');
+        $this->repository->update($id, ['mark' => $data]);
+        return app('json')->success('修改成功');
     }
 }

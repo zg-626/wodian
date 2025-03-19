@@ -42,6 +42,7 @@ class MerchantIntention extends BaseController
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
 
+    // 备注表单
     public function form($id)
     {
         if (!$this->repository->getWhereCount(['mer_intention_id' => $id, 'is_del' => 0]))
@@ -49,6 +50,7 @@ class MerchantIntention extends BaseController
         return app('json')->success(formToData($this->repository->markForm($id)));
     }
 
+    // 审核表单
     public function statusForm($id)
     {
         if (!$this->repository->getWhereCount(['mer_intention_id' => $id, 'is_del' => 0]))
@@ -56,6 +58,7 @@ class MerchantIntention extends BaseController
         return app('json')->success(formToData($this->repository->statusForm($id)));
     }
 
+    // 备注
     public function mark($id)
     {
         if (!$this->repository->getWhereCount(['mer_intention_id' => $id, 'is_del' => 0]))
@@ -65,9 +68,10 @@ class MerchantIntention extends BaseController
         return app('json')->success('修改成功');
     }
 
+    // 审核
     public function switchStatus($id)
     {
-        if (!$this->repository->getWhereCount(['mer_intention_id' => $id, 'is_del' => 0]))
+        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
             return app('json')->fail('数据不存在');
         $data = $this->request->params(['status', 'fail_msg', 'create_mer']);
         $data['status'] = $data['status'] == 1 ? 1 : 2;

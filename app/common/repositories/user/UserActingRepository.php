@@ -16,6 +16,15 @@ namespace app\common\repositories\user;
 use app\common\repositories\BaseRepository;
 use app\common\dao\user\UserActingDao as dao;
 use app\common\repositories\store\shipping\CityRepository;
+use app\common\repositories\system\config\ConfigValueRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
+use app\common\repositories\system\merchant\MerchantTypeRepository;
+use crmeb\jobs\SendSmsJob;
+use FormBuilder\Factory\Elm;
+use think\exception\ValidateException;
+use think\facade\Db;
+use think\facade\Queue;
+use think\facade\Route;
 
 /**
  * Class UserRepositoryRepository
@@ -133,5 +142,64 @@ class UserActingRepository extends BaseRepository
     public function get($id, $uid)
     {
         return $this->dao->getWhere(['address_id' => $id, 'uid' => $uid])->append(['area']);
+    }
+
+    public function markForm($id)
+    {
+        $data = $this->dao->get($id);
+        $form = Elm::createForm(Route::buildUrl('userActingMarkForm', ['id' => $id])->build());
+        $form->setRule([
+            Elm::textarea('mark', '备注：', $data['mark'])->placeholder('请输入备注')->required(),
+        ]);
+        return $form->setTitle('修改备注');
+    }
+
+    public function statusForm($id)
+    {
+        $form = Elm::createForm(Route::buildUrl('userActingStatus', ['id' => $id])->build());
+        $form->setRule([
+            Elm::select('status', '审核状态：', 1)->options([
+                ['value' => 1, 'label' => '同意'],
+                ['value' => 2, 'label' => '拒绝'],
+            ])->control([
+                /*[
+                    'value' => 1,
+                    'rule' => [
+                        Elm::radio('create_mer', '自动创建分组：', 1)->options([
+                            ['value' => 1, 'label' => '创建'],
+                            ['value' => 2, 'label' => '不创建'],
+                        ])
+                    ]
+                ],*/
+                [
+                    'value' => 2,
+                    'rule' => [
+                        Elm::textarea('fail_msg', '失败原因：', '信息填写有误')->placeholder('请输入失败原因')
+                    ]
+                ]
+            ]),
+        ]);
+        return $form->setTitle('修改审核状态');
+    }
+
+    public function updateStatus($id, $data)
+    {
+        $intention = $this->dao->get($id);
+        if (!$intention)
+            throw new ValidateException('信息不存在');
+        if ($intention->status)
+            throw new ValidateException('状态有误,修改失败');
+
+        $margin = app()->make(UserGroupRepository::class)->get($intention['group_id']);
+
+        if ($margin) {
+            // 修改分组
+            //UserRepository::class->update($intention['uid'], $data);
+            /** @var UserRepository $userRepository */
+            $userRepository = app()->make(UserRepository::class);
+            $user = $userRepository->get($intention['uid']);
+            $user->group_id = $intention['group_id'];
+            $user->save();
+        }
     }
 }

@@ -333,11 +333,19 @@ Route::group(function () {
         Route::delete(':id', '/delete')->name('userActingDelete')->option([
             '_alias' => '用户代理删除',
         ]);
-        Route::post(':id', '/status')->name('userActingStatus')->option([
+        Route::post(':id', '/update')->name('userActingUpdate')->option([
             '_alias' => '用户代理编辑',
         ]);
-        Route::get('form/:id', '/statusForm')->name('userActingStatusForm')->option([
+        Route::get('form/:id', '/updateForm')->name('userActingUpdateForm')->option([
             '_alias' => '用户代理编辑表单',
+            '_auth' => false,
+            '_form' => 'userActingUpdate',
+        ]);
+        Route::post('status/:id', '/switchStatus')->name('userActingStatus')->option([
+            '_alias' => '审核',
+        ]);
+        Route::get('status/:id/form', '/statusForm')->name('userActingStatusForm')->option([
+            '_alias' => '申请商户',
             '_auth' => false,
             '_form' => 'userActingStatus',
         ]);
