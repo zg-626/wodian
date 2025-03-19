@@ -431,6 +431,38 @@ class Auth extends BaseController
     }
 
     /**
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/1
+     */
+    public function actingInfo()
+    {
+        $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
+        $user->append(['service', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral']);
+        $data = $user->toArray();
+        $data['total_consume'] = $user['pay_price'];
+        $data['extension_status'] = systemConfig('extension_status');
+        if (systemConfig('member_status'))
+            $data['member_icon'] = $this->request->userInfo()->member->brokerage_icon ?? '';
+        if ($data['is_svip'] == 3)
+            $data['svip_endtime'] = date('Y-m-d H:i:s', strtotime("+100 year"));
+
+        $day = date('Y-m-d', time());
+        $key = 'sign_' . $user['uid'] . '_' . $day;
+        $data['sign_status'] = false;
+        if (Cache::get($key)) {
+            $data['sign_status'] = true;
+        } else {
+            $nu = app()->make(UserSignRepository::class)->getSign($user->uid, $day);
+            if ($nu) {
+                $data['sign_status'] = true;
+                Cache::set($key, true, new \DateTime($day . ' 23:59:59'));
+            }
+        }
+        return app('json')->success($data);
+    }
+
+    /**
      * TODO 注册账号
      * @param UserAuthValidate $validate
      * @param UserRepository $repository

@@ -408,10 +408,29 @@ class CommunityRepository extends BaseRepository
         $data['avatar'] = $user->avatar;
         $data['nickname'] = $user->nickname;
         $data['is_start'] = $is_start;
+        $data['group_id'] = $user->group_id;
         $data['member_icon'] = systemConfig('member_status') ? ($user->member->brokerage_icon ?? '')  : '';
         $data['is_self'] = $is_self;
         $data['fans'] = $user->count_fans;
 
+        return $data;
+    }
+
+    /**
+     * TODO 获取某用户信息
+     * @param int $uid
+     * @param null $self
+     * @return mixed
+     * @author Qinii
+     * @day 10/29/21
+     */
+    public function getActingInfo(int $uid)
+    {
+        $user = app()->make(UserRepository::class)->get($uid);
+        $data['uid']   = $user->uid;
+        $data['avatar'] = $user->avatar;
+        $data['nickname'] = $user->nickname;
+        $data['group_id'] = $user->group_id;
         return $data;
     }
 

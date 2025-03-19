@@ -36,10 +36,11 @@ use think\facade\{Cache, Db, Queue};
 
 class StoreOrderCreateRepository extends StoreOrderRepository
 {
-    public function v2CartIdByOrderInfo($user, array $cartId, array $takes = null, array $useCoupon = null, bool $useIntegral = false, int $addressId = null, $createOrder = false)
+    public function v2CartIdByOrderInfo($user, array $cartId, array $takes = null, array $useCoupon = null, bool $useIntegral = false, $userDeduction = false, int $addressId = null, $createOrder = false)
     {
         $uid = $user->uid;
         $userIntegral = $user->integral;
+        $user_coupon_amount = $user->coupon_amount;
         $key = md5(json_encode(compact('cartId', 'takes', 'useCoupon', 'useIntegral', 'addressId'))) . $uid;
 
         //去掉过期的优惠券信息
@@ -47,7 +48,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         //验证地址
         $address = $this->validateAddress($addressId, $uid);
         //获取购物车信息
-        $merchantCartList = $this->validateCartList($cartId,$address,$user);
+        $merchantCartList = $this->validateCartList($cartId, $address, $user);
         $svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
         $svip_integral_rate = $svip_status ? app()->make(MemberinterestsRepository::class)->getSvipInterestVal(MemberinterestsRepository::HAS_TYPE_PAY) : 0;
         $mer_form_id = 0;
@@ -59,7 +60,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         //虚拟订单自定义数据
         $order_extend = [];
         //检查商品类型, 活动商品只能单独购买
-        $this->validatePurchaseLimit($merchantCartList,$user, $order_type, $order_model, $mer_form_id);
+        $this->validatePurchaseLimit($merchantCartList, $user, $order_type, $order_model, $mer_form_id);
         if ($mer_form_id > 0) {
             $mer_form_info = app()->make(FormRepository::class)->get($mer_form_id);
         }
@@ -116,8 +117,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                     $deliveryStatus = false;
                 }
                 //加载商品数据
-                switch($cart['product_type'])
-                {
+                switch ($cart['product_type']) {
                     case 2:
                         $append = ['productPresell', 'productPresellAttr'];
                         break;
@@ -694,6 +694,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         $order_total_integral = 0;
         $order_total_integral_price = 0;
         $order_total_give_integral = 0;
+        $order_total_deduction= 0;
+        $order_total_deduction_price = 0;
+        $order_total_give_deduction = 0;
         $allow_no_address = true;
 
         foreach ($merchantCartList as &$merchantCart) {
@@ -709,7 +712,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             unset($merchantCart['config']);
             $merIntegralConfig['mer_integral_rate'] = min(1, $merIntegralConfig['mer_integral_rate'] > 0 ? bcdiv($merIntegralConfig['mer_integral_rate'], 100, 4) : $merIntegralConfig['mer_integral_rate']);
             $total_integral = 0;
+            $total_deduction = 0;
             $total_integral_price = 0;
+            $total_deduction_price = 0;
             $merIntegralFlag = $merIntegralFlag || ((bool)$merIntegralConfig['mer_integral_status']);
             $integralFlag = $useIntegral && $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_money'] > 0 && $merIntegralConfig['mer_integral_status'];
 
@@ -755,9 +760,54 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                 }
                 $cart['integral'] = null;
             }
+            //计算抵扣金抵扣
+            foreach ($merchantCart['list'] as &$cart) {
+                //只有普通商品可以抵扣
+                if ($cart['product_type'] == 0 && $user_coupon_amount > 0 && $merchantCart['order']['true_price'] > 0) {
+                    //$eductionRate = $cart['product']['integral_rate'];
+                    $eductionRate = 100;
+                    /*if ($eductionRate < 0) {
+                    $eductionRate = $merIntegralConfig['mer_integral_rate'];
+                    } else if ($eductionRate > 0) {
+                    $eductionRate = min(bcdiv($eductionRate, 100, 4), 1);
+                    }*/
+                    if ($eductionRate > 0) {
+                        $productDeductionPrice = min(bcmul(bcmul($this->cartByPrice($cart), $cart['cart_num'], 2), $eductionRate, 2), $cart['true_price']);
+                        if ($productDeductionPrice > 0) {
+                            $productDeduction = ceil(bcdiv($productDeductionPrice, 1, 3));
+                            if ($productDeduction <= $user_coupon_amount) {
+                                $user_coupon_amount = bcsub($user_coupon_amount, $productDeduction, 0);
+                                //使用多少抵扣金抵扣了多少金额
+                                $cart['deduction'] = [
+                                    'use' => $productDeduction,
+                                    'price' => $productDeductionPrice
+                                ];
+                            } else {
+                                $productDeductionPrice = bcmul($user_coupon_amount, 1, 2);
+                                //使用多少抵扣金抵扣了多少金额
+                                $cart['deduction'] = [
+                                    'use' => $user_coupon_amount,
+                                    'price' => $productDeductionPrice
+                                ];
+                                $user_coupon_amount = 0;
+                            }
+
+                            $cart['true_price'] = bcsub($cart['true_price'], $cart['deduction']['price'], 2);
+                            $merchantCart['order']['true_price'] = bcsub($merchantCart['order']['true_price'], $cart['deduction']['price'], 2);
+
+                            $total_deduction_price = bcadd($total_deduction_price, $cart['deduction']['price'], 2);
+                            $total_deduction = bcadd($total_deduction, $cart['deduction']['use'], 0);
+                            continue;
+                        }
+                    }
+                }
+                $cart['deduction'] = null;
+            }
             unset($cart);
             $order_total_integral = bcadd($order_total_integral, $total_integral, 0);
             $order_total_integral_price = bcadd($order_total_integral_price, $total_integral_price, 2);
+            $order_total_deduction = bcadd($order_total_deduction, $total_deduction, 0);
+            $order_total_deduction_price = bcadd($order_total_deduction_price, $total_deduction_price, 2);
 
             $_pay_price = $merchantCart['order']['true_price'];
             $valid_total_price = $merchantCart['order']['valid_total_price'];
@@ -831,6 +881,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         $total_price = $order_total_price;
         $openIntegral = $merIntegralFlag && !$order_type && $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_money'] > 0;
         $total_coupon = bcadd($order_svip_discount, bcadd(bcadd($total_platform_coupon_price, $order_coupon_price, 2), $order_total_integral_price, 2), 2);
+        $total_coupon=bcadd($total_coupon,$order_total_deduction_price,0);
 
         $data = compact(
                 'order_type',
@@ -847,6 +898,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                 'order_total_integral',
                 'order_total_integral_price',
                 'order_total_give_integral',
+                'order_total_deduction',
+                'order_total_deduction_price',
+                'order_total_give_deduction',
                 'order_svip_discount',
                 'total_platform_coupon_price',
                 'total_coupon',
@@ -861,6 +915,103 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             ) + ['allow_address' => !$allow_no_address, 'order_delivery_status' => $orderDeliveryStatus];
         Cache::set('order_create_cache' . $uid . '_' . $key, $data, 600);
         return $data;
+    }
+
+    /**
+     * TODO 获取用户的收获地址信息
+     * @param $addressId
+     * @param $uid
+     * @return array|\think\Model|null
+     * @author Qinii
+     */
+    protected function validateAddress($addressId, $uid)
+    {
+        $address = null;
+        //验证地址
+        if ($addressId) {
+            $addressRepository = app()->make(UserAddressRepository::class);
+            $address = $addressRepository->getWhere(['uid' => $uid, 'address_id' => $addressId]);
+        }
+        return $address;
+    }
+
+    /**
+     * TODO 获取整单的购物车数据
+     * @param $cartId
+     * @param $address
+     * @param $user
+     * @return mixed
+     * @author Qinii
+     */
+    protected function validateCartList($cartId, $address, $user)
+    {
+        $storeCartRepository = app()->make(storeCartRepository::class);
+        $cartData = $storeCartRepository->cartIbByData($cartId, $user->uid, $address);
+        $res = $storeCartRepository->checkCartList($cartData, 0, $user);
+        $fail = $res['fail'];
+        // 存在失效商品
+        if (count($fail)) {
+            if ($fail[0]['is_fail']) {
+                throw new ValidateException('[已失效]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
+            }
+            if (in_array($fail[0]['product_type'], [1, 2, 3]) && !$fail[0]['userPayCount']) {
+                throw new ValidateException('[超出限购数]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
+            }
+            throw new ValidateException('[已失效]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
+        }
+        //正常返回数据
+        return $res['list'];
+    }
+
+    /**
+     * TODO 检测商品是否限制购买
+     * @param $merchantCartList
+     * @param $order_type
+     * @param $order_model
+     * @param $order_extend
+     */
+    protected function validatePurchaseLimit($merchantCartList, $user, &$order_type, &$order_model, &$mer_form_id)
+    {
+        foreach ($merchantCartList as $merchantCart) {
+            foreach ($merchantCart['list'] as $cart) {
+                if ($cart['cart_num'] <= 0) {
+                    throw new ValidateException('购买商品数必须大于0');
+                }
+                if ($cart['product_type'] == 0) {
+                    if ($cart['product']['once_min_count'] > 0 && $cart['product']['once_min_count'] > $cart['cart_num']) {
+                        throw new ValidateException('[低于起购数:' . $cart['product']['once_min_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
+                    }
+                    if ($cart['product']['pay_limit'] == 1 && $cart['product']['once_max_count'] < $cart['cart_num']) {
+                        throw new ValidateException('[超出单次限购数：' . $cart['product']['once_max_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
+                    }
+                    if ($cart['product']['pay_limit'] == 2) {
+                        $count = app()->make(StoreOrderRepository::class)->getMaxCountNumber($cart['uid'], $cart['product_id']);
+                        if (($cart['cart_num'] + $count) > $cart['product']['once_max_count']) {
+                            throw new ValidateException('[超出限购总数：' . $cart['product']['once_max_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
+                        }
+                    }
+                } else {
+                    if ($cart['product_type'] > 0) {
+                        $order_type = $cart['product_type'];
+                        if (($cart['product_type'] != 10 && count($merchantCart['list']) != 1) || count($merchantCartList) != 1) {
+                            throw new ValidateException('活动商品必须单独购买');
+                        }
+                    }
+                }
+                if ($cart['product']['type'] && (count($merchantCart['list']) != 1 || count($merchantCartList) != 1)) {
+                    throw new ValidateException('虚拟商品必须单独购买');
+                }
+                $order_model = $cart['product']['type'];
+                $mer_form_id = (int)$cart['product']['mer_form_id'];
+            }
+        }
+
+        //套餐商品
+        if ($order_type == 10) {
+            $storeDiscountRepository = app()->make(StoreDiscountRepository::class);
+            $storeDiscountRepository->check($merchantCartList[0]['list'][0]['source_id'], $merchantCartList[0]['list'], $user);
+        }
+        unset($merchantCart, $cart);
     }
 
     public function v2CreateOrder($key, int $pay_type, $user, array $cartId, array $extend, array $mark, array $receipt_data, array $takes = null, array $useCoupon = null, bool $useIntegral = false, int $addressId = null, array $post)
@@ -890,7 +1041,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                 if ($params['val'][$k]['type'] == 'uploadPicture') {
                     $order_extend[$params['val'][$k]['label']] = $v;
                 } else {
-                    $order_extend[$params['val'][$k]['label']] = is_array($v) ? implode(',',$v) : $v;
+                    $order_extend[$params['val'][$k]['label']] = is_array($v) ? implode(',', $v) : $v;
                 }
             }
         }
@@ -1064,6 +1215,8 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                 'integral' => $merchantCart['order']['total_integral'],
                 'integral_price' => $merchantCart['order']['total_integral_price'],
                 'give_integral' => $merchantCart['order']['total_give_integral'],
+                'deduction' => $merchantCart['order']['total_deduction'],
+                'deduction_price' => $merchantCart['order']['total_deduction_price'],
                 'mer_id' => $merchantCart['mer_id'],
                 'cost' => $cost,
                 'order_extend' => count($order_extend) ? json_encode($order_extend, JSON_UNESCAPED_UNICODE) : '',
@@ -1098,6 +1251,8 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             'give_coupon_ids' => $giveCouponIds,
             'integral' => $orderInfo['order_total_integral'],
             'integral_price' => $orderInfo['order_total_integral_price'],
+            'deduction' => $orderInfo['order_total_deduction'],
+            'deduction_price' => $orderInfo['order_total_deduction_price'],
             'give_integral' => $orderInfo['order_total_give_integral'],
             'activity_type' => $orderInfo['order_type'],
         ];
@@ -1146,6 +1301,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                             if ($cart['integral'] && $cart['integral']['use'] > 0) {
                                 $productRepository->incIntegral($cart['product']['product_id'], $cart['integral']['use'], $cart['integral']['price']);
                             }
+                            if ($cart['deduction'] && $cart['deduction']['use'] > 0) {
+                                $productRepository->incDeduction($cart['product']['product_id'], $cart['deduction']['use'], $cart['deduction']['price']);
+                            }
                         }
                     } catch (\Exception $e) {
                         throw new ValidateException('库存不足');
@@ -1173,6 +1331,7 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             //创建订单
             $groupOrder = $storeGroupOrderRepository->create($groupOrder);
             $bills = [];
+            $bills_deduction = [];
 
             if ($groupOrder['integral'] > 0) {
                 $user->integral = bcsub($user->integral, $groupOrder['integral'], 0);
@@ -1183,6 +1342,20 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                     'number' => $groupOrder['integral'],
                     'mark' => '购买商品使用积分抵扣' . floatval($groupOrder['integral_price']) . '元',
                     'balance' => $user->integral
+                ]);
+                $user->save();
+            }
+
+            // 扣除抵扣金
+            if ($groupOrder['deduction'] > 0) {
+                $user->coupon_amount = bcsub($user->coupon_amount, $groupOrder['deduction'], 0);
+                app()->make(UserBillRepository::class)->decBill($user['uid'], 'deduction', 'deduction', [
+                    'link_id' => $groupOrder['group_order_id'],
+                    'status' => 1,
+                    'title' => '购买商品',
+                    'number' => $groupOrder['deduction'],
+                    'mark' => '购买商品使用抵扣金抵扣' . floatval($groupOrder['deduction_price']) . '元',
+                    'balance' => $user->coupon_amount
                 ]);
                 $user->save();
             }
@@ -1210,6 +1383,22 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                         'number' => $order['integral'],
                         'balance' => $user->integral,
                         'mark' => '购买商品使用' . $order['integral'] . '积分抵扣' . floatval($order['integral_price']) . '元',
+                        'mer_id' => $order['mer_id'],
+                        'status' => 1
+                    ];
+                }
+
+                if ($order['deduction'] > 0) {
+                    $bills_deduction[] = [
+                        'uid' => $uid,
+                        'link_id' => $_order->order_id,
+                        'pm' => 0,
+                        'title' => '抵扣金抵扣',
+                        'category' => 'mer_deduction',
+                        'type' => 'deduction',
+                        'number' => $order['deduction'],
+                        'balance' => $user->coupon_amount,
+                        'mark' => '购买商品使用' . $order['deduction'] . '积分抵扣' . floatval($order['deduction_price']) . '元',
                         'mer_id' => $order['mer_id'],
                         'status' => 1
                     ];
@@ -1306,6 +1495,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                         'integral_price' => $cart['integral']['price'] ?? 0,
                         'integral' => $cart['integral'] ? bcdiv($cart['integral']['use'], $cart['cart_num'], 0) : 0,
                         'integral_total' => $cart['integral'] ? $cart['integral']['use'] : 0,
+                        'deduction_price' => $cart['deduction']['price'] ?? 0,
+                        'deduction' => $cart['deduction'] ? bcdiv($cart['deduction']['use'], $cart['cart_num'], 0) : 0,
+                        'deduction_total' => $cart['deduction'] ? $cart['deduction']['use'] : 0,
                         'product_type' => $cart['product_type'],
                         'cart_info' => json_encode($order_cart),
                         'refund_switch' => $cart['refund_switch'],
@@ -1318,6 +1510,9 @@ class StoreOrderCreateRepository extends StoreOrderRepository
 
             if (count($bills) > 0) {
                 app()->make(UserBillRepository::class)->insertAll($bills);
+            }
+            if (count($bills_deduction) > 0) {
+                app()->make(UserBillRepository::class)->insertAll($bills_deduction);
             }
             $storeOrderStatusRepository->batchCreateLog($orderStatus);
             $storeOrderProductRepository->insertAll($orderProduct);
@@ -1340,105 +1535,8 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         }
         Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_CREATE', 'id' => $group->group_order_id]);
         if ($addressId)
-            app()->make(RecordRepository::class)->addRecord(RecordRepository::TYPE_ADDRESS_RECORD,['address_id' => $addressId,'num' => count($orderList),'uid' => $uid]);
+            app()->make(RecordRepository::class)->addRecord(RecordRepository::TYPE_ADDRESS_RECORD, ['address_id' => $addressId, 'num' => count($orderList), 'uid' => $uid]);
         return $group;
-    }
-
-    /**
-     * TODO 获取用户的收获地址信息
-     * @param $addressId
-     * @param $uid
-     * @return array|\think\Model|null
-     * @author Qinii
-     */
-    protected function validateAddress($addressId, $uid)
-    {
-        $address = null;
-        //验证地址
-        if ($addressId) {
-            $addressRepository = app()->make(UserAddressRepository::class);
-            $address = $addressRepository->getWhere(['uid' => $uid, 'address_id' => $addressId]);
-        }
-        return $address;
-    }
-
-    /**
-     * TODO 获取整单的购物车数据
-     * @param $cartId
-     * @param $address
-     * @param $user
-     * @return mixed
-     * @author Qinii
-     */
-    protected function validateCartList($cartId,$address,$user)
-    {
-        $storeCartRepository = app()->make(storeCartRepository::class);
-        $cartData = $storeCartRepository->cartIbByData($cartId, $user->uid, $address);
-        $res = $storeCartRepository->checkCartList($cartData, 0, $user);
-        $fail = $res['fail'];
-        // 存在失效商品
-        if (count($fail)) {
-            if ($fail[0]['is_fail']) {
-                throw new ValidateException('[已失效]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
-            }
-            if (in_array($fail[0]['product_type'], [1, 2, 3]) && !$fail[0]['userPayCount']) {
-                throw new ValidateException('[超出限购数]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
-            }
-            throw new ValidateException('[已失效]' . mb_substr($fail[0]['product']['store_name'], 0, 10) . '...');
-        }
-        //正常返回数据
-        return $res['list'];
-    }
-
-    /**
-     * TODO 检测商品是否限制购买
-     * @param $merchantCartList
-     * @param $order_type
-     * @param $order_model
-     * @param $order_extend
-     */
-    protected function validatePurchaseLimit($merchantCartList,$user, &$order_type, &$order_model, &$mer_form_id)
-    {
-        foreach ($merchantCartList as $merchantCart) {
-            foreach ($merchantCart['list'] as $cart) {
-                if ($cart['cart_num'] <= 0) {
-                    throw new ValidateException('购买商品数必须大于0');
-                }
-                if ($cart['product_type'] == 0) {
-                    if ($cart['product']['once_min_count'] > 0 && $cart['product']['once_min_count'] > $cart['cart_num']) {
-                        throw new ValidateException('[低于起购数:' . $cart['product']['once_min_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
-                    }
-                    if ($cart['product']['pay_limit'] == 1 && $cart['product']['once_max_count'] < $cart['cart_num']) {
-                        throw new ValidateException('[超出单次限购数：' . $cart['product']['once_max_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
-                    }
-                    if ($cart['product']['pay_limit'] == 2) {
-                        $count = app()->make(StoreOrderRepository::class)->getMaxCountNumber($cart['uid'], $cart['product_id']);
-                        if (($cart['cart_num'] + $count) > $cart['product']['once_max_count']) {
-                            throw new ValidateException('[超出限购总数：' . $cart['product']['once_max_count'] . ']' . mb_substr($cart['product']['store_name'], 0, 10) . '...');
-                        }
-                    }
-                } else {
-                    if ($cart['product_type'] > 0) {
-                        $order_type = $cart['product_type'];
-                        if (($cart['product_type'] != 10 && count($merchantCart['list']) != 1) || count($merchantCartList) != 1) {
-                            throw new ValidateException('活动商品必须单独购买');
-                        }
-                    }
-                }
-                if ($cart['product']['type'] && (count($merchantCart['list']) != 1 || count($merchantCartList) != 1)) {
-                    throw new ValidateException('虚拟商品必须单独购买');
-                }
-                $order_model = $cart['product']['type'];
-                $mer_form_id = (int)$cart['product']['mer_form_id'];
-            }
-        }
-
-        //套餐商品
-        if ($order_type == 10) {
-            $storeDiscountRepository = app()->make(StoreDiscountRepository::class);
-            $storeDiscountRepository->check($merchantCartList[0]['list'][0]['source_id'], $merchantCartList[0]['list'], $user);
-        }
-        unset($merchantCart, $cart);
     }
 }
 

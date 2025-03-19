@@ -376,6 +376,10 @@ class ProductDao extends BaseDao
     {
         model::getDB()->where('product_id', $productId)->inc('integral_total', $integral_total)->inc('integral_price_total', $integral_price_total)->update();
     }
+    public function incDeduction(int $productId, $deduction_total, $deduction_price_total)
+    {
+        model::getDB()->where('product_id', $productId)->inc('deduction_total', $deduction_total)->inc('deduction_price_total', $deduction_price_total)->update();
+    }
 
     public function visitProductGroup($date, $merId = null, $limit = 7)
     {

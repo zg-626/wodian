@@ -407,6 +407,7 @@ Route::group('api/', function () {
             Route::get('/show/:id', 'Community/show');
             //用户页
             Route::get('/user/info/:id', 'Community/userInfo');
+            Route::get('/user/acting_info/:id', 'Community/actingInfo');
             //用户的文章
             Route::get('/user/community/:id', 'Community/userCommunitylst');
             //用户的视频

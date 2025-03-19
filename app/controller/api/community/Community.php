@@ -421,6 +421,24 @@ class Community extends BaseController
         return app('json')->success($data);
     }
 
+    /**
+     * TODO 用户信息
+     * @param $id
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 10/28/21
+     */
+    public function actingInfo($id)
+    {
+        if (!$id)  return app('json')->fail('缺少参数');
+        $data = $this->repository->getActingInfo($id);
+        if($data['group_id'] !== 1){
+            return app('json')->success($data);
+
+        }
+        return app('json')->fail('该用户为普通用户');
+    }
+
     public function getSpuByOrder($id)
     {
         $data = $this->repository->getSpuByOrder($id,7233);
