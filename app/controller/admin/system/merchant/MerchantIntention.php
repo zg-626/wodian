@@ -71,7 +71,7 @@ class MerchantIntention extends BaseController
     // 审核
     public function switchStatus($id)
     {
-        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
+        if (!$this->repository->getWhereCount(['mer_intention_id' => $id, 'is_del' => 0]))
             return app('json')->fail('数据不存在');
         $data = $this->request->params(['status', 'fail_msg', 'create_mer']);
         $data['status'] = $data['status'] == 1 ? 1 : 2;
