@@ -14,14 +14,17 @@ namespace app\controller\api\article;
 
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\repositories\store\CityAreaRepository;
+use app\common\repositories\system\attachment\AttachmentRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
+use crmeb\services\QrcodeService;
 use crmeb\services\SwooleTaskService;
 use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
+use think\exception\ValidateException;
 
 class Article extends BaseController
 {
@@ -79,9 +82,26 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
+        $shopId=123;
+        $ratio=3.00;
+        $siteUrl = rtrim(systemConfig('site_url'), '/');
+        $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
+        $name = md5('shop' . $shopId . date('Ymd')) . '.jpg';
+        $logoPath = 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/67da1202503191526466152.jpg'; // Logo 图片路径
+        $imageInfo = app()->make(QrcodeService::class)->getQRCodeLogoPath($codeUrl, $name,$logoPath);
+        if (is_string($imageInfo)) throw new ValidateException('二维码生成失败');
+        $imageInfo['dir'] = tidy_url($imageInfo['dir'], null, $siteUrl);
+        $attachmentRepository = app()->make(AttachmentRepository::class);
+        $attachmentRepository->create(systemConfig('upload_type') ?: 1, -2, $shopId, [
+            'attachment_category_id' => 0,
+            'attachment_name' => $imageInfo['name'],
+            'attachment_src' => $imageInfo['dir']
+        ]);
+        $urlCode = $imageInfo['dir'];
+        print_r($urlCode);
         /** @var CityAreaRepository $cityArea */
-        $cityArea= app()->make(CityAreaRepository::class);
-        print_r($cityArea->getAddressChildList());
+       /* $cityArea= app()->make(CityAreaRepository::class);
+        print_r($cityArea->getAddressChildList());*/
         /*$MerchantDao = app()->make(MerchantDao::class); // MerchantDao
         $merchant = $MerchantDao->search(['mer_id' => 78])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 

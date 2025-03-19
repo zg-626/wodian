@@ -190,4 +190,57 @@ class QrcodeService
         }
     }
 
+    public function getQRCodeLogoPath($url, $name, $logoPath = null)
+    {
+        if (!strlen(trim($url)) || !strlen(trim($name))) return false;
+        try {
+            $uploadType = systemConfig('upload_type');
+            if (!$uploadType) $uploadType = 1;
+            $uploadType = (int)$uploadType;
+            $siteUrl = systemConfig('site_url');
+            if (!$siteUrl) return '请前往后台设置->系统设置->网站域名 填写您的域名格式为：http://域名';
+            $info = [];
+            $outfile = Config::get('qrcode.cache_dir');
+
+            // 创建二维码
+            $code = new QrCode($url);
+            $code->setSize(300); // 设置二维码大小
+            $code->setMargin(10); // 设置边距
+
+            // 添加 Logo
+            if ($logoPath) {
+                $code->setLogoPath($logoPath); // 设置 Logo 路径
+                $code->setLogoSize(100, 100); // 设置 Logo 大小
+                //$code->setLogoBackgroundColor([255, 255, 255, 127]); // 设置 Logo 背景颜色
+            }
+
+            if ($uploadType === 1) {
+                if (!is_dir('./public/' . $outfile))
+                    mkdir('./public/' . $outfile, 0777, true);
+                $code->writeFile('./public/' . $outfile . '/' . $name);
+                $info["code"] = 200;
+                $info["name"] = $name;
+                $info["dir"] = rtrim($siteUrl, '/') . '/' . $outfile . '/' . $name;
+                $info["time"] = time();
+                $info['size'] = 0;
+                $info['type'] = 'image/png';
+                $info["image_type"] = 1;
+                $info['thumb_path'] = $info["dir"];
+                return $info;
+            } else {
+                $upload = UploadService::create($uploadType);
+                $res = $upload->to('/public/' . $outfile)->validate()->stream($code->writeString(), $name);
+                if ($res === false) {
+                    return $upload->getError();
+                }
+                $info = $upload->getUploadInfo();
+                $info['image_type'] = $uploadType;
+                return $info;
+            }
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
+    }
+
+
 }

@@ -14,6 +14,7 @@ use app\common\middleware\InstallMiddleware;
 use think\facade\Route;
 
 Route::any('api/wechat/serve', 'WechatNotice/serve');
+Route::any('payPage', 'Page/payPage');
 
 Route::get('install','Install/begin');
 Route::group('install',function(){
