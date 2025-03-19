@@ -330,7 +330,7 @@ Route::group(function () {
         Route::get('lst', '/lst')->name('userActingLst')->option([
             '_alias' => '用户代理申请列表',
         ]);
-        Route::delete(':id', '/delete')->name('userActingDelete')->option([
+        Route::delete('delete/:id', '/delete')->name('userActingDelete')->option([
             '_alias' => '用户代理删除',
         ]);
         Route::post(':id', '/update')->name('userActingUpdate')->option([

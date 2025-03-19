@@ -107,6 +107,12 @@ class MerchantDao extends BaseDao
         }
         if (isset($where['status']) && $where['status'] !== '')
             $query->where('status', $where['status']);
+        if (isset($where['is_online'])){
+            if($where['is_online'] == ''){
+                $where['is_online'] = 0;
+            }
+            $query->where('is_online', $where['is_online']);
+        }
         $order = $where['order'] ?? '';
         $query->when($order, function ($query) use ($where, $order) {
             if ($order == 'rate') {

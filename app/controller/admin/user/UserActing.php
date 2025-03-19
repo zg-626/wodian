@@ -96,7 +96,7 @@ class UserActing extends BaseController
      */
     public function delete($id)
     {
-        if (!$this->repository->fieldExists('feedback_id', $id))
+        if (!$this->repository->getWhereCount(['id' => $id, 'is_del' => 0]))
             return app('json')->fail('数据不存在');
         $this->repository->update($id, ['is_del' => 1]);
         return app('json')->success('删除成功');

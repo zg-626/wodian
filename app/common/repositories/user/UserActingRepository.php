@@ -113,8 +113,8 @@ class UserActingRepository extends BaseRepository
         $count = $query->count();
         $list = $query->page($page, $limit)->order('id desc')->select();
         return compact('count','list');*/
-
-        $query = $this->dao->search(['uid', $uid])->with(
+        $where=['is_del'=>0];
+        $query = $this->dao->search($where)->with(
             [
                 'group' => function ($query) {
                 $query->field('group_id,group_name');
@@ -124,9 +124,7 @@ class UserActingRepository extends BaseRepository
                 },]
         );
         $count = $query->count();
-        $list = $query->page($page, $limit)->withAttr('images', function ($val) {
-            return $val ? json_decode($val, true) : [];
-        })->select();
+        $list = $query->page($page, $limit)->select();
         return compact('count', 'list');
     }
 
@@ -200,6 +198,8 @@ class UserActingRepository extends BaseRepository
             $user = $userRepository->get($intention['uid']);
             $user->group_id = $intention['group_id'];
             $user->save();
+
+            $intention->save($data);
         }
     }
 }
