@@ -839,7 +839,8 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             $giveIntegralFlag = $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_order_rate'] > 0;
             $total_give_integral = 0;
             //计算赠送积分, 只有普通商品赠送积分
-            if ($giveIntegralFlag && !$order_type && $pay_price > 0) {
+            // TODO 下单赠送积分,不花钱时也赠送$pay_price > 0
+            if ($giveIntegralFlag && !$order_type && $pay_price >= 0) {
                 $total_give_integral = floor(bcmul($pay_price, $sysIntegralConfig['integral_order_rate'], 0));
                 if ($total_give_integral > 0 && $svip_status && $svip_integral_rate > 0) {
                     $total_give_integral = bcmul($svip_integral_rate, $total_give_integral, 0);
