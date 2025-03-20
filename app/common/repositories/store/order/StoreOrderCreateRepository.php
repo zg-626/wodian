@@ -533,123 +533,123 @@ class StoreOrderCreateRepository extends StoreOrderRepository
         unset($merchantCart);
 
         //计算平台券优惠金额
-//        if ($total_true_price > 0) {
-        $StoreCouponUser = app()->make(StoreCouponUserRepository::class);
-        $platformCoupon = $StoreCouponUser->validUserPlatformCoupon($uid);
-        if ($enabledPlatformCoupon && count($platformCoupon)) {
+        if ($total_true_price > 0) {
+            $StoreCouponUser = app()->make(StoreCouponUserRepository::class);
+            $platformCoupon = $StoreCouponUser->validUserPlatformCoupon($uid);
+            if ($enabledPlatformCoupon && count($platformCoupon)) {
 
-            $catePriceLst = [];
-            $storePriceLst = [];
-            $_cartNum = 0;
+                $catePriceLst = [];
+                $storePriceLst = [];
+                $_cartNum = 0;
 
-            foreach ($merchantCartList as &$merchantCart) {
-                if ($merchantCart['order']['true_price'] <= 0) continue;
-                foreach ($merchantCart['list'] as &$cart) {
-                    $_cartNum++;
-                    if ($cart['product']['cate_id']) {
-                        if (!isset($catePriceLst[$cart['product']['cate_id']])) {
-                            $catePriceLst[$cart['product']['cate_id']] = ['price' => 0, 'cart' => []];
+                foreach ($merchantCartList as &$merchantCart) {
+                    if ($merchantCart['order']['true_price'] <= 0) continue;
+                    foreach ($merchantCart['list'] as &$cart) {
+                        $_cartNum++;
+                        if ($cart['product']['cate_id']) {
+                            if (!isset($catePriceLst[$cart['product']['cate_id']])) {
+                                $catePriceLst[$cart['product']['cate_id']] = ['price' => 0, 'cart' => []];
+                            }
+                            $catePriceLst[$cart['product']['cate_id']]['price'] = bcadd($catePriceLst[$cart['product']['cate_id']]['price'], $cart['true_price']);
+                            $catePriceLst[$cart['product']['cate_id']]['cart'][] = &$cart;
                         }
-                        $catePriceLst[$cart['product']['cate_id']]['price'] = bcadd($catePriceLst[$cart['product']['cate_id']]['price'], $cart['true_price']);
-                        $catePriceLst[$cart['product']['cate_id']]['cart'][] = &$cart;
+                    }
+                    unset($cart);
+                    $storePriceLst[$merchantCart['mer_id']] = [
+                        'price' => $merchantCart['order']['true_price'],
+                        'num' => count($merchantCart['list'])
+                    ];
+                }
+                unset($merchantCart);
+                $flag = false;
+                $platformCouponRate = null;
+
+                foreach ($platformCoupon as &$coupon) {
+                    $coupon['checked'] = false;
+                    //通用券
+                    if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_ALL) {
+                        $coupon['disabled'] = $total_true_price <= 0 || $coupon['use_min_price'] > $total_true_price;
+                        if (!$platformCouponRate && !$coupon['disabled'] && !$flag && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
+                            $platformCouponRate = [
+                                'id' => $coupon['coupon_user_id'],
+                                'type' => $coupon['coupon']['type'],
+                                'price' => $total_true_price,
+                                'coupon_price' => $coupon['coupon_price'],
+                                'use_count' => $_cartNum,
+                                'check' => function ($cart) {
+                                    return true;
+                                }
+                            ];
+                            $coupon['checked'] = true;
+                            $flag = true;
+                        }
+                        //品类券
+                    } else if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_CATE) {
+                        $_price = 0;
+                        $_use_count = 0;
+                        $cateIds = $coupon['product']->column('product_id');
+                        $allCateIds = array_unique(array_merge(app()->make(StoreCategoryRepository::class)->allChildren($cateIds), $cateIds));
+                        $flag2 = true;
+                        foreach ($allCateIds as $cateId) {
+                            if (isset($catePriceLst[$cateId])) {
+                                $_price = bcadd($catePriceLst[$cateId]['price'], $_price, 2);
+                                $_use_count += count($catePriceLst[$cateId]['cart']);
+                                $flag2 = false;
+                            }
+                        }
+                        $coupon['disabled'] = $flag2 || $coupon['use_min_price'] > $_price;
+                        //品类券可用
+                        if (!$platformCouponRate && !$coupon['disabled'] && !$flag && !$flag2 && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
+                            $platformCouponRate = [
+                                'id' => $coupon['coupon_user_id'],
+                                'type' => $coupon['coupon']['type'],
+                                'price' => $_price,
+                                'use_cate' => $allCateIds,
+                                'coupon_price' => $coupon['coupon_price'],
+                                'use_count' => $_use_count,
+                                'check' => function ($cart) use ($allCateIds) {
+                                    return in_array($cart['product']['cate_id'], $allCateIds);
+                                }
+                            ];
+                            $coupon['checked'] = true;
+                            $flag = true;
+                        }
+                        //跨店券
+                    } else if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_STORE) {
+                        $_price = 0;
+                        $_use_count = 0;
+                        $flag2 = true;
+                        foreach ($coupon['product'] as $item) {
+                            $merId = $item['product_id'];
+                            if (isset($storePriceLst[$merId])) {
+                                $_price = bcadd($storePriceLst[$merId]['price'], $_price, 2);
+                                $_use_count += $storePriceLst[$merId]['num'];
+                                $flag2 = false;
+                            }
+                        }
+                        $coupon['disabled'] = $flag2 || $coupon['use_min_price'] > $_price;
+                        //店铺券可用
+                        if (!$platformCouponRate && !$coupon['disabled'] && !$flag && !$flag2 && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
+                            $_merIds = $coupon['product']->column('product_id');
+                            $platformCouponRate = [
+                                'id' => $coupon['coupon_user_id'],
+                                'type' => $coupon['coupon']['type'],
+                                'price' => $_price,
+                                'use_store' => $_merIds,
+                                'coupon_price' => $coupon['coupon_price'],
+                                'use_count' => $_use_count,
+                                'check' => function ($cart) use ($_merIds) {
+                                    return in_array($cart['mer_id'], $_merIds);
+                                }
+                            ];
+                            $coupon['checked'] = true;
+                            $flag = true;
+                        }
                     }
                 }
-                unset($cart);
-                $storePriceLst[$merchantCart['mer_id']] = [
-                    'price' => $merchantCart['order']['true_price'],
-                    'num' => count($merchantCart['list'])
-                ];
+                unset($coupon);
             }
-            unset($merchantCart);
-            $flag = false;
-            $platformCouponRate = null;
-
-            foreach ($platformCoupon as &$coupon) {
-                $coupon['checked'] = false;
-                //通用券
-                if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_ALL) {
-                    $coupon['disabled'] = $total_true_price <= 0 || $coupon['use_min_price'] > $total_true_price;
-                    if (!$platformCouponRate && !$coupon['disabled'] && !$flag && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
-                        $platformCouponRate = [
-                            'id' => $coupon['coupon_user_id'],
-                            'type' => $coupon['coupon']['type'],
-                            'price' => $total_true_price,
-                            'coupon_price' => $coupon['coupon_price'],
-                            'use_count' => $_cartNum,
-                            'check' => function ($cart) {
-                                return true;
-                            }
-                        ];
-                        $coupon['checked'] = true;
-                        $flag = true;
-                    }
-                    //品类券
-                } else if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_CATE) {
-                    $_price = 0;
-                    $_use_count = 0;
-                    $cateIds = $coupon['product']->column('product_id');
-                    $allCateIds = array_unique(array_merge(app()->make(StoreCategoryRepository::class)->allChildren($cateIds), $cateIds));
-                    $flag2 = true;
-                    foreach ($allCateIds as $cateId) {
-                        if (isset($catePriceLst[$cateId])) {
-                            $_price = bcadd($catePriceLst[$cateId]['price'], $_price, 2);
-                            $_use_count += count($catePriceLst[$cateId]['cart']);
-                            $flag2 = false;
-                        }
-                    }
-                    $coupon['disabled'] = $flag2 || $coupon['use_min_price'] > $_price;
-                    //品类券可用
-                    if (!$platformCouponRate && !$coupon['disabled'] && !$flag && !$flag2 && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
-                        $platformCouponRate = [
-                            'id' => $coupon['coupon_user_id'],
-                            'type' => $coupon['coupon']['type'],
-                            'price' => $_price,
-                            'use_cate' => $allCateIds,
-                            'coupon_price' => $coupon['coupon_price'],
-                            'use_count' => $_use_count,
-                            'check' => function ($cart) use ($allCateIds) {
-                                return in_array($cart['product']['cate_id'], $allCateIds);
-                            }
-                        ];
-                        $coupon['checked'] = true;
-                        $flag = true;
-                    }
-                    //跨店券
-                } else if ($coupon['coupon']['type'] === StoreCouponRepository::TYPE_PLATFORM_STORE) {
-                    $_price = 0;
-                    $_use_count = 0;
-                    $flag2 = true;
-                    foreach ($coupon['product'] as $item) {
-                        $merId = $item['product_id'];
-                        if (isset($storePriceLst[$merId])) {
-                            $_price = bcadd($storePriceLst[$merId]['price'], $_price, 2);
-                            $_use_count += $storePriceLst[$merId]['num'];
-                            $flag2 = false;
-                        }
-                    }
-                    $coupon['disabled'] = $flag2 || $coupon['use_min_price'] > $_price;
-                    //店铺券可用
-                    if (!$platformCouponRate && !$coupon['disabled'] && !$flag && !$flag2 && ((!$usePlatformCouponId && !$usePlatformCouponFlag) || $usePlatformCouponId == $coupon['coupon_user_id'])) {
-                        $_merIds = $coupon['product']->column('product_id');
-                        $platformCouponRate = [
-                            'id' => $coupon['coupon_user_id'],
-                            'type' => $coupon['coupon']['type'],
-                            'price' => $_price,
-                            'use_store' => $_merIds,
-                            'coupon_price' => $coupon['coupon_price'],
-                            'use_count' => $_use_count,
-                            'check' => function ($cart) use ($_merIds) {
-                                return in_array($cart['mer_id'], $_merIds);
-                            }
-                        ];
-                        $coupon['checked'] = true;
-                        $flag = true;
-                    }
-                }
-            }
-            unset($coupon);
         }
-//        }
 
         $usePlatformCouponId = 0;
         $total_platform_coupon_price = 0;
@@ -760,10 +760,12 @@ class StoreOrderCreateRepository extends StoreOrderRepository
                 }
                 $cart['integral'] = null;
             }
+            $deductionlFlag = $userDeduction  > 0;
+
             //计算抵扣金抵扣
             foreach ($merchantCart['list'] as &$cart) {
                 //只有普通商品可以抵扣
-                if ($cart['product_type'] == 0 && $user_coupon_amount > 0 && $merchantCart['order']['true_price'] > 0) {
+                if ($cart['product_type'] == 0 && $deductionlFlag && $user_coupon_amount > 0 && $merchantCart['order']['true_price'] > 0) {
                     //$eductionRate = $cart['product']['integral_rate'];
                     $eductionRate = 100;
                     /*if ($eductionRate < 0) {
@@ -853,6 +855,8 @@ class StoreOrderCreateRepository extends StoreOrderRepository
             $merchantCart['order']['total_give_integral'] = $total_give_integral;
             $merchantCart['order']['total_integral_price'] = $total_integral_price;
             $merchantCart['order']['total_integral'] = $total_integral;
+            $merchantCart['order']['total_deduction_price'] = $total_deduction_price;
+            $merchantCart['order']['total_deduction'] = $total_deduction;
             $merchantCart['order']['org_price'] = $org_price;
             $merchantCart['order']['pay_price'] = $pay_price;
             $merchantCart['order']['coupon_price'] = $coupon_price;
