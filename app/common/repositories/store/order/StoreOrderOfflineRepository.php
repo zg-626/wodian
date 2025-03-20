@@ -20,12 +20,14 @@ use app\common\repositories\BaseRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\system\groupData\GroupDataRepository;
 use app\common\repositories\system\merchant\FinancialRecordRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\PayService;
 use FormBuilder\Factory\Elm;
+use think\exception\ValidateException;
 use think\facade\Db;
 use think\facade\Log;
 use think\facade\Queue;
@@ -112,7 +114,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $body = [
             'order_sn' => $order_sn,
             'pay_price' => $money,
-            'attach' => 'user_order',
+            'attach' => 'offline_order',
             'body' =>'线下门店支付'
         ];
         $type = $params['pay_type'];
@@ -124,7 +126,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $info = $this->dao->create($data);
         if ($money){
             try {
-                $service = new PayService($type,$body, 'user_order');
+                $service = new PayService($type,$body, 'offline_order');
                 $config = $service->pay($user);
                 return app('json')->status($type, $config + ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
@@ -173,8 +175,31 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $res->paid = 1;
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
+                $order = $res;
+                // 商户增加余额
+                app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
+                // 赠送积分
+                $this->giveIntegral($order);
+                // 赠送商户积分
+                //$this->giveMerIntegral($order->mer_id,$groupOrder);
+                app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+
                 return $this->payAfter($res, $res);
             });
+        }
+    }
+
+    public function giveIntegral($groupOrder)
+    {
+        if ($groupOrder->give_integral > 0) {
+            app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'lock', [
+                'link_id' => $groupOrder['order_id'],
+                'status' => 0,
+                'title' => '下单赠送积分',
+                'number' => $groupOrder->give_integral,
+                'mark' => '线下成功消费' . floatval($groupOrder['pay_price']) . '元,赠送积分' . floatval($groupOrder->give_integral),
+                'balance' => $groupOrder->user->integral
+            ]);
         }
     }
 
@@ -182,50 +207,22 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         $financialRecordRepository = app()->make(FinancialRecordRepository::class);
         $userBillRepository = app()->make(UserBillRepository::class);
-        $info = json_decode($data['order_info']);
+
         $user = app()->make(UserRepository::class)->get($ret['uid']);
-        $day = $info->svip_type == 3 ? 0 : $info->svip_number;
-        $endtime = ($user['svip_endtime'] && $user['is_svip'] != 0) ? $user['svip_endtime'] : date('Y-m-d H:i:s',time());
-        $svip_endtime =  date('Y-m-d H:i:s',strtotime("$endtime  +$day day" ));
 
-        $user->is_svip = $info->svip_type;
-        $user->svip_endtime = $svip_endtime;
-        $user->save();
-        $ret->status = 1;
-        $ret->pay_time = date('Y-m-d H:i:s',time());
-        $ret->end_time = $svip_endtime;
-        $ret->save();
-        $title = '支付会员';
-        if ($info->svip_type == 3) {
-            $date = '终身会员';
-            $mark = '终身会员';
-        } else {
-            $date = $svip_endtime;
-            $mark = '到期时间'.$svip_endtime;
-        }
+        $title = '线下门店支付';
 
-        $financialRecordRepository->inc([
-            'order_id' => $ret->order_id,
-            'order_sn' => $ret->order_sn,
-            'user_info'=> $user->nickname,
-            'user_id'  => $user->uid,
-            'financial_type' => $financialRecordRepository::FINANCIA_TYPE_SVIP,
-            'number' => $ret->pay_price,
-            'type'  => 2,
-        ],0);
+        $mark = '线下门店支付';
 
-        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_SVIP_PAY,'svip_pay',[
+        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_SVIP_PAY,'offline_order',[
             'link_id' => $ret->order_id,
             'title' => $title,
             'number'=> $ret->pay_price,
             'status'=> 1,
             'mark' => $mark,
         ]);
-        if ($user->phone) Queue::push(SendSmsJob::class,['tempId' => 'SVIP_PAY_SUCCESS','id' => ['phone' => $user->phone, 'date' => $date]]);
 
-        //小程序发货管理
-        event('mini_order_shipping', ['member', $ret, 3, '', '']);
-        return ;
+        return true;
     }
 
 
@@ -255,6 +252,77 @@ class StoreOrderOfflineRepository extends BaseRepository
                 'name' => '累计已过期人数'
             ],
         ];
+    }
+
+    /**
+     * @param $id
+     * @param null $uid
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/10
+     */
+    public function cancel($id, $uid = null)
+    {
+        $groupOrder = $this->search(['paid' => 0, 'uid' => $uid ?? ''])->where('order_id', $id)->find();
+        if (!$groupOrder)
+            throw new ValidateException('订单不存在');
+        if ($groupOrder['paid'] != 0)
+            throw new ValidateException('订单状态错误,无法删除');
+        //TODO 关闭订单
+        Db::transaction(function () use ($groupOrder, $id, $uid) {
+            $groupOrder->is_del = 1;
+            $orderStatus = [];
+
+            //退回积分
+            if ($groupOrder->integral > 0) {
+                $make = app()->make(UserRepository::class);
+                $make->update($groupOrder->uid, ['integral' => Db::raw('integral+' . $groupOrder->integral)]);
+                app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'cancel', [
+                    'link_id' => $groupOrder['order_id'],
+                    'status' => 1,
+                    'title' => '退回积分',
+                    'number' => $groupOrder['integral'],
+                    'mark' => '订单自动关闭,退回' . intval($groupOrder->integral) . '积分',
+                    'balance' => $make->get($groupOrder->uid)->integral
+                ]);
+            }
+            // 退回抵扣金
+            //订单记录
+            /*$storeOrderStatusRepository = app()->make(StoreOrderStatusRepository::class);
+            foreach ($groupOrder->orderList as $order) {
+                if ($order->activity_type == 3 && $order->presellOrder) {
+                    $order->presellOrder->status = 0;
+                    $order->presellOrder->save();
+                }
+                $order->is_del = 1;
+                $order->save();
+                $orderStatus[] = [
+                    'order_id' => $order->order_id,
+                    'order_sn' => $order->order_sn,
+                    'type' => $storeOrderStatusRepository::TYPE_ORDER,
+                    'change_message' => '取消订单',
+                    'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
+                    'uid' => $uid ?:0 ,
+                    'nickname' => $uid ? $order->user->nickname : '系统',
+                    'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
+                ];
+            }*/
+            /*$orderStatus[] = [
+                'order_id' => $groupOrder->order_id,
+                'order_sn' => $groupOrder->order_sn,
+                'type' => $storeOrderStatusRepository::TYPE_ORDER,
+                'change_message' => '取消订单',
+                'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
+                'uid' => $uid ?:0 ,
+                'nickname' => $uid ? $order->user->nickname : '系统',
+                'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
+            ];*/
+            $groupOrder->save();
+            //$storeOrderStatusRepository->batchCreateLog($orderStatus);
+        });
+        Queue::push(CancelGroupOrderJob::class, $id);
     }
 
 }

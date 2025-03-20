@@ -67,4 +67,16 @@ class StoreOrderOfflineDao extends BaseDao
                 getModelTime($query, $where['date'], 'StoreOrderOffline.create_time');
             });
     }
+
+    /**
+     * @param $time
+     * @param bool $is_remind
+     * @return array
+     * @author xaboy
+     * @day 2020/6/9
+     */
+    public function getTimeOutIds($time)
+    {
+        return StoreOrderOffline::getDB()->where('is_del', 0)->where('paid', 0)->where('create_time', '<=', $time)->column('order_id');
+    }
 }
