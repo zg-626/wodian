@@ -496,66 +496,72 @@ class DataScreenRepository extends BaseRepository
 
     public function adminQuery()
     {
-        $merchantIds='';
+        $merchantIds=[];
         $adminInfo = request()->adminInfo();
 
-        // 当前管理员账号
-        $account = $adminInfo->account;
+        if($adminInfo->admin_id!==1){
+            // 当前管理员账号
+            $account = $adminInfo->account;
 
-        // 查询用户信息
-        /** @var UserRepository $userRepository */
-        $userRepository = app()->make(UserRepository::class);
-        $user = $userRepository->accountByUser($account);
-        $salesman_id = $user['uid'];
+            // 查询用户信息
+            /** @var UserRepository $userRepository */
+            $userRepository = app()->make(UserRepository::class);
+            $user = $userRepository->accountByUser($account);
+            if($user){
+                $salesman_id = $user['uid'];
 
-        // 获取roles数组第一个值
-        $roleId=$adminInfo->roles[0];
-        // 如果不是超级管理员或管理员，则进入逻辑
-        if ($roleId != 1) {
+                // 获取roles数组第一个值
+                $roleId=$adminInfo->roles[0];
+                // 如果不是超级管理员或管理员，则进入逻辑
+                if ($roleId != 1) {
 
-            /** @var MerchantRepository $merchantRepository */
-            $merchantRepository = app()->make(MerchantRepository::class);
-            switch ($roleId){
-                // 业务员
-                case 20:
-                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
-                    //$mewhere = ['mer_id', 'in', $merchantIds];
-                    break;
-                // 区域经理
-                case 21:
-                    // 查询区域经理绑定的业务员
-                    $yewuIds = $userRepository->getSubIds(18513130164);
-                    // 查询业务员绑定的商家
-                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
-                    //$mewhere = ['mer_id', 'in', $merchantIds];
-                    break;
-                // 区、县代理商
-                case 22:
-                    // 查询所属区域id
-                    $district_id = $user['district_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
-                    //$mewhere = ['mer_id', 'in', $merchantIds];
-                    break;
-                // 区、县代理商
-                case 23:
-                    // 查询所属区域id
-                    $city_id = $user['city_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
-                    //$mewhere = ['mer_id', 'in', $merchantIds];
-                    break;
-                // 区、县代理商
-                case 24:
-                    // 查询所属区域id
-                    $province_id = $user['province_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
-                    //$mewhere = ['mer_id', 'in', $merchantIds];
-                    break;
+                    /** @var MerchantRepository $merchantRepository */
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    switch ($roleId){
+                        // 业务员
+                        case 20:
+                            $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
+                            //$mewhere = ['mer_id', 'in', $merchantIds];
+                            break;
+                        // 区域经理
+                        case 21:
+                            // 查询区域经理绑定的业务员
+                            $yewuIds = $userRepository->getSubIds(18513130164);
+                            // 查询业务员绑定的商家
+                            $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
+                            //$mewhere = ['mer_id', 'in', $merchantIds];
+                            break;
+                        // 区、县代理商
+                        case 22:
+                            // 查询所属区域id
+                            $district_id = $user['district_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
+                            //$mewhere = ['mer_id', 'in', $merchantIds];
+                            break;
+                        // 区、县代理商
+                        case 23:
+                            // 查询所属区域id
+                            $city_id = $user['city_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
+                            //$mewhere = ['mer_id', 'in', $merchantIds];
+                            break;
+                        // 区、县代理商
+                        case 24:
+                            // 查询所属区域id
+                            $province_id = $user['province_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
+                            //$mewhere = ['mer_id', 'in', $merchantIds];
+                            break;
+                    }
+                }
+                return $merchantIds;
+
             }
-        }
 
+        }
         return $merchantIds;
     }
 
@@ -566,82 +572,85 @@ class DataScreenRepository extends BaseRepository
         $mewhere = [];
         $orderwhere = [];
         $adminInfo = request()->adminInfo();
-        // 当前管理员账号
-        $account=$adminInfo->account;
-        // 查询用户信息
-        /** @var UserRepository $usrerRepository */
-        $usrerRepository = app()->make(UserRepository::class);
-        $user = $usrerRepository->accountByUser($account);
-        $salesman_id = $user['uid'];
-
-        // 获取roles数组第一个值
-        $roleId=$adminInfo->roles[0];
-        // 如果不是超级管理员或管理员，则进入逻辑
-        if($roleId!==1 ||$roleId!==26){
-            /** @var MerchantRepository $merchantRepository */
-            $merchantRepository = app()->make(MerchantRepository::class);
-            /** @var StoreOrderRepository $storeOrderRepository */
-            $storeOrderRepository = app()->make(StoreOrderRepository::class);
-            switch ($roleId){
-                // 业务员
-                case 20:
-                    $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    // 订单ids
-                    $query = $storeOrderRepository->getSearch([]);
-                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
-                    $orderwhere=['order_id','in',$orderIds];
-                    break;
-                // 区域经理
-                case 21:
-                    // 查询区域经理绑定的业务员
-                    $yewuIds= $usrerRepository->getSubIds($account);
-                    // 查询业务员绑定的商家
-                    $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    // 订单ids
-                    $query = $storeOrderRepository->getSearch([]);
-                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
-                    $orderwhere=['order_id','in',$orderIds];
-                    break;
-                // 区、县代理商
-                case 22:
-                    // 查询所属区域id
-                    $district_id = $user['district_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    // 订单ids
-                    $query = $storeOrderRepository->getSearch([]);
-                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
-                    $orderwhere=['order_id','in',$orderIds];
-                    break;
-                // 区、县代理商
-                case 23:
-                    // 查询所属区域id
-                    $city_id = $user['city_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    // 订单ids
-                    $query = $storeOrderRepository->getSearch([]);
-                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
-                    $orderwhere=['order_id','in',$orderIds];
-                    break;
-                // 区、县代理商
-                case 24:
-                    // 查询所属区域id
-                    $province_id = $user['province_id'];
-                    // 查询当前区域的商户
-                    $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
-                    $mewhere=['mer_id','in',$merchantIds];
-                    // 订单ids
-                    $query = $storeOrderRepository->getSearch([]);
-                    $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
-                    $orderwhere=['order_id','in',$orderIds];
-                    break;
+        if($adminInfo->admin_id!==1){
+            // 当前管理员账号
+            $account=$adminInfo->account;
+            // 查询用户信息
+            /** @var UserRepository $usrerRepository */
+            $usrerRepository = app()->make(UserRepository::class);
+            $user = $usrerRepository->accountByUser($account);
+            if($user){
+                $salesman_id = $user['uid'];
+                // 获取roles数组第一个值
+                $roleId=$adminInfo->roles[0];
+                // 如果不是超级管理员或管理员，则进入逻辑
+                if($roleId!==1 ||$roleId!==26){
+                    /** @var MerchantRepository $merchantRepository */
+                    $merchantRepository = app()->make(MerchantRepository::class);
+                    /** @var StoreOrderRepository $storeOrderRepository */
+                    $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                    switch ($roleId){
+                        // 业务员
+                        case 20:
+                            $merchantIds = $merchantRepository->salesmanIdByMerchant($salesman_id);
+                            $mewhere=['mer_id','in',$merchantIds];
+                            // 订单ids
+                            $query = $storeOrderRepository->getSearch([]);
+                            $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                            $orderwhere=['order_id','in',$orderIds];
+                            break;
+                        // 区域经理
+                        case 21:
+                            // 查询区域经理绑定的业务员
+                            $yewuIds= $usrerRepository->getSubIds($account);
+                            // 查询业务员绑定的商家
+                            $merchantIds = $merchantRepository->salesmanIdByMerchants($yewuIds);
+                            $mewhere=['mer_id','in',$merchantIds];
+                            // 订单ids
+                            $query = $storeOrderRepository->getSearch([]);
+                            $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                            $orderwhere=['order_id','in',$orderIds];
+                            break;
+                        // 区、县代理商
+                        case 22:
+                            // 查询所属区域id
+                            $district_id = $user['district_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($district_id,22);
+                            $mewhere=['mer_id','in',$merchantIds];
+                            // 订单ids
+                            $query = $storeOrderRepository->getSearch([]);
+                            $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                            $orderwhere=['order_id','in',$orderIds];
+                            break;
+                        // 区、县代理商
+                        case 23:
+                            // 查询所属区域id
+                            $city_id = $user['city_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($city_id,23);
+                            $mewhere=['mer_id','in',$merchantIds];
+                            // 订单ids
+                            $query = $storeOrderRepository->getSearch([]);
+                            $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                            $orderwhere=['order_id','in',$orderIds];
+                            break;
+                        // 区、县代理商
+                        case 24:
+                            // 查询所属区域id
+                            $province_id = $user['province_id'];
+                            // 查询当前区域的商户
+                            $merchantIds = $merchantRepository->cityIdByMerchants($province_id,24);
+                            $mewhere=['mer_id','in',$merchantIds];
+                            // 订单ids
+                            $query = $storeOrderRepository->getSearch([]);
+                            $orderIds = $query->where($mewhere)->where('paid',1)->column('order_id');
+                            $orderwhere=['order_id','in',$orderIds];
+                            break;
+                    }
+                    return $orderwhere;
+                }
             }
-
         }
 
         return $orderwhere;
