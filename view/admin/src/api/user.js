@@ -242,9 +242,7 @@ export function modifyUserReferrer(uid) {
 /**
  * @description 用户 -- 修改用户上级(表单)
  */
-export function 
-
-modifyUserSuperior(uid) {
+export function modifyUserSuperior(uid) {
     return request.get(`user/change_superior_form/${uid}`)
 }
 /**
