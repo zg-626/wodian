@@ -211,9 +211,9 @@ class Merchant extends BaseController
      */
     public function checkParam(MerchantValidate $validate, $isUpdate = false)
     {
-        $data = $this->request->params([['category_id', 0], ['type_id', 0], 'mer_name', 'commission_rate', 'real_name', 'mer_phone', 'mer_keyword', 'mer_address', 'mark', ['sort', 0], ['status', 0], ['is_audit', 0], ['is_best', 0], ['is_bro_goods', 0], ['is_bro_room', 0], ['is_trader', 0], 'sub_mchid', ['commission_switch', 0]]);
+        $data = $this->request->params([['category_id', 0], ['type_id', 0], 'mer_name','commission_rate', 'commission_rate', 'real_name', 'mer_phone', 'mer_keyword', 'mer_address', 'mark', ['sort', 0], ['status', 0], ['is_audit', 0], ['is_best', 0], ['is_bro_goods', 0], ['is_bro_room', 0], ['is_trader', 0], 'sub_mchid', ['commission_switch', 0]]);
         if (!$isUpdate) {
-            $data += $this->request->params(['mer_account', 'mer_password']);
+            $data += $this->request->params(['mer_account', 'mer_password','commission_rate']);
         } else {
             $validate->isUpdate();
         }

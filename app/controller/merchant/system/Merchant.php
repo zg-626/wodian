@@ -84,6 +84,7 @@ class Merchant extends BaseController
                 'mini_banner',
                 'mer_keyword',
                 'mer_address',
+                'commission_rate',
                 'long',
                 'lat',
                 ['delivery_way',[2]],
