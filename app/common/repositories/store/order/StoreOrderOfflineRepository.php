@@ -239,35 +239,6 @@ class StoreOrderOfflineRepository extends BaseRepository
         return true;
     }
 
-
-    /**
-     * 统计会员信息
-     * @return array
-     */
-    public function countMemberInfo(array $where = [])
-    {
-        return [
-            [
-                'className' => 'el-icon-s-goods',
-                'count' => $this->dao->search(['paid' => 1] + $where)->group('uid')->count(),
-                'field' => 'member_nums',
-                'name' => '累计付费会员人数'
-            ],
-            [
-                'className' => 'el-icon-s-goods',
-                'count' => $this->dao->search(['paid' => 1, 'pay_price' => 0] + $where)->sum('UserOrder.pay_price'),
-                'field' => 'total_membership_fee',
-                'name' => '累计支付会员费'
-            ],
-            [
-                'className' => 'el-icon-s-goods',
-                'count' => app()->make(UserRepository::class)->search(['svip_type' => 0])->count(),
-                'field' => 'member_expire_nums',
-                'name' => '累计已过期人数'
-            ],
-        ];
-    }
-
     /**
      * @param $id
      * @param null $uid
@@ -302,7 +273,14 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'balance' => $make->get($groupOrder->uid)->integral
                 ]);
             }
+            // 退回商家积分
+            app()->make(MerchantRepository::class)->subMerIntegral($groupOrder->mer_id, 'mer_integral', $groupOrder->order->order_id, $groupOrder->integral);
+
             // 退回抵扣金
+            if($groupOrder->deduction > 0){
+                $make = app()->make(UserRepository::class);
+                $make->update($groupOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $groupOrder->deduction)]);
+            }
             //订单记录
             /*$storeOrderStatusRepository = app()->make(StoreOrderStatusRepository::class);
             foreach ($groupOrder->orderList as $order) {
