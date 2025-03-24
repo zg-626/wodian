@@ -407,7 +407,7 @@ class Auth extends BaseController
     public function userInfo()
     {
         $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
-        $user->append(['service', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral']);
+        $user->append(['service','group', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral']);
         $data = $user->toArray();
         $data['total_consume'] = $user['pay_price'];
         $data['extension_status'] = systemConfig('extension_status');
