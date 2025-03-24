@@ -44,8 +44,8 @@ class StoreOrderOffline extends BaseController
         $params = $this->request->params(['pay_type','return_url','to_uid']);
         if (!in_array($params['pay_type'], ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr'], true))
             return app('json')->fail('请选择正确的支付方式');
-        if (!$money)
-            return app('json')->fail('金额不能为0');
+        if ($money<0)
+            return app('json')->fail('金额不能小于0');
         if(!$mer_id)
             return app('json')->fail('缺少商户id');
         $params['is_app'] = $this->request->isApp();
@@ -63,17 +63,12 @@ class StoreOrderOffline extends BaseController
 
     public function v2CheckOrder(StoreOrderOfflineRepository $storeOrderOfflineRepository)
     {
-
-        $couponIds = (array)$this->request->param('use_coupon', []);
-        $takes = (array)$this->request->param('takes', []);
-        $useIntegral = (bool)$this->request->param('use_integral', false);
         $userDeduction = (bool)$this->request->param('user_deduction', false);
         $money = (float)$this->request->param('money', 0);
         $user = $this->request->userInfo();
-        $uid = $user->uid;
         if ($money <= 0)
             return app('json')->fail('数据无效');
-        $orderInfo = $storeOrderOfflineRepository->v2CartIdByOrderInfo($user,$money, $takes, $couponIds, $useIntegral,$userDeduction);
+        $orderInfo = $storeOrderOfflineRepository->v2CartIdByOrderInfo($user,$money,$userDeduction);
 
         return app('json')->success($orderInfo);
     }

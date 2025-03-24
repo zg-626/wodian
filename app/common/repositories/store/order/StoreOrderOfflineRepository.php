@@ -95,6 +95,16 @@ class StoreOrderOfflineRepository extends BaseRepository
             }
         }
 
+        // 抵扣金额
+        if($params['user_deduction'] > 0){
+            // 计算抵扣后的抵扣金
+            $user_coupon_amount = $user->coupon_amount;
+            $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);
+            $user->coupon_amount = $deduction_money;
+            $user->save();
+
+        }
+
         //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
         $order_sn = app()->make(StoreOrderRepository::class)->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
@@ -111,6 +121,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             'mer_id'     => $mer_id,
             'gieve_integral' => $total_give_integral,
             'other'     => 0,
+            'deduction' => $params['user_deduction']?: 0,
+            'deduction_money' => $params['user_deduction']?: 0,
             'to_uid'=>$params['to_uid']?:0
         ];
         $body = [
@@ -327,21 +339,21 @@ class StoreOrderOfflineRepository extends BaseRepository
         Queue::push(CancelGroupOrderJob::class, $id);
     }
 
-    public function v2CartIdByOrderInfo($user, $money, array $takes, array $useCoupon = null, bool $useIntegral = false, bool $userDeduction = false)
+    public function v2CartIdByOrderInfo($user, $money, bool $userDeduction = false)
     {
         $uid = $user->uid;
         $user_coupon_amount = $user->coupon_amount;
         $deductionlFlag = $userDeduction  > 0;
-
+        $deduction = [
+            'use' => 0, // 使用的抵扣金数量
+            'price' => 0 // 抵扣的金额
+        ];
+        $finalAmount=0;
         //计算抵扣金抵扣
         if ($deductionlFlag && $user_coupon_amount > 0 && $money > 0) {
 
             $eductionRate = 100;
 
-            $deduction = [
-                'use' => 0, // 使用的抵扣金数量
-                'price' => 0 // 抵扣的金额
-            ];
             // 如果抵扣比例大于0
             if ($eductionRate > 0) {
                 // 计算抵扣金额（抵扣金额 = 订单金额 * 抵扣比例）
