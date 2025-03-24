@@ -61,4 +61,21 @@ class StoreOrderOffline extends BaseController
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
 
+    public function v2CheckOrder(StoreOrderOfflineRepository $storeOrderOfflineRepository)
+    {
+
+        $couponIds = (array)$this->request->param('use_coupon', []);
+        $takes = (array)$this->request->param('takes', []);
+        $useIntegral = (bool)$this->request->param('use_integral', false);
+        $userDeduction = (bool)$this->request->param('user_deduction', false);
+        $money = (float)$this->request->param('money', 0);
+        $user = $this->request->userInfo();
+        $uid = $user->uid;
+        if ($money <= 0)
+            return app('json')->fail('数据无效');
+        $orderInfo = $storeOrderOfflineRepository->v2CartIdByOrderInfo($user,$money, $takes, $couponIds, $useIntegral,$userDeduction);
+
+        return app('json')->success($orderInfo);
+    }
+
 }

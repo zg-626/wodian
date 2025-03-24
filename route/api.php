@@ -78,6 +78,7 @@ Route::group('api/', function () {
             //Route::post('check', 'PointsOrder/beforCheck');
             Route::post('/offline/create', 'Offline/createOrder');
             Route::get('/offline/list', 'Offline/getList');
+            Route::post('/offline/check', 'Offline/v2CheckOrder');
         })->prefix('api.store.order.StoreOrder');
 
         // 预售

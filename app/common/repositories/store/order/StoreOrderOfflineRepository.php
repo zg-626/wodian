@@ -17,6 +17,7 @@ namespace app\common\repositories\store\order;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\user\LabelRuleDao;
 use app\common\repositories\BaseRepository;
+use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\system\groupData\GroupDataRepository;
 use app\common\repositories\system\merchant\FinancialRecordRepository;
@@ -28,6 +29,7 @@ use crmeb\jobs\SendSmsJob;
 use crmeb\services\PayService;
 use FormBuilder\Factory\Elm;
 use think\exception\ValidateException;
+use think\facade\Cache;
 use think\facade\Db;
 use think\facade\Log;
 use think\facade\Queue;
@@ -323,6 +325,44 @@ class StoreOrderOfflineRepository extends BaseRepository
             //$storeOrderStatusRepository->batchCreateLog($orderStatus);
         });
         Queue::push(CancelGroupOrderJob::class, $id);
+    }
+
+    public function v2CartIdByOrderInfo($user, $money, array $takes, array $useCoupon = null, bool $useIntegral = false, bool $userDeduction = false)
+    {
+        $uid = $user->uid;
+        $user_coupon_amount = $user->coupon_amount;
+        $deductionlFlag = $userDeduction  > 0;
+
+        //计算抵扣金抵扣
+        if ($deductionlFlag && $user_coupon_amount > 0 && $money > 0) {
+
+            $eductionRate = 100;
+
+            $deduction = [
+                'use' => 0, // 使用的抵扣金数量
+                'price' => 0 // 抵扣的金额
+            ];
+            // 如果抵扣比例大于0
+            if ($eductionRate > 0) {
+                // 计算抵扣金额（抵扣金额 = 订单金额 * 抵扣比例）
+                $deductionAmount = min($money, $user_coupon_amount); // 最大只能抵扣订单金额或抵扣金数量
+                $deduction['use'] = intval($deductionAmount); // 使用的抵扣金数量
+                $deduction['price'] = $deductionAmount; // 抵扣的金额
+                // 更新剩余抵扣金
+                $user_coupon_amount -= $deduction['use'];
+                // 计算抵扣后的金额
+                $finalAmount = $money - $deduction['price'];
+            }
+
+        }
+
+        $data = [
+            'use_deduction' => $deduction['use'],
+            'deduction_price' => $user_coupon_amount ,
+            'finalAmount' => $finalAmount
+
+        ];
+        return $data;
     }
 
 }
