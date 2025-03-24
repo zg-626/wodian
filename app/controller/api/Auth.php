@@ -17,6 +17,7 @@ namespace app\controller\api;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
+use app\common\repositories\system\merchant\MerchantAdminRepository;
 use app\common\repositories\system\notice\SystemNoticeConfigRepository;
 use app\common\repositories\user\UserInfoRepository;
 use app\common\repositories\user\UserOrderRepository;
@@ -427,6 +428,10 @@ class Auth extends BaseController
                 Cache::set($key, true, new \DateTime($day . ' 23:59:59'));
             }
         }
+        $data['is_shop'] = 0;
+        $adminRepository = app()->make(MerchantAdminRepository::class);
+        if ($adminRepository->fieldExists('account', $data['phone']))
+            $data['is_shop'] = 1;
         return app('json')->success($data);
     }
 
