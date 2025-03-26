@@ -83,7 +83,7 @@ class MerchantCategoryRepository extends BaseRepository
 
         $form = Elm::createForm($action, [
             Elm::input('category_name', '分类名称：')->placeholder('请输入分类名称')->required(),
-            Elm::number('commission_rate', '手续费(%)：', 0)->required()->max(100)->precision(2)
+            //Elm::number('commission_rate', '手续费(%)：', 0)->required()->max(100)->precision(2)
         ]);
 
         return $form->formData($formData)->setTitle(is_null($id) ? '添加商户分类' : '编辑商户分类');

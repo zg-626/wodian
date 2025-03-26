@@ -78,6 +78,7 @@ class Community extends BaseController
     public function update($id)
     {
         $data['start'] = $this->request->param('start', 1);
+        $data['count_start'] = $this->request->param('count_start', 1);
         if (!$this->repository->exists($id))
             return app('json')->fail('数据不存在');
 
