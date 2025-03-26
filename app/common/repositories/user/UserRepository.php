@@ -386,12 +386,12 @@ class UserRepository extends BaseRepository
     public function changeIntegralForm($id)
     {
         return Elm::createForm(Route::buildUrl('systemUserChangeIntegral', compact('id'))->build(), [
-            Elm::radio('type', '修改积分：', 1)->options([
+            Elm::radio('type', '修改抵扣金：', 1)->options([
                 ['label' => '增加', 'value' => 1],
                 ['label' => '减少', 'value' => 0],
             ])->requiredNum(),
-            Elm::number('now_money', '积分')->required()->min(0)->max(999999)
-        ])->setTitle('修改用户积分');
+            Elm::number('coupon_amount', '抵扣金')->required()->min(0)->max(999999)
+        ])->setTitle('修改用户抵扣金');
     }
 
     /**
@@ -471,6 +471,48 @@ class UserRepository extends BaseRepository
                     'title' => '系统减少积分',
                     'number' => $integral,
                     'mark' => '系统减少了' . $integral . '积分',
+                    'balance' => $balance
+                ]);
+            }
+        });
+    }
+
+    /**
+     * @param $id
+     * @param $adminId
+     * @param $type
+     * @param $integral
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020-05-07
+     */
+    public function changeDeduction($id, $adminId, $type, $integral)
+    {
+        $user = $this->dao->get($id);
+        Db::transaction(function () use ($id, $adminId, $user, $type, $integral) {
+            $integral = (int)$integral;
+            $balance = $type == 1 ? bcadd($user->coupon_amount, $integral, 0) : bcsub($user->coupon_amount, $integral, 0);
+            $user->save(['coupon_amount' => $balance]);
+            /** @var UserBillRepository $make */
+            $make = app()->make(UserBillRepository::class);
+            if ($type == 1) {
+                $make->incBill($id, 'coupon_amount', 'sys_inc', [
+                    'link_id' => $adminId,
+                    'status' => 1,
+                    'title' => '系统增加抵扣金',
+                    'number' => $integral,
+                    'mark' => '系统增加了' . $integral . '抵扣金',
+                    'balance' => $balance
+                ]);
+            } else {
+                $make->decBill($id, 'coupon_amount', 'sys_dec', [
+                    'link_id' => $adminId,
+                    'status' => 1,
+                    'title' => '系统减少抵扣金',
+                    'number' => $integral,
+                    'mark' => '系统减少了' . $integral . '抵扣金',
                     'balance' => $balance
                 ]);
             }

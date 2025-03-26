@@ -480,7 +480,8 @@ class User extends BaseController
         $validate->check($data);
         if (!$this->repository->exists($id))
             return app('json')->fail('数据不存在');
-        $this->repository->changeIntegral($id, $this->request->adminId(), $data['type'], $data['now_money']);
+        //$this->repository->changeIntegral($id, $this->request->adminId(), $data['type'], $data['now_money']);
+        $this->repository->changeDeduction($id, $this->request->adminId(), $data['type'], $data['now_money']);
 
         return app('json')->success('修改成功');
     }
