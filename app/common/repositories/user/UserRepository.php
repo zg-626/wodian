@@ -1064,7 +1064,14 @@ class UserRepository extends BaseRepository
         $where['spread_uid'] = $uid;
         $query = $this->search($where);
         $count = $query->count();
-        $list = $query->setOption('field', [])->field('uid,avatar,nickname,pay_count,pay_price,spread_count,spread_time')->page($page, $limit)->select();
+        $list = $query->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,spread_count,spread_time')->page($page, $limit)->select();
+        // 手机号脱敏
+        foreach ($list as &$item) {
+            if (!$item['phone']) {
+                continue;
+            }
+            $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+        }
         return compact('list', 'count');
     }
 
@@ -1087,7 +1094,14 @@ class UserRepository extends BaseRepository
         if (count($where['spread_uids'])) {
             $query = $this->search($where);
             $count = $query->count();
-            $list = $query->setOption('field', [])->field('uid,avatar,nickname,pay_count,pay_price,spread_count,spread_time')->page($page, $limit)->select();
+            $list = $query->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,spread_count,spread_time')->page($page, $limit)->select();
+            // 手机号脱敏
+            foreach ($list as &$item) {
+                if (!$item['phone']) {
+                    continue;
+                }
+                $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+            }
         } else {
             $list = [];
             $count = 0;
