@@ -58,7 +58,7 @@ class StoreOrderOfflineDao extends BaseDao
                 $query->whereDay('pay_time', $where['pay_time']);
             })
             ->when(isset($where['mer_id']) && $where['mer_id'] !== '', function ($query) use ($where) {
-                $query->whereDay('mer_id', $where['mer_id']);
+                $query->where('mer_id', $where['mer_id']);
             })
             ->when(isset($where['pay_price']) && $where['pay_price'] !== '', function ($query) use ($where) {
                 $query->where('StoreOrderOffline.pay_price', '>', $where['pay_price']);

@@ -15,6 +15,7 @@ namespace app\common\repositories\store\order;
 
 
 use app\common\dao\store\order\StoreOrderOfflineDao;
+use app\common\dao\system\merchant\MerchantDao;
 use app\common\dao\user\LabelRuleDao;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
@@ -83,8 +84,12 @@ class StoreOrderOfflineRepository extends BaseRepository
         $rate = 0.2;
         if($money>0){
             // 计算平台手续费
+            /**
+             * @var MerchantDao $merchant
+             */
+            $merchant = app()->make(MerchantDao::class);
 
-            $merchant = $this->dao->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+            $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 
             if ($merchant['commission_rate'] > 0) {
                 $rate = $merchant['commission_rate'] / 100;
@@ -110,7 +115,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
 
         // 抵扣金额
-        if($params['user_deduction'] > 0){
+        if(isset($params['user_deduction']) && $params['user_deduction'] > 0){
             // 计算抵扣后的抵扣金
             $user_coupon_amount = $user->coupon_amount;
             $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);

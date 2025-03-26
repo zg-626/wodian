@@ -41,7 +41,7 @@ class StoreOrderOffline extends BaseController
      */
     public function createOrder($money,$mer_id, StoreOrderOfflineRepository $storeOrderOfflineRepository)
     {
-        $params = $this->request->params(['pay_type','return_url','to_uid']);
+        $params = $this->request->params(['pay_type','return_url','to_uid','user_deduction']);
         if (!in_array($params['pay_type'], ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr'], true))
             return app('json')->fail('请选择正确的支付方式');
         if ($money<0)
