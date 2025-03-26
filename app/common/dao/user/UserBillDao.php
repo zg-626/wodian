@@ -65,6 +65,21 @@ class UserBillDao extends BaseDao
             ->whereIn('type', ['order_one', 'order_two'])->with('user')->where('status', 0)->select();
     }
 
+    /**
+     * @param $time
+     * @return \think\Collection
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function getTimeoutDeductionBill($time)
+    {
+        return UserBill::getDB()->where('create_time', '<=', $time)->where('category', 'coupon_amount')
+            ->whereIn('type', ['order_one', 'order_two'])->with('user')->where('status', 0)->select();
+    }
+
     public function getTimeoutIntegralBill($time)
     {
         return UserBill::getDB()->where('create_time', '<=', $time)->where('category', 'integral')

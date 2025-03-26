@@ -138,8 +138,8 @@ class DataScreenRepository extends BaseRepository
 
         $today_pay_count_number['visit_num'] = (int)$userVisitRepository->dateVisitNum($date);
         $today_pay_count_number['visit_user_num'] = (int)$userVisitRepository->dateVisitUserNum($date);
-        $today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
-        $today_pay_count_number['today_pay_product'] = 0;
+        //$today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
+        //$today_pay_count_number['today_pay_product'] = 0;
         $today_pay_count_number['today_pay_user_first'] = (int)app()->make(UserRepository::class)->newUserNum($date);
         $today_pay_count_number['today_pay_number'] = 0;
         return $today_pay_count_number;
@@ -296,9 +296,8 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_merchant_rank($params = [])
     {
-        $merchantIds = $this->adminQuery();
-        $mewhere=['mer_id','in',$merchantIds];
-        return $this->cache(function() use($params,$merchantIds) {
+        //$merchantIds = $this->adminQuery();
+        return $this->cache(function() use($params) {
             $date = systemConfig('sys_pay_merchant_rank') ?: 'today';
             if (systemConfig('sys_pay_merchant_rank_type')) {
                 $today_pay_merchant_rank['type'] = '个';
@@ -314,10 +313,23 @@ class DataScreenRepository extends BaseRepository
                     getModelTime($query, $date,'StoreOrder.create_time');
                 });
             $query->whereDay('StoreOrder.create_time')
-                ->whereIn('StoreOrder.mer_id', $merchantIds)
+                //->whereIn('StoreOrder.mer_id', $merchantIds)
                 ->setOption('field',[])
                 ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
                 ->group('StoreOrder.mer_id');
+            /*if(!empty($merchantIds)){
+                $query->whereDay('StoreOrder.create_time')
+                    ->whereIn('StoreOrder.mer_id', $merchantIds)
+                    ->setOption('field',[])
+                    ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
+                    ->group('StoreOrder.mer_id');
+            }else{
+                $query->whereDay('StoreOrder.create_time')
+                    ->setOption('field',[])
+                    ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
+                    ->group('StoreOrder.mer_id');
+            }*/
+
             $list = $query->order("value DESC")->limit(20)->select();
             foreach ($list as &$item) {
                 $item['value'] = (int)$item['value'];
@@ -339,10 +351,17 @@ class DataScreenRepository extends BaseRepository
         $mewhere=['mer_id','in',$merchantIds];
         return $this->cache(function() use($params,$merchantIds) {
             $storeOrderRepository = app()->make(StoreOrderRepository::class);
-            $query = $storeOrderRepository->getSearch([])
-                ->whereIn('mer_id', $merchantIds)
-                ->whereDay('create_time')
-                ->where('paid', 1);
+            if(!empty($merchantIds)){
+                $query = $storeOrderRepository->getSearch([])
+                    ->whereIn('mer_id', $merchantIds)
+                    ->whereDay('create_time')
+                    ->where('paid', 1);
+
+            }else{
+                $query = $storeOrderRepository->getSearch([])
+                    ->whereDay('create_time')
+                    ->where('paid', 1);
+            }
             $list = $query->field("sum(pay_price) as number,count(*) as count,paid,order_id")
                 ->select()->toArray();
             $today_pay_number = $list[0] ?? ['number' => '0.00', 'count' => '0'];
@@ -427,9 +446,15 @@ class DataScreenRepository extends BaseRepository
                 $i++;
                 $i = $i + $j;
             } while ($h >= $i);
-            $storeOrderRepository = app()->make(StoreOrderRepository::class);
-            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%H\') as hours,count(order_id) order_count,count(distinct uid) as user_count');
-            $query = $storeOrderRepository->getSearch([])->where('paid',1)->whereIn('mer_id', $merchantIds)->whereDay('create_time');
+            if(!empty($merchantIds)){
+                $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%H\') as hours,count(order_id) order_count,count(distinct uid) as user_count');
+                $query = $storeOrderRepository->getSearch([])->where('paid',1)->whereIn('mer_id', $merchantIds)->whereDay('create_time');
+            }else{
+                $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%H\') as hours,count(order_id) order_count,count(distinct uid) as user_count');
+                $query = $storeOrderRepository->getSearch([])->where('paid',1)->whereDay('create_time');
+            }
             $orderList = $query->field($field)->order('hours ASC')->group('hours')->select()->toArray();
             $orderList = array_combine(array_column($orderList, 'hours'), $orderList);
 

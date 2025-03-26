@@ -166,10 +166,18 @@ class StoreOrderProductDao extends BaseDao
      */
     public function getProductRate(int $mer_id, $date = '', $type = 'number', $limit = 10,$merchantIds = [], string $group = 'P.product_id')
     {
-        $query = StoreOrderProduct::getDB()->alias('P')->leftJoin('StoreOrder O', 'O.order_id = P.order_id')
-            ->with(['product' => function ($query) {
-                $query->field('product_id,store_name,image');
-            }])->where('O.paid', 1)->where('O.mer_id','in',$merchantIds);
+        if(!empty($merchantIds)){
+            $query = StoreOrderProduct::getDB()->alias('P')->leftJoin('StoreOrder O', 'O.order_id = P.order_id')
+                ->with(['product' => function ($query) {
+                    $query->field('product_id,store_name,image');
+                }])->where('O.paid', 1)->where('O.mer_id','in',$merchantIds);
+        }else{
+            $query = StoreOrderProduct::getDB()->alias('P')->leftJoin('StoreOrder O', 'O.order_id = P.order_id')
+                ->with(['product' => function ($query) {
+                    $query->field('product_id,store_name,image');
+                }])->where('O.paid', 1);
+        }
+
         switch($type){
             case 'number':
                 $field = "P.product_id,O.pay_price as number,sum(P.product_num) as count,P.create_time, P.order_id,O.mer_id";

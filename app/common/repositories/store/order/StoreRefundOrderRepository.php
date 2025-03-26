@@ -1257,7 +1257,7 @@ class StoreRefundOrderRepository extends BaseRepository
         $userBillRepository = app()->make(UserBillRepository::class);
         $userRepository = app()->make(UserRepository::class);
         if ($refundOrder['extension_one'] > 0) {
-            $bill = $userBillRepository->getWhere(['category' => 'brokerage', 'type' => 'order_one', 'link_id' => $refundOrder->order_id]);
+            /*$bill = $userBillRepository->getWhere(['category' => 'brokerage', 'type' => 'order_one', 'link_id' => $refundOrder->order_id]);
             $refundOrder->order->extension_one = bcsub($refundOrder->order->extension_one, $refundOrder['extension_one'], 2);
             if ($bill && $bill->status != 1) {
                 $userRepository->incBrokerage($bill->uid, $refundOrder['extension_one'], '-');
@@ -1280,10 +1280,35 @@ class StoreRefundOrderRepository extends BaseRepository
                     'financial_type' => 'refund_brokerage_one',
                     'number' => $refundOrder['extension_one'],
                 ], $refundOrder->mer_id);
+            }*/
+            // 抵扣金退回
+            $bill = $userBillRepository->getWhere(['category' => 'coupon_amount', 'type' => 'order_one', 'link_id' => $refundOrder->order_id]);
+            $refundOrder->order->extension_one = bcsub($refundOrder->order->extension_one, $refundOrder['extension_one'], 2);
+            if ($bill && $bill->status != 1) {
+                $userRepository->incBrokerage($bill->uid, $refundOrder['extension_one'], '-');
+                $userBillRepository->decBill($bill->uid, 'coupon_amount', 'refund_one', [
+                    'link_id' => $refundOrder->order_id,
+                    'status' => 1,
+                    'title' => '用户退款',
+                    'number' => $refundOrder['extension_one'],
+                    'mark' => '用户退款扣除推广抵扣金' . floatval($refundOrder['extension_one']),
+                    'balance' => 0
+                ]);
+            }
+            if (!$bill || $bill->status != 1) {
+                app()->make(FinancialRecordRepository::class)->inc([
+                    'order_id' => $refundOrder->refund_order_id,
+                    'order_sn' => $refundOrder->refund_order_sn,
+                    'user_info' => $bill ? $userRepository->getUsername($bill->uid) : '退还一级抵扣金',
+                    'user_id' => $bill ? $bill->uid : 0,
+                    'type' => 1,
+                    'financial_type' => 'refund_brokerage_one',
+                    'number' => $refundOrder['extension_one'],
+                ], $refundOrder->mer_id);
             }
         }
         if ($refundOrder['extension_two'] > 0) {
-            $bill = $userBillRepository->getWhere(['category' => 'brokerage', 'type' => 'order_two', 'link_id' => $refundOrder->order_id]);
+            /*$bill = $userBillRepository->getWhere(['category' => 'brokerage', 'type' => 'order_two', 'link_id' => $refundOrder->order_id]);
             $refundOrder->order->extension_two = bcsub($refundOrder->order->extension_two, $refundOrder['extension_two'], 2);
             if ($bill && $bill->status != 1) {
                 $userRepository->incBrokerage($bill->uid, $refundOrder['extension_two'], '-');
@@ -1301,6 +1326,31 @@ class StoreRefundOrderRepository extends BaseRepository
                     'order_id' => $refundOrder->refund_order_id,
                     'order_sn' => $refundOrder->refund_order_sn,
                     'user_info' => $bill ? $userRepository->getUsername($bill->uid) : '退还二级佣金',
+                    'user_id' => $bill ? $bill->uid : 0,
+                    'type' => 1,
+                    'financial_type' => 'refund_brokerage_two',
+                    'number' => $refundOrder['extension_two'],
+                ], $refundOrder->mer_id);
+            }*/
+            // 抵扣金退回
+            $bill = $userBillRepository->getWhere(['category' => 'coupon_amount', 'type' => 'order_two', 'link_id' => $refundOrder->order_id]);
+            $refundOrder->order->extension_two = bcsub($refundOrder->order->extension_two, $refundOrder['extension_two'], 2);
+            if ($bill && $bill->status != 1) {
+                $userRepository->incBrokerage($bill->uid, $refundOrder['extension_two'], '-');
+                $userBillRepository->decBill($bill->uid, 'coupon_amount', 'refund_two', [
+                    'link_id' => $refundOrder->order_id,
+                    'status' => 1,
+                    'title' => '用户退款',
+                    'number' => $refundOrder['extension_two'],
+                    'mark' => '用户退款扣除推广抵扣金' . floatval($refundOrder['extension_two']),
+                    'balance' => 0
+                ]);
+            }
+            if (!$bill || $bill->status != 1) {
+                app()->make(FinancialRecordRepository::class)->inc([
+                    'order_id' => $refundOrder->refund_order_id,
+                    'order_sn' => $refundOrder->refund_order_sn,
+                    'user_info' => $bill ? $userRepository->getUsername($bill->uid) : '退还二级抵扣金',
                     'user_id' => $bill ? $bill->uid : 0,
                     'type' => 1,
                     'financial_type' => 'refund_brokerage_two',
@@ -1332,6 +1382,7 @@ class StoreRefundOrderRepository extends BaseRepository
             $refundOrder->order->status = -1;
         }
         Queue::push(SendSmsJob::class, ['tempId' => 'REFUND_CONFORM_CODE', 'id' => $refundOrder->refund_order_id]);
+        // 返还佣金
         $this->descBrokerage($refundOrder);
 
         //退回平台优惠

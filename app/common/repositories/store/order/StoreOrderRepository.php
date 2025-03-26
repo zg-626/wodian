@@ -36,6 +36,7 @@ use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\system\serve\ServeDumpRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserBrokerageRepository;
+use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\PayGiveCouponJob;
@@ -426,7 +427,8 @@ class StoreOrderRepository extends BaseRepository
             // 赠送商户积分
             //$this->giveMerIntegral($order->mer_id,$groupOrder);
             app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $groupOrder->give_integral);
-
+            // 代理赠送佣金
+            $this->addCommission($order->mer_id,$groupOrder);
             if (count($profitsharing)) {
                 $storeOrderProfitsharingRepository->insertAll($profitsharing);
             }
@@ -450,6 +452,40 @@ class StoreOrderRepository extends BaseRepository
         app()->make(UserBrokerageRepository::class)->incMemberValue($groupOrder->uid, 'member_pay_num', $groupOrder->group_order_id);
         event('order.paySuccess', compact('groupOrder'));
         event('data.screen.send', []);
+    }
+
+    // 添加推广佣金
+    public function addCommission(int $merId, $order)
+    {
+        if ($order['pay_price'] <= 0) return;
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        // 如果没有业务员，则没有佣金
+        if ($merchant->salesman_id===0) return;
+        // 查询业务员信息
+        $salesman = app()->make(UserRepository::class)->get($merchant->salesman_id);
+        // 查询业务员分组
+        $commission = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
+        // 佣金比例
+        $commission = $commission->extension;
+        // 平台抽取的手续费
+        $commission_rate = $order->commission_rate;
+
+        //$money=$commission_rate*0.6*$commission;
+        $money=bcmul(0.6,$commission_rate,3);// 根据让利金额的百分之60  再分配给业务员
+        // 业务员的佣金
+        $extension_one = bcmul($commission/100, $money, 2);
+
+        $userBillRepository = app()->make(UserBillRepository::class);
+        $userBillRepository->incBill($merchant->salesman_id, 'brokerage', 'order_one', [
+            'link_id' => $order['order_id'],
+            'status' => 0,
+            'title' => '获得推广佣金',
+            'number' => $extension_one,
+            //'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_one),
+            'mark' => '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($extension_one),
+            'balance' => 0
+        ]);
     }
 
     /**
@@ -701,12 +737,21 @@ class StoreOrderRepository extends BaseRepository
         }
         //TODO 添加冻结佣金
         if ($order->extension_one > 0 && $spreadUid) {
-            $userBillRepository->incBill($spreadUid, 'brokerage', 'order_one', [
+            /*$userBillRepository->incBill($spreadUid, 'brokerage', 'order_one', [
                 'link_id' => $order['order_id'],
                 'status' => 0,
                 'title' => '获得推广佣金',
                 'number' => $order->extension_one,
                 'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_one),
+                'balance' => 0
+            ]);*/
+            // 佣金改为抵扣金
+            $userBillRepository->incBill($spreadUid, 'coupon_amount', 'order_one', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广抵扣金',
+                'number' => $order->extension_one,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广抵扣金' . floatval($order->extension_one),
                 'balance' => 0
             ]);
             $userRepository = app()->make(UserRepository::class);
@@ -721,14 +766,23 @@ class StoreOrderRepository extends BaseRepository
             //            ], $order->mer_id);
         }
         if ($order->extension_two > 0 && $topUid) {
-            $userBillRepository->incBill($topUid, 'brokerage', 'order_two', [
+            // 获得推广佣金改为获得推广抵扣金
+            $userBillRepository->incBill($topUid, 'coupon_amount', 'order_two', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广抵扣金',
+                'number' => $order->extension_two,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广抵扣金' . floatval($order->extension_two),
+                'balance' => 0
+            ]);
+            /*$userBillRepository->incBill($topUid, 'brokerage', 'order_two', [
                 'link_id' => $order['order_id'],
                 'status' => 0,
                 'title' => '获得推广佣金',
                 'number' => $order->extension_two,
                 'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_two),
                 'balance' => 0
-            ]);
+            ]);*/
             $userRepository = app()->make(UserRepository::class);
             $userRepository->incBrokerage($topUid, $order->extension_two);
             //            app()->make(FinancialRecordRepository::class)->dec([

@@ -80,10 +80,11 @@ class UserGroupApply extends BaseController
      */
     public function update($id, validate $validate)
     {
-        if (!$this->repository->fieldExists($id, $this->request->uid()))
-            return app('json')->fail('信息不存在');
+//        if (!$this->repository->fieldExists($id, $this->request->uid()))
+//            return app('json')->fail('信息不存在');
         $data = $this->checkParams($validate);
-
+        $data['status'] = 0;
+        $data['fail_msg'] = '';
         $this->repository->update($id, $data);
         return app('json')->success('编辑成功');
     }

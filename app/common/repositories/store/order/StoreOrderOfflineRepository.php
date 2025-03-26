@@ -79,6 +79,20 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function add($money,$mer_id, $user, $params)
     {
+        $commission_rate=0;
+        $rate = 0.2;
+        if($money>0){
+            // 计算平台手续费
+
+            $merchant = $this->dao->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+            if ($merchant['commission_rate'] > 0) {
+                $rate = $merchant['commission_rate'] / 100;
+            }
+
+            $commission_rate = bcmul($rate, $money, 3);
+        }
+
         //积分配置
         $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
         $svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
@@ -89,7 +103,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $total_give_integral = 0;
         //$order_total_give_integral = 0;
         if ($giveIntegralFlag  && $pay_price > 0) {
-            $total_give_integral = floor(bcmul($pay_price, 20, 0));
+            $total_give_integral = floor(bcmul($pay_price, $rate, 0));
             if ($total_give_integral > 0 && $svip_status && $svip_integral_rate > 0) {
                 $total_give_integral = bcmul($svip_integral_rate, $total_give_integral, 0);
             }
@@ -105,6 +119,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         }
 
+
         //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
         $order_sn = app()->make(StoreOrderRepository::class)->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
@@ -117,6 +132,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'uid'        => $user->uid,
             'order_type' => self::TYPE_SVIP,
             'pay_type'   =>  $params['pay_type'],
+            'commission_rate'=>$commission_rate,
             'status'     => 1,
             'mer_id'     => $mer_id,
             'gieve_integral' => $total_give_integral,

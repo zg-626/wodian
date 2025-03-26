@@ -1005,7 +1005,7 @@ class UserRepository extends BaseRepository
                 }
                 $spread->spread_count++;
                 if ($config['integral_user_give'] > 0 && $user->isNew) {
-                    $integral = (int)$config['integral_user_give'];
+                    /*$integral = (int)$config['integral_user_give'];
                     $spread->integral += $integral;
                     app()->make(UserBillRepository::class)->incBill($spreadUid, 'integral', 'spread', [
                         'link_id' => $user->uid,
@@ -1014,7 +1014,8 @@ class UserRepository extends BaseRepository
                         'number' => $integral,
                         'mark' => '邀请好友奖励' . $integral . '积分',
                         'balance' => $spread->integral
-                    ]);
+                    ]);*/
+                    // 邀请赠送抵扣金
                 }
                 $spread->save();
                 $user->save();

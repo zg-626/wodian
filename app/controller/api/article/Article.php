@@ -82,7 +82,27 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
-        $shopId=123;
+        $merchant = app ()->make(MerchantDao::class);
+        $merchant = $merchant->search(['mer_id' => 78])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        // 如果没有业务员，则没有佣金
+        //if ($merchant->salesman_id===0) return;
+        // 查询业务员信息
+        $salesman = app()->make(UserRepository::class)->get($merchant->salesman_id);
+        // 查询业务员分组
+        $commission = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
+        // 佣金比例
+        $commission = $commission->extension;
+        // 平台抽取的手续费
+        $commission_rate = 20;
+
+        $money=bcmul(0.6,$commission_rate,2);// 根据让利金额的百分之60  再分配给业务员
+
+        // 业务员的佣金
+        $extension_one = bcmul($commission/100, $money, 2);
+        //print_r($money);
+        //print_r($extension_one);
+        /*$shopId=123;
         $ratio=3.00;
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
@@ -98,7 +118,7 @@ class Article extends BaseController
             'attachment_src' => $imageInfo['dir']
         ]);
         $urlCode = $imageInfo['dir'];
-        print_r($urlCode);
+        print_r($urlCode);*/
         /** @var CityAreaRepository $cityArea */
        /* $cityArea= app()->make(CityAreaRepository::class);
         print_r($cityArea->getAddressChildList());*/
