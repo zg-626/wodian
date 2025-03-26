@@ -82,6 +82,7 @@ class User extends BaseController
         $data = [
             'total_brokerage_price' => $user->total_brokerage_price,
             'lock_brokerage' => $user->lock_brokerage,
+            'coupon_amount' => $user->coupon_amount,
             'one_level_count' => $user->one_level_count,
             'two_level_count' => $user->two_level_count,
             'spread_total' => $user->spread_total,

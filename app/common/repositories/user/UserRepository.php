@@ -390,7 +390,7 @@ class UserRepository extends BaseRepository
                 ['label' => '增加', 'value' => 1],
                 ['label' => '减少', 'value' => 0],
             ])->requiredNum(),
-            Elm::number('coupon_amount', '抵扣金')->required()->min(0)->max(999999)
+            Elm::number('coupon_amount', '抵扣金')->required()->min(0)->max(50)
         ])->setTitle('修改用户抵扣金');
     }
 
