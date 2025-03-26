@@ -459,7 +459,7 @@ class CommunityRepository extends BaseRepository
 
         return $form->setRule([
             Elm::rate('start', '排序星级：')->max(5),
-            Elm::rate('count_start', '点赞数：'),
+            Elm::number('count_start', '点赞数：')->precision(0),
         ])->setTitle('编辑星级')->formData($formData);
     }
 

@@ -500,7 +500,7 @@ class Auth extends BaseController
         $repository->loginAfter($user);
 
         // 更新用户分组
-        $repository->updateUserGroup($user);
+        //$repository->updateUserGroup($user);
 
         return app('json')->success($repository->returnToken($user, $tokenInfo));
     }

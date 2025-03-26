@@ -524,7 +524,9 @@ class UserRepository extends BaseRepository
                 'avatar' => $wechatUser['headimgurl'] ?? '',
                 'sex' => $wechatUser['sex'] ?? 0,
                 'spread_uid' => 0,
-                'is_promoter' => 0,
+                'group_id' => 1,
+                'is_promoter' => 1,// 默认成为推广员
+                'promoter_time' => date('Y-m-d H:i:s'),
                 'last_time' => date('Y-m-d H:i:s'),
                 'last_ip' => $request->ip()
             ]);
@@ -735,6 +737,9 @@ class UserRepository extends BaseRepository
             'nickname' => substr($phone, 0, 3) . '****' . substr($phone, 7, 4),
             'avatar' => '',
             'phone' => $phone,
+            'group_id' => 1,
+            'is_promoter' => 1,// 默认成为推广员
+            'promoter_time' => date('Y-m-d H:i:s'),
             'last_ip' => app('request')->ip()
         ];
         return $this->create($user_type, $data);
