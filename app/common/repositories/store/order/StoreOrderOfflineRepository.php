@@ -84,6 +84,7 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function add($money,$mer_id, $user, $params)
     {
+        $total_price=$money;
         $commission_rate=0;
         $rate = 0.2;
         if($money>0){
@@ -146,6 +147,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'mer_id'     => $mer_id,
             'gieve_integral' => $total_give_integral,
             'other'     => 0,
+            'total_price' => $total_price,
             'deduction' => $params['user_deduction']?: 0,
             'deduction_money' => $params['user_deduction']?: 0,
             'to_uid'=>$params['to_uid']?:0
