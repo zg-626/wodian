@@ -73,4 +73,21 @@ class StoreOrderOffline extends BaseController
         return app('json')->success($orderInfo);
     }
 
+    /**
+     * @param $id
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/10
+     */
+    public function detail($id)
+    {
+        $order = $this->repository->getDetail((int)$id);
+        if (!$order)
+            return app('json')->fail('订单不存在');
+        /*if ($order->order_type == 1) {
+            $order->append(['take', 'refund_status']);
+        }*/
+        return app('json')->success($order->toArray());
+    }
+
 }

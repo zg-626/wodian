@@ -29,11 +29,15 @@ use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\PayService;
 use FormBuilder\Factory\Elm;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\DbException;
+use think\db\exception\ModelNotFoundException;
 use think\exception\ValidateException;
 use think\facade\Cache;
 use think\facade\Db;
 use think\facade\Log;
 use think\facade\Queue;
+use think\Model;
 
 /**
  * Class LabelRuleRepository
@@ -373,6 +377,38 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         ];
         return $data;
+    }
+
+    /**
+     * @param $id
+     * @param null $uid
+     * @return array|Model|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/10
+     */
+    public function getDetail($id, $uid = null)
+    {
+        $where = [];
+        $with = [
+            'merchant' => function ($query) {
+                return $query->field('mer_id,mer_name,service_phone')->append(['services_type']);
+            }
+        ];
+        if ($uid) {
+            $where['uid'] = $uid;
+        } else if (!$uid) {
+            $with['user'] = function ($query) {
+                return $query->field('uid,nickname');
+            };
+        }
+        $order = $this->dao->search($where)->where('order_id', $id)->where('is_del', 0)->with($with)->find();
+        if (!$order) {
+            return null;
+        }
+        return $order;
     }
 
 }
