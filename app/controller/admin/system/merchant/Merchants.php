@@ -158,6 +158,17 @@ class Merchants extends BaseController
         $data['is_margin'] = $margin['is_margin'];
         $data['ot_margin'] = $margin['ot_margin'];
 
+        // 根据城市id更新商户的所属区域名称
+        $cityAreaRepository = app()->make(CityAreaRepository::class);
+        $provinceArea = $cityAreaRepository->get($data['province_id']);
+        $data['province'] = $provinceArea['name'];
+
+        $cityArea = $cityAreaRepository->get($data['city_id']);
+        $data['city'] = $cityArea['name'];
+
+        $districtArea = $cityAreaRepository->get($data['district_id']);
+        $data['district'] = $districtArea['name'];
+
         // 商户编辑记录日志
         event('create_operate_log', [
             'category' => OperateLogRepository::PLATFORM_EDIT_MERCHANT,

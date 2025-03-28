@@ -108,9 +108,11 @@ class MerchantDao extends BaseDao
         if (isset($where['status']) && $where['status'] !== '')
             $query->where('status', $where['status']);
 
-        if (isset($where['district']) && $where['district'] !== '')
+        if (isset($where['district']) && $where['district'] !== ''){
             $query->where('district', $where['district']);
             $query->whereOr('city', $where['district']);
+        }
+
 
         if (isset($where['is_online'])){
             if($where['is_online'] == ''){

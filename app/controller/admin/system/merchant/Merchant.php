@@ -60,7 +60,7 @@ class Merchant extends BaseController
 
     public function count()
     {
-        $where = $this->request->params(['keyword', 'date', 'status', 'statusTag', 'is_trader', 'category_id', 'type_id']);
+        $where = $this->request->params(['keyword', 'date', 'status', 'statusTag', 'is_trader', 'category_id', 'type_id','district']);
         return app('json')->success($this->repository->count($where));
     }
 
@@ -75,7 +75,8 @@ class Merchant extends BaseController
     public function lst()
     {
         [$page, $limit] = $this->getPage();
-        $where = $this->request->params(['keyword', 'date', 'status', 'statusTag', 'is_trader', 'category_id', 'type_id', ['order', 'create_time'], 'is_best']);
+        $where = $this->request->params(['keyword', 'date', 'status', 'statusTag', 'is_trader', 'category_id', 'type_id'
+            ,'district', ['order', 'create_time'], 'is_best']);
         return app('json')->success($this->repository->lst($where, $page, $limit));
     }
 
@@ -152,6 +153,17 @@ class Merchant extends BaseController
         $data['margin'] = $margin['margin'];
         $data['is_margin'] = $margin['is_margin'];
         $data['ot_margin'] = $margin['ot_margin'];
+
+        // 根据城市id更新商户的所属区域名称
+        $cityAreaRepository = app()->make(CityAreaRepository::class);
+        $provinceArea = $cityAreaRepository->get($data['province_id']);
+        $data['province'] = $provinceArea['name'];
+
+        $cityArea = $cityAreaRepository->get($data['city_id']);
+        $data['city'] = $cityArea['name'];
+
+        $districtArea = $cityAreaRepository->get($data['district_id']);
+        $data['district'] = $districtArea['name'];
 
         // 商户编辑记录日志
         event('create_operate_log', [
