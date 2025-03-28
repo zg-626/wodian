@@ -82,7 +82,40 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
-        $merchant = app ()->make(MerchantDao::class);
+        // 修改商户省市区
+        try {
+            // 获取需要更新的商户数据（只查询有城市ID的商户）
+            $merchantDao = app()->make(MerchantDao::class);
+            $merchants = $merchantDao->search(['city_id', '<>', 0])
+                ->field('mer_id, province_id, city_id, district_id')
+                ->select();
+
+            // 提前加载所有需要的地域数据（省市区）
+            $cityRepo = app()->make(CityAreaRepository::class);
+            $areas = $cityRepo->search([])
+                ->where('level', '<>', 4)
+                ->column('name', 'id');  // 以ID为键的数组
+
+            // 批量更新商户数据
+            foreach ($merchants as $merchant) {
+                $merchant->province = $areas[$merchant->province_id] ?? null;
+                $merchant->city = $areas[$merchant->city_id] ?? null;
+                $merchant->district = $areas[$merchant->district_id] ?? null;
+
+                // 只保存有变化的字段
+                $merchant->save();
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            return $e->getMessage();
+            // 记录错误日志
+            //\Log::error('更新商户省市区失败: ' . $e->getMessage());
+            return false;
+        }
+
+        var_dump($merchant);exit();
+        /*$merchant = app ()->make(MerchantDao::class);
         $merchant = $merchant->search(['mer_id' => 78])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 
         // 如果没有业务员，则没有佣金
@@ -99,7 +132,7 @@ class Article extends BaseController
         $money=bcmul(0.6,$commission_rate,2);// 根据让利金额的百分之60  再分配给业务员
 
         // 业务员的佣金
-        $extension_one = bcmul($commission/100, $money, 2);
+        $extension_one = bcmul($commission/100, $money, 2);*/
         //print_r($money);
         //print_r($extension_one);
         /*$shopId=123;

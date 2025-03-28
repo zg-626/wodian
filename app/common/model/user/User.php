@@ -16,6 +16,7 @@ namespace app\common\model\user;
 
 use app\common\model\BaseModel;
 use app\common\model\store\service\StoreService;
+use app\common\model\system\merchant\Merchant;
 use app\common\model\wechat\WechatUser;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
@@ -244,6 +245,15 @@ class User extends BaseModel
             ->where('is_open', 1)
             ->field('service_id,uid,nickname,avatar,customer,mer_id,is_verify,is_goods,is_open')
             ->order('is_verify DESC,customer DESC');
+    }
+
+    // 关联的商户
+    public function merchant()
+    {
+        return $this->hasOne(Merchant::class, 'mer_phone', 'phone')
+            ->where('is_del', 0)
+            ->where('status', 1)
+            ->field('mer_id,mer_name,mer_avatar');
     }
 
     public function topService()
