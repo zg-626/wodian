@@ -34,6 +34,10 @@ Route::group(function () {
         Route::get('info','Config/info')->name('merchantServeInfo')->option([
             '_alias' => '账号信息',
         ]);
+        // 直接通过
+        Route::get('pay','Serve/pay')->name('merchantServePay')->option([
+            '_alias' => '支付',
+        ]);
     })->prefix('merchant.system.serve.')->option([
         '_path' => '/setting/sms/sms_config/index',
         '_auth' => true,

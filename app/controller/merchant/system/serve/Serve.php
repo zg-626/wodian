@@ -48,6 +48,17 @@ class Serve extends BaseController
         return app('json')->success($ret);
     }
 
+    public function pay()
+    {
+        $sms_info = systemConfigNoCache('serve_account');
+        if (!$sms_info) {
+            return app('json')->fail('平台未登录一号通');
+        }
+        $data = $this->request->params(['meal_id','pay_type']);
+        $ret = $this->repository->pay($this->request->merId(),'meal', $data);
+        return app('json')->success($ret);
+    }
+
     public function meal()
     {
         $sms_info = systemConfigNoCache('serve_account');

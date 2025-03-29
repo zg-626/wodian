@@ -155,17 +155,48 @@ class ServeOrderRepository extends BaseRepository
             $param['body'] = $order_sn;
             $payType = $data['pay_type'] == 1 ? 'weixinQr' : 'alipayQr';
             $service = new PayService($payType,$param);
-            $code = $service->pay(null);
+            //$code = $service->pay(null);
 
             $endtime = time() + 1800 ;
-            $result = [
+            /*$result = [
                 'config' => $code['config'],
+                'endtime'=> date('Y-m-d H:i:s',$endtime),
+                'price'  => $param['pay_price']
+            ];*/
+            //TODO 解决没填写微信公众号的报错问题
+            $result = [
+                'config' => 001,
                 'endtime'=> date('Y-m-d H:i:s',$endtime),
                 'price'  => $param['pay_price']
             ];
             Cache::store('file')->set($key,$result,30);
             $param['key'] = $key;
             Cache::store('file')->set($order_sn,$param,60 * 24);
+        }
+
+        return $result;
+    }
+
+    // 直接生成购买订单
+    public function pay(int $merId, string $type, array $data)
+    {
+        $res = $this->{$type}($merId, $data);
+        $key = $res['key'];
+        $param = $res['param'];
+
+        if(!$result = Cache::store('file')->get($key)){
+            $order_sn = app()->make(StoreOrderRepository::class)->getNewOrderId(StoreOrderRepository::TYPE_SN_SERVER_ORDER);
+            $param['order_sn'] = $order_sn;
+            $param['body'] = $order_sn;
+
+            Cache::store('file')->set($key,$result,30);
+            $param['key'] = $key;
+            Cache::store('file')->set($order_sn,$param,60 * 24);
+            // 直接走成功支付回调
+            $this->paySuccess($param);
+
+            return true;
+
         }
 
         return $result;
