@@ -158,6 +158,9 @@ class Merchants extends BaseController
         $data['is_margin'] = $margin['is_margin'];
         $data['ot_margin'] = $margin['ot_margin'];
 
+        if(empty($data['province_id'])){
+            return app('json')->fail('请选择所在地区');
+        }
         // 根据城市id更新商户的所属区域名称
         $cityAreaRepository = app()->make(CityAreaRepository::class);
         $provinceArea = $cityAreaRepository->get($data['province_id']);

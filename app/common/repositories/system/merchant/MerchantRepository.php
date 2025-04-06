@@ -18,6 +18,7 @@ use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\store\product\ProductReply;
 use app\common\repositories\BaseRepository;
+use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\coupon\StoreCouponRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
@@ -227,6 +228,20 @@ class MerchantRepository extends BaseRepository
             throw new ValidateException('商户分类不存在');
         if ($adminRepository->fieldExists('account', $data['mer_account']))
             throw new ValidateException('账号已存在');
+
+        if(empty($data['province_id'])){
+            throw new ValidateException('请选择所在地区');
+        }
+        // 根据城市id更新商户的所属区域名称
+        $cityAreaRepository = app()->make(CityAreaRepository::class);
+        $provinceArea = $cityAreaRepository->get($data['province_id']);
+        $data['province'] = $provinceArea['name'];
+
+        $cityArea = $cityAreaRepository->get($data['city_id']);
+        $data['city'] = $cityArea['name'];
+
+        $districtArea = $cityAreaRepository->get($data['district_id']);
+        $data['district'] = $districtArea['name'];
 
         /** @var MerchantAdminRepository $make */
         $make = app()->make(MerchantAdminRepository::class);
