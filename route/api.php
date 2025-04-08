@@ -540,6 +540,20 @@ Route::group('api/', function () {
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 
+        // 美团回调接口
+        Route::group('meituan', function () {
+            // 交易标准三方收银台支付回调接口
+            Route::any('/callback', 'Meituan/callback');
+            // 交易标准三方收银台关单外部接口
+            Route::any('/close', 'Meituan/close');
+            // 交易标准三方收银台退款外部接口
+            Route::any('/refund', 'Meituan/refund');
+            // 交易标准三方收银台支付查询外部接口
+            Route::any('/query', 'Meituan/query');
+            // 交易标准三方收银台下单外部接口
+            Route::any('/pay', 'Meituan/pay');
+        })->prefix('api.meituan.');
+
         // 分红
         Route::group('dividend', function () {
             Route::get('/dividend', 'Dividend/dividend');
