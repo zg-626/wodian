@@ -427,6 +427,9 @@ class CommunityRepository extends BaseRepository
     public function getActingInfo(int $uid)
     {
         $user = app()->make(UserRepository::class)->get($uid);
+        if(!$user) {
+            throw new ValidateException('用户不存在,请重新输入');
+        }
         $data['uid']   = $user->uid;
         $data['avatar'] = $user->avatar;
         $data['nickname'] = $user->nickname;

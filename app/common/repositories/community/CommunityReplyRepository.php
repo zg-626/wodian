@@ -63,6 +63,7 @@ class CommunityReplyRepository extends BaseRepository
 
     public function getApiList(array $where, int $page, int $limit, $userInfo)
     {
+        /** @var CommunityRepository $make */
         $make = app()->make(CommunityRepository::class);
 
         $where_['community_id'] = $where['community_id'];
