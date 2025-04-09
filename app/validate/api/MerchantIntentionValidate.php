@@ -22,6 +22,7 @@ class MerchantIntentionValidate extends Validate
     protected $rule = [
         'phone|手机号' => 'require|mobile',
         'name|姓名' => 'require',
+        'salesman_id|商务id' => 'require',
         'mer_name|姓名' => 'require|max:32',
         'merchant_category_id|商户分类' => 'require',
         'mer_type_id|店铺类型' => 'integer',
