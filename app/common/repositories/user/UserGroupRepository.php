@@ -81,11 +81,21 @@ class UserGroupRepository extends BaseRepository
     {
         $isCreate = is_null($id);
         $action = Route::buildUrl($isCreate ? 'systemUserGroupCreate' : 'systemUserGroupUpdate', $isCreate ? [] : compact('id'))->build();
-        if($id==1){
+        if ($id==1) {
             return
                 Elm::createForm($action, [
                     Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
                     //Elm::input('extension', '佣金比例：'),
+                ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
+        }
+
+        if($id==2) {
+            return
+                Elm::createForm($action, [
+                    Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
+                    Elm::input('extension', '佣金比例：'),
+                    Elm::input('money', '让利部分达到：'),// 升级规则
+                    Elm::input('integral', '赠送积分：'),// 赠送积分
                 ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
         }
         return

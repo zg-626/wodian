@@ -145,7 +145,7 @@ class UserGroup extends BaseController
      */
     protected function checkParams(UserGroupValidate $validate)
     {
-        $data = $this->request->params(['group_name']);
+        $data = $this->request->params(['group_name', 'extension', 'money', 'integral']);
         $validate->check($data);
         return $data;
     }
