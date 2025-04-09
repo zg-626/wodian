@@ -43,7 +43,16 @@ class MerchantIntention extends BaseModel
         return implode(',', $value);
     }
 
+    public function setMerBannerAttr($value)
+    {
+        return implode(',', $value);
+    }
+
     public function getImagesAttr($value)
+    {
+        return $value ? explode(',', $value) : [];
+    }
+    public function getMerBannerAttr($value)
     {
         return $value ? explode(',', $value) : [];
     }
