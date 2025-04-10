@@ -552,6 +552,8 @@ Route::group('api/', function () {
             Route::any('/query', 'Meituan/query');
             // 交易标准三方收银台下单外部接口
             Route::any('/pay', 'Meituan/pay');
+            // 美团免登外卖地址
+            Route::any('/mt_waimai', 'Waimai/mtWaimai');
         })->prefix('api.meituan.');
 
         // 分红
