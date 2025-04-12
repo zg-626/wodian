@@ -50,9 +50,9 @@ class Client extends PartnerClient
         $params = [
             'out_trade_no' => $order['out_trade_no'],
             'sp_mchid' => $this->app['config']['service_payment']['merchant_id'],// 服务商商户号
-            'sp_appid' => 'wx5acfa79d79184c88',// 服务商APPID
+            //'sp_appid' => 'wx5acfa79d79184c88',// 服务商APPID
             'description' => $order['description'],
-            //'sp_appid' => $this->app['config']['app_id'],// 服务商APPID
+            'sp_appid' => $this->app['config']['app_id'],// 服务商APPID
             'sub_mchid' => $order['sub_mchid'],// 子商户id
             'scene_info' => [
                 'device_id' => 'shop system',

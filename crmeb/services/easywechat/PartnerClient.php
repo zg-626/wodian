@@ -109,6 +109,8 @@ class PartnerClient extends AbstractAPI
         //            'Wechatpay-Serial' => $this->app['config']['payment']['serial_no']
         ];*/
         $headers = [
+            'Content-Type' => 'application/json',
+            'User-Agent' => 'curl',
             'Accept' => 'application/json',
             'Authorization' => $this->getAuthorization($endpoint, $method, $sign_body),
             // 必须明确区分服务商/子商户证书
