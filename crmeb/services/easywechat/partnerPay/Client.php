@@ -74,11 +74,12 @@ class Client extends PartnerClient
             ];
         }
 
-        /*if ($type === 'h5') {
+        if ($type === 'h5') {
             $params['scene_info']['h5_info'] = [
                 'type' => $order['h5_type'] ?? 'Wap'
             ];
-        }*/
+        }
+
         Log::info('微信服务商v3支付：'.var_export($params,true));
         $content = json_encode($params, JSON_UNESCAPED_UNICODE);
 
