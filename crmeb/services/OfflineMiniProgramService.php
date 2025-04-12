@@ -32,12 +32,12 @@ use think\facade\Log;
 use think\facade\Route;
 
 /**
- * Class MiniProgramService
+ * Class OfflineMiniProgramService
  * @package crmeb\services
  * @author xaboy
  * @day 2020-05-11
  */
-class MiniProgramService
+class OfflineMiniProgramService
 {
     /**
      * @var MiniProgram
@@ -47,7 +47,7 @@ class MiniProgramService
     protected $config;
 
     /**
-     * MiniProgramService constructor.
+     * OfflineMiniProgramService constructor.
      * @param array $config
      */
     public function __construct(array $config)
@@ -87,6 +87,7 @@ class MiniProgramService
         $payment = systemConfig(['pay_routine_mchid', 'pay_routine_key', 'pay_routine_v3_key', 'pay_routine_serial_no_v3', 'pay_routine_client_cert', 'pay_routine_client_key', 'pay_weixin_open', 'wechat_service_merid', 'wechat_service_key', 'wechat_service_v3key', 'wechat_service_client_cert', 'wechat_service_client_key', 'wechat_service_serial_no', 'pay_routine_new_mchid']);
         $config = [
             'app_id' => $wechat['routine_appId'],
+            //'app_id' => 'wx5acfa79d79184c88',
             'secret' => $wechat['routine_appsecret'],
             'mini_program' => [
                 'app_id' => $wechat['routine_appId'],
@@ -96,6 +97,7 @@ class MiniProgramService
             ],
             'payment' => [
                 'app_id' => $wechat['routine_appId'],
+                //'app_id' => 'wx5acfa79d79184c88',
                 'merchant_id' => trim($payment['pay_routine_mchid']),
                 'key' => trim($payment['pay_routine_key']),
                 'apiv3_key' => trim($payment['pay_routine_v3_key']),
@@ -116,6 +118,9 @@ class MiniProgramService
                 'pay_weixin_client_key' => $payment['wechat_service_client_key'],
                 'serial_no' => trim($payment['wechat_service_serial_no']),
                 'apiv3_key' => trim($payment['wechat_service_v3key']),
+                // 新增平台证书配置
+                'platform_cert' => app()->getRootPath() . 'public/cert/pub_key.pem', // 需从商户平台下载
+
             ],
             'pay_routine_new_mchid' => $payment['pay_routine_new_mchid'],
         ];
@@ -136,7 +141,7 @@ class MiniProgramService
 
 
     /**
-     * @return MiniProgramService
+     * @return OfflineMiniProgramService
      * @author xaboy
      * @day 2020/6/2
      */

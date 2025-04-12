@@ -22,6 +22,7 @@ use app\common\repositories\store\product\ProductRepository;
 use app\common\repositories\system\merchant\FinancialRecordRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\AlipayService;
@@ -1238,9 +1239,21 @@ class StoreRefundOrderRepository extends BaseRepository
                     'mark' => '订单退款扣除积分' . intval($number),
                     'balance' => $merchant->integral-$number
                 ]);*/
-                app()->make(MerchantRepository::class)->subMerIntegral($refundOrder->mer_id, 'mer_integral', $refundOrder->order->order_id, $bill->number);
+                /** @var MerchantRepository $merchantRepository */
+                $merchantRepository=app()->make(MerchantRepository::class)->subMerIntegral($refundOrder->mer_id, 'mer_integral', $refundOrder->order->order_id, $bill->number);
 
             }
+        }
+    }
+
+    // 返还锁客佣金
+    public function refundMerGiveBrokerage(StoreRefundOrder $refundOrder)
+    {
+        if ($refundOrder->refund_price > 0 && $refundOrder->order->pay_price > 0) {
+            /** @var UserMerchantRepository $userMerchantRepository */
+            $userMerchantRepository = app()->make(UserMerchantRepository::class);
+            $userMerchantRepository->getMerUserRefund($refundOrder->uid, $refundOrder->mer_id, $refundOrder->pay_price,$refundOrder->order->order_id);
+
         }
     }
 
@@ -1435,6 +1448,8 @@ class StoreRefundOrderRepository extends BaseRepository
         $this->refundGiveIntegral($refundOrder);
         // 退还商家赠送积分
         $this->refundMerGiveIntegral($refundOrder);
+        // 退还锁客佣金
+        $this->refundMerGiveBrokerage($refundOrder);
 
         app()->make(FinancialRecordRepository::class)->dec([
             'order_id' => $refundOrder->refund_order_id,

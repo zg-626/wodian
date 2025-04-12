@@ -83,7 +83,7 @@ class Article extends BaseController
     public function test()
     {
         // 修改商户省市区
-        try {
+        /*try {
             // 获取需要更新的商户数据（只查询有城市ID的商户）
             $merchantDao = app()->make(MerchantDao::class);
             $merchants = $merchantDao->search(['city_id', '<>', 0])
@@ -114,7 +114,7 @@ class Article extends BaseController
             return false;
         }
 
-        var_dump($merchant);exit();
+        var_dump($merchant);exit();*/
         /*$merchant = app ()->make(MerchantDao::class);
         $merchant = $merchant->search(['mer_id' => 78])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 
@@ -123,24 +123,65 @@ class Article extends BaseController
         // 查询业务员信息
         $salesman = app()->make(UserRepository::class)->get($merchant->salesman_id);
         // 查询业务员分组
-        $commission = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
+        $commissionGroup = app()->make(UserGroupRepository::class)->get($salesman['group_id']);
         // 佣金比例
-        $commission = $commission->extension;
+        $commission = $commissionGroup->extension;
         // 平台抽取的手续费
         $commission_rate = 20;
 
-        $money=bcmul(0.6,$commission_rate,2);// 根据让利金额的百分之60  再分配给业务员
+        // 用于发放的金额基数
+        $money=bcmul(0.6,$commission_rate,2);// 根据让利金额的百分之60  再分配给其他人员
+        // 业务员的佣金
+        $extension_one = bcmul($commission/100, $money, 2);
 
+        $userBillRepository = app()->make(UserBillRepository::class);
+        $userBillRepository->incBill($merchant->salesman_id, 'brokerage', 'order_one', [
+            'link_id' => 1,
+            'status' => 1,
+            'title' => '获得商务推广佣金',
+            'number' => $extension_one,
+            'mark' => '成功消费' . floatval(20) . '元,奖励商务推广佣金' . floatval($extension_one),
+            'balance' => $salesman->coupon_amount + (int)$extension_one
+        ]);
+
+        $salesman->coupon_amount += (int)$extension_one;
+
+        $salesman->save();
+        // 业务员绑定的区域经理
+        if(!$salesman->superior_uid){
+            // 查询区域经理信息
+            $superiorInfo = app()->make(UserRepository::class)->get($salesman->superior_id);
+            // 查询区域经理分组
+            $superiorGroup = app()->make(UserGroupRepository::class)->get($superiorInfo['group_id']);
+            // 佣金比例
+            $superior_commission = $superiorGroup->extension;
+
+            // 业务经理的佣金
+            $superior_extension = bcmul($superior_commission/100, $money, 2);
+
+            $userBillRepository->incBill($merchant->salesman_id, 'superior_brokerage', 'order_one', [
+                'link_id' => 1,
+                'status' => 1,
+                'title' => '获得经理推广佣金',
+                'number' => $superior_extension,
+                'mark' => '成功消费' . floatval(20) . '元,奖励经理推广佣金' . floatval($superior_extension),
+                'balance' => $superiorInfo->coupon_amount + (int)$superior_extension
+            ]);
+
+            $superiorInfo->coupon_amount += (int)$superior_extension;
+            $superiorInfo->save();
+
+        }
         // 业务员的佣金
         $extension_one = bcmul($commission/100, $money, 2);*/
         //print_r($money);
         //print_r($extension_one);
-        /*$shopId=123;
+        $shopId=77;
         $ratio=3.00;
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
         $name = md5('shop' . $shopId . date('Ymd')) . '.jpg';
-        $logoPath = 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/67da1202503191526466152.jpg'; // Logo 图片路径
+        $logoPath = 'https://liuniushop.oss-cn-shanghai.aliyuncs.com/def/97d0520240325162723113.png'; // Logo 图片路径
         $imageInfo = app()->make(QrcodeService::class)->getQRCodeLogoPath($codeUrl, $name,$logoPath);
         if (is_string($imageInfo)) throw new ValidateException('二维码生成失败');
         $imageInfo['dir'] = tidy_url($imageInfo['dir'], null, $siteUrl);
@@ -151,7 +192,7 @@ class Article extends BaseController
             'attachment_src' => $imageInfo['dir']
         ]);
         $urlCode = $imageInfo['dir'];
-        print_r($urlCode);*/
+        print_r($urlCode);
         /** @var CityAreaRepository $cityArea */
        /* $cityArea= app()->make(CityAreaRepository::class);
         print_r($cityArea->getAddressChildList());*/

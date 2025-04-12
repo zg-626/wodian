@@ -19,7 +19,7 @@ use EasyWeChat\Core\Http;
 use EasyWeChat\Encryption\EncryptionException;
 use think\exception\InvalidArgumentException;
 
-class BaseClient extends AbstractAPI
+class PartnerClient extends AbstractAPI
 {
     protected $app;
 
@@ -101,17 +101,33 @@ class BaseClient extends AbstractAPI
     public function request(string $endpoint, string $method = 'POST', array $options = [], $serial = true)
     {
         $sign_body = $options['sign_body'] ?? '';
-        $headers = [
+        /*$headers = [
             'Content-Type' => 'application/json',
             'User-Agent' => 'curl',
             'Accept' => 'application/json',
             'Authorization' => $this->getAuthorization($endpoint, $method, $sign_body),
-//            'Wechatpay-Serial' => $this->app['config']['payment']['serial_no']
+        //            'Wechatpay-Serial' => $this->app['config']['payment']['serial_no']
+        ];*/
+        $headers = [
+            'Accept' => 'application/json',
+            'Authorization' => $this->getAuthorization($endpoint, $method, $sign_body),
+            // 必须明确区分服务商/子商户证书
+            'Wechatpay-Serial' => $this->isService
+                ? $this->app['config']['service_payment']['serial_no']
+                : $this->app['config']['payment']['serial_no']
         ];
+
         $options['headers'] = array_merge($headers, ($options['headers'] ?? []));
 
-        if ($serial)
-            $options['headers']['Wechatpay-Serial'] = $this->app->certficates->setServiceStatus($this->isService)->get()['serial_no'];
+        /*if ($serial)
+            $options['headers']['Wechatpay-Serial'] = $this->app->certficates->setServiceStatus($this->isService)->get()['serial_no'];*/
+        if ($serial) {
+            $serialNo = $this->isService
+                ? $this->app['config']['service_payment']['serial_no']
+                : $this->app['config']['payment']['serial_no'];
+            $options['headers']['Wechatpay-Serial'] = $serialNo;
+        }
+
 
         Http::setDefaultOptions($options);
         return $this->_doRequestCurl($method, 'https://api.mch.weixin.qq.com' . $endpoint, $options);

@@ -17,6 +17,7 @@ namespace app\common\repositories\user;
 use app\common\dao\user\UserMerchantDao;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\system\config\ConfigValueRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use FormBuilder\Factory\Elm;
 use think\facade\Db;
 use think\facade\Route;
@@ -93,8 +94,58 @@ class UserMerchantRepository extends BaseRepository
     public function getInfo($uid, $mer_id)
     {
         $user = $this->dao->getWhere(compact('uid', 'mer_id'));
-        if (!$user) $user = $this->create($uid, $mer_id);
+        if (!$user) {
+            $user = $this->create($uid, $mer_id);
+        }
         return $user;
+    }
+
+    /**
+     * @param $uid
+     * @param $mer_id
+     * @return \app\common\dao\BaseDao|array|\think\Model
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author xaboy
+     * @day 2020/10/20
+     */
+    public function getMerUser($uid, $mer_id,$pay_price,$order_id)
+    {
+        // 用户信息
+        $merUser = $this->dao->getWhere(compact('uid'));
+        if (!$merUser)
+        {
+            //给该商家5%的佣金，后续消费无变化
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository = app()->make(MerchantRepository::class);
+            $merchantRepository->addCommission($mer_id,$pay_price,$order_id);
+        }
+    }
+
+    /**
+     * @param $uid
+     * @param $mer_id
+     * @return \app\common\dao\BaseDao|array|\think\Model
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author xaboy
+     * @day 2020/10/20
+     */
+    public function getMerUserRefund($uid, $mer_id,$pay_price,$order_id)
+    {
+        // 用户信息
+        $merUser = $this->dao->getWhere(compact('uid'));
+        if ($merUser)
+        {
+            // 取消绑定
+            $user = $this->delete($merUser['id']);
+            //扣减商家5%的佣金，后续消费无变化
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository = app()->make(MerchantRepository::class);
+            $merchantRepository->subCommission($mer_id,$pay_price,$order_id);
+        }
     }
 
     /**
@@ -107,7 +158,7 @@ class UserMerchantRepository extends BaseRepository
      * @author xaboy
      * @day 2020/10/21
      */
-    public function updatePayTime($uid, $merId, $pay_price, $flag = true)
+    public function updatePayTime($uid, $merId, $pay_price, $flag,$order_id)
     {
         $user = $this->getInfo($uid, $merId);
         $time = date('Y-m-d H:i:s');
@@ -117,6 +168,8 @@ class UserMerchantRepository extends BaseRepository
         $user->pay_price = bcadd($user->pay_price, $pay_price, 2);
         if (!$user->first_pay_time) $user->first_pay_time = $time;
         $user->save();
+        // 锁客，每个用户只绑定一个商户
+        $this->getMerUser($uid,$merId,$pay_price,$order_id);
     }
 
     public function rmLabel($id)

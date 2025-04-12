@@ -311,6 +311,25 @@ Route::group('api/', function () {
 
         })->prefix('api.server.StoreOrder')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
 
+        //管理员线下订单
+        Route::group('admin_offline/:merId', function () {
+            Route::get('/statistics', '/orderStatistics');
+            Route::get('/order_price', '/orderDetail');
+            Route::get('/order_list', '/orderList');
+            Route::get('/order/:id', '/order');
+            Route::post('/mark/:id', '/mark');
+            Route::post('/price/:id', '/price');
+            Route::post('/delivery/:id', '/delivery');
+            Route::post('/verify/:id', '/verify');
+            Route::get('/pay_price', '/payPrice');
+            Route::get('/pay_number', '/payNumber');
+            Route::get('/mer_form', '/getFormData');
+            Route::get('/dump_temp', '/getFormData');
+            Route::get('/delivery_config', '/getDeliveryConfig');
+            Route::get('/delivery_options', '/getDeliveryOptions');
+
+        })->prefix('api.server.StoreOrderOffline')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
+
         //管理员退款单
         Route::group('server/:merId/refund', function () {
             //退款单
@@ -330,6 +349,9 @@ Route::group('api/', function () {
             Route::get('order/:id', '/detail');
             Route::post(':id', '/verify');
         })->prefix('api.store.order.StoreOrderVerify')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
+
+        // 美团免登外卖地址
+        Route::any('/mt_waimai', 'Waimai/mtWaimai');
 
         //社区
         Route::group('community', function () {
@@ -552,8 +574,6 @@ Route::group('api/', function () {
             Route::any('/query', 'Meituan/query');
             // 交易标准三方收银台下单外部接口
             Route::any('/pay', 'Meituan/pay');
-            // 美团免登外卖地址
-            Route::any('/mt_waimai', 'Waimai/mtWaimai');
         })->prefix('api.meituan.');
 
         // 分红

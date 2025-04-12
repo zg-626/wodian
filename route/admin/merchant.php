@@ -111,6 +111,10 @@ Route::group(function () {
         Route::post('update/:id', '.Merchants/update')->name('systemMerchantsUpdate')->option([
             '_alias' => '商户编辑',
         ]);
+        Route::post('updates/:id', '.Merchants/update')->name('systemMerchantsUpdates')->option([
+            '_alias' => '商户编辑',
+        ]);
+
         Route::post('status/:id', '.Merchants/switchStatus')->name('systemMerchantsStatus')->option([
             '_alias' => '商户修改推荐',
         ]);

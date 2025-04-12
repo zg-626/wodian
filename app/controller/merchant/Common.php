@@ -14,6 +14,7 @@
 namespace app\controller\merchant;
 
 
+use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\repositories\system\CountRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\basic\BaseController;
@@ -91,6 +92,33 @@ class Common extends BaseController
         $userVisitRepository = app()->make(UserVisitRepository::class);
         $repository = app()->make(StoreOrderRepository::class);
         $relationRepository = app()->make(UserRelationRepository::class);
+        $orderNum = (float)$repository->dayOrderNum($date, $merId);
+        $payPrice = (float)$repository->dayOrderPrice($date, $merId);
+        $payUser = (float)$repository->dayOrderUserNum($date, $merId);
+        $visitNum = (float)$userVisitRepository->dateVisitUserNum($date, $merId);
+        $likeStore = (float)$relationRepository->dayLikeStore($date, $merId);
+        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore');
+    }
+
+    /**
+     * @param $date
+     * @param $merId
+     * @return array
+     * @desc 线下订单
+     * @author xaboy
+     * @day 2020/6/25
+     */
+    public function offlineMainGroup($date, $merId)
+    {
+        /** @var UserVisitRepository $userVisitRepository */
+        $userVisitRepository = app()->make(UserVisitRepository::class);
+
+        /** @var StoreOrderOfflineDao $repository */
+        $repository = app()->make(StoreOrderOfflineDao::class);
+
+        /** @var UserRelationRepository $relationRepository */
+        $relationRepository = app()->make(UserRelationRepository::class);
+
         $orderNum = (float)$repository->dayOrderNum($date, $merId);
         $payPrice = (float)$repository->dayOrderPrice($date, $merId);
         $payUser = (float)$repository->dayOrderUserNum($date, $merId);

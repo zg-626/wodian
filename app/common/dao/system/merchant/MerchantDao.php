@@ -109,8 +109,8 @@ class MerchantDao extends BaseDao
             $query->where('status', $where['status']);
 
         if (isset($where['district']) && $where['district'] !== ''){
-            $query->where('district', $where['district']);
-            $query->whereOr('city', $where['district']);
+            //$query->where('district', $where['district']);
+            $query->where('city', $where['district']);
         }
 
 
@@ -266,6 +266,24 @@ class MerchantDao extends BaseDao
     }
 
     /**
+     * TODO 增加商户佣金
+     * @param int $merId
+     * @param float $num
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function addBrokerage(int $merId, float $num)
+    {
+        $field = 'brokerage_price';
+        $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
+        if ($merchant) {
+            $mer_money = bcadd($merchant[$field], $num, 2);
+            $merchant[$field] = $mer_money;
+            $merchant->save();
+        }
+    }
+
+    /**
      * TODO 增加商户积分
      * @param int $merId
      * @param float $num
@@ -311,6 +329,24 @@ class MerchantDao extends BaseDao
     public function subMoney(int $merId, float $num)
     {
         $field = 'mer_money';
+        $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
+        if ($merchant) {
+            $mer_money = bcsub($merchant[$field], $num, 2);
+            $merchant[$field] = $mer_money;
+            $merchant->save();
+        }
+    }
+
+    /**
+     * TODO 减少商户佣金
+     * @param int $merId
+     * @param float $num
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function subBrokerage(int $merId, float $num)
+    {
+        $field = 'brokerage_price';
         $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
         if ($merchant) {
             $mer_money = bcsub($merchant[$field], $num, 2);

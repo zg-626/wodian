@@ -281,6 +281,78 @@ class MerchantRepository extends BaseRepository
         });
     }
 
+    /**
+     * @param array $data
+     * @author xaboy
+     * @day 2020-04-17
+     */
+    public function createMerchants(array $data)
+    {
+        if ($this->fieldExists('mer_name', $data['mer_name']))
+            throw new ValidateException('商户名已存在');
+        if ($data['mer_phone'] && isPhone($data['mer_phone']))
+            throw new ValidateException('请输入正确的手机号');
+        $merchantCategoryRepository = app()->make(MerchantCategoryRepository::class);
+        $adminRepository = app()->make(MerchantAdminRepository::class);
+
+        if (!$data['category_id'] || !$merchantCategoryRepository->exists($data['category_id']))
+            throw new ValidateException('商户分类不存在');
+        if ($adminRepository->fieldExists('account', $data['mer_account']))
+            throw new ValidateException('账号已存在');
+        /*
+            if(empty($data['province_id'])){
+                throw new ValidateException('请选择所在地区');
+            }
+          // 根据城市id更新商户的所属区域名称
+            /*$cityAreaRepository = app()->make(CityAreaRepository::class);
+            $provinceArea = $cityAreaRepository->get($data['province_id']);
+            $data['province'] = $provinceArea['name'];
+
+            $cityArea = $cityAreaRepository->get($data['city_id']);
+            $data['city'] = $cityArea['name'];
+
+            $districtArea = $cityAreaRepository->get($data['district_id']);
+            $data['district'] = $districtArea['name'];
+        */
+
+        /** @var MerchantAdminRepository $make */
+        $make = app()->make(MerchantAdminRepository::class);
+
+        $margin = app()->make(MerchantTypeRepository::class)->get($data['type_id']);
+        $data['is_margin'] = $margin['is_margin'] ?? 0;
+        $data['margin'] = $margin['margin'] ?? 0;
+        $data['ot_margin'] = $margin['margin'] ?? 0;
+
+        $admin_info = [];
+        if(isset($data['admin_info'])){
+            $admin_info = $data['admin_info'] ?: [];
+            unset($data['admin_info']);
+        }
+
+        return Db::transaction(function () use ($data, $make,$admin_info) {
+            $account = $data['mer_account'];
+            $password = $data['mer_password'];
+            unset($data['mer_account'], $data['mer_password']);
+
+            $merchant = $this->dao->create($data);
+            $make->createMerchantAccount($merchant, $account, $password);
+            app()->make(ShippingTemplateRepository::class)->createDefault($merchant->mer_id);
+            app()->make(ProductCopyRepository::class)->defaulCopyNum($merchant->mer_id);
+
+            // 记录商户创建日志
+            if (!empty($admin_info) && !empty($update_infos)) {
+                event('create_operate_log', [
+                    'category' => OperateLogRepository::PLATFORM_CREATE_MERCHANT,
+                    'data' => [
+                        'merchant' => $merchant,
+                        'admin_info' => $admin_info,
+                    ],
+                ]);
+            }
+            return $merchant;
+        });
+    }
+
 
     /**
      * @Author:Qinii
@@ -570,6 +642,30 @@ class MerchantRepository extends BaseRepository
 
     }
 
+    public function addCommission(int $merId,  float $pay_price, $orderId)
+    {
+        if ($pay_price <= 0) return;
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,brokerage_price,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        // 佣金比例
+        $percentage = '0.05'; // 5%
+        $number = bcmul($pay_price, $percentage, 2);
+
+        app()->make(UserBillRepository::class)->incBill($merId, 'mer_brokerage', 'mer_brokerage', [
+            'link_id' => $orderId,
+            'mer_id' => $merId,
+            'status' => 1,
+            'title' => '商户锁客，增加佣金',
+            'number' => $number,
+            'mark' => '用户成功消费,增加锁客佣金' . $number,
+
+            'balance' => $merchant->brokerage_price+(int)$number
+        ]);
+
+        $this->dao->addBrokerage($merId, $number);
+
+    }
+
     public function subMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
     {
         if ($integral <= 0) return;
@@ -591,6 +687,33 @@ class MerchantRepository extends BaseRepository
 
 
     }
+
+    public function subCommission(int $merId,$pay_price, int $orderId)
+    {
+        if ($pay_price <= 0) return;
+        $make = app()->make(UserBillRepository::class);
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+
+        $bill = $make->search(['category' => 'mer_brokerage', 'type' => 'mer_brokerage', 'mer_id' => $merId, 'link_id' =>$orderId, 'status' => 1])->find();
+
+        if($bill){
+            $make->decBill($merId, 'mer_refund_brokerage', 'mer_refund_brokerage', [
+                'link_id' => $orderId,
+                'mer_id' => $merId,
+                'status' => 1,
+                'title' => '扣除商户锁客佣金',
+                'number' => $bill->number,
+                'mark' => '订单退款扣除锁客佣金' . intval($bill->number),
+                'balance' => $merchant->brokerage_price+(int)$bill->number
+            ]);
+            $this->dao->subBrokerage($merId, $$bill->number);
+        }
+
+
+
+    }
+
+
 
     public function checkCrmebNum(int $merId, string $type)
     {

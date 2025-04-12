@@ -27,6 +27,7 @@ use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
+use crmeb\services\OfflinePayService;
 use crmeb\services\PayService;
 use FormBuilder\Factory\Elm;
 use think\db\exception\DataNotFoundException;
@@ -85,34 +86,41 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function add($money,$mer_id, $user, $params)
     {
         $total_price=$money;
-        $commission_rate=0;
-        $rate = 0.2;
-        if($money>0){
-            // 计算平台手续费
-            /**
-             * @var MerchantDao $merchant
-             */
-            $merchant = app()->make(MerchantDao::class);
 
-            $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+        $handling_fee=0;
 
-            if ($merchant['commission_rate'] > 0) {
-                $rate = $merchant['commission_rate'] / 100;
-            }
+        /*** @var MerchantDao $merchant */
+        $merchant = app()->make(MerchantDao::class);
 
-            $commission_rate = bcmul($rate, $money, 3);
+        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid')->find();
+
+        // 判断有没有申请子商户
+        if ($merchant['sub_mchid'] == 0) {
+            throw new ValidateException('该商家未申请子商户，无法下单');
+        }
+        $rate=0;
+        // 计算平台手续费
+        if(($money > 0) && $merchant['commission_rate'] > 0) {
+            $rate = $merchant['commission_rate'] /100;
+            $handling_fee = bcmul($money,$rate, 2);
         }
 
         //积分配置
         $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
+
         $svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
+
         $pay_price = $money;
+
         $svip_integral_rate = $svip_status ? app()->make(MemberinterestsRepository::class)->getSvipInterestVal(MemberinterestsRepository::HAS_TYPE_PAY) : 0;
+
         //计算赠送积分, 只有普通商品赠送积分
         $giveIntegralFlag = $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_order_rate'] > 0;
+
         $total_give_integral = 0;
+
         //$order_total_give_integral = 0;
-        if ($giveIntegralFlag  && $pay_price > 0) {
+        if ($giveIntegralFlag  && $pay_price > 0 && $rate) {
             $total_give_integral = floor(bcmul($pay_price, $rate, 0));
             if ($total_give_integral > 0 && $svip_status && $svip_integral_rate > 0) {
                 $total_give_integral = bcmul($svip_integral_rate, $total_give_integral, 0);
@@ -132,7 +140,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
-        $order_sn = app()->make(StoreOrderRepository::class)->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
+        $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
         $data = [
             'title'     => '线下门店支付',
             'link_id'   => 0,
@@ -142,7 +150,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             'uid'        => $user->uid,
             'order_type' => self::TYPE_SVIP,
             'pay_type'   =>  $params['pay_type'],
-            'commission_rate'=>$commission_rate,
+            'commission_rate'=>$merchant['commission_rate'],
+            'handling_fee' => $handling_fee,
             'status'     => 1,
             'mer_id'     => $mer_id,
             'gieve_integral' => $total_give_integral,
@@ -152,12 +161,17 @@ class StoreOrderOfflineRepository extends BaseRepository
             'deduction_money' => $params['user_deduction']?: 0,
             'to_uid'=>$params['to_uid']?:0
         ];
+
+        // 微信服务商支付
         $body = [
-            'order_sn' => $order_sn,
+            'out_trade_no' => $order_sn,
             'pay_price' => $money,
             'attach' => 'offline_order',
+            'sub_mchid' => $merchant['sub_mchid'],
+            'description' => '线下商品消费',
             'body' =>'线下门店支付'
         ];
+
         $type = $params['pay_type'];
         if (in_array($type, ['weixin', 'alipay'], true) && $params['is_app']) {
             $type .= 'App';
@@ -165,9 +179,11 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
 
         $info = $this->dao->create($data);
+
         if ($money){
             try {
-                $service = new PayService($type,$body, 'offline_order');
+                //$service = new PayService($type,$body, 'offline_order');
+                $service = new OfflinePayService($type, $body);
                 $config = $service->pay($user);
                 return app('json')->status($type, $config + ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
@@ -177,6 +193,19 @@ class StoreOrderOfflineRepository extends BaseRepository
             $res = $this->paySuccess($data);
             return app('json')->status('success', ['order_id' => $info->order_id]);
         }
+    }
+
+    /**
+     * @return string
+     * @author xaboy
+     * @day 2020/6/9
+     */
+    public function getNewOrderId($type)
+    {
+        list($msec, $sec) = explode(' ', microtime());
+        $msectime = number_format((floatval($msec) + floatval($sec)) * 1000, 0, '', '');
+        $orderId = $type . $msectime . mt_rand(10000, max(intval($msec * 10000) + 10000, 98369));
+        return $orderId;
     }
 
     public function paySuccess($data)

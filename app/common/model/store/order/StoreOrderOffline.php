@@ -40,4 +40,25 @@ class StoreOrderOffline extends BaseModel
     {
         return $this->hasOne(Merchant::class, 'mer_id', 'mer_id');
     }
+
+    public function getCombinePayParams()
+    {
+        $params = [
+            'order_sn' => $this->order_sn,
+            'sub_orders' => [],
+            'attach' => 'offline_order',
+            'body' => '线下订单支付',
+        ];
+
+        if ($this->pay_price > 0) {
+            $subOrder = [
+                'pay_price' => $this->pay_price,
+                'order_sn' => $this->order_sn,
+                'sub_mchid' => $this->merchant->sub_mchid,
+            ];
+            $params['sub_orders'][] = $subOrder;
+        }
+
+        return $params;
+    }
 }

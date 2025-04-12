@@ -204,13 +204,13 @@ class QrcodeService
 
             // 创建二维码
             $code = new QrCode($url);
-            $code->setSize(300); // 设置二维码大小
+            $code->setSize(400); // 设置二维码大小
             $code->setMargin(10); // 设置边距
 
             // 添加 Logo
             if ($logoPath) {
                 $code->setLogoPath($logoPath); // 设置 Logo 路径
-                $code->setLogoSize(100, 100); // 设置 Logo 大小
+                $code->setLogoSize(90, 90); // 设置 Logo 大小
                 //$code->setLogoBackgroundColor([255, 255, 255, 127]); // 设置 Logo 背景颜色
             }
 

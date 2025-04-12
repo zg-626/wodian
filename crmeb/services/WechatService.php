@@ -993,6 +993,14 @@ class WechatService
         return $this->application->combinePay;
     }
 
+    /**
+     * @return easywechat\partnerPay\Client
+     */
+    public function partnerPay()
+    {
+        return $this->application->partnerPay;
+    }
+
 
 
     /**

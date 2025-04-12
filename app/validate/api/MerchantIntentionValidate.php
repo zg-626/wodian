@@ -28,5 +28,7 @@ class MerchantIntentionValidate extends Validate
         'mer_type_id|店铺类型' => 'integer',
         'code|验证码' => 'require',
         'images|资质' => 'array',
+        //'id_card|法人身份证正反面' => 'array',
+        //'inside|经营区域内部照片' => 'array',
     ];
 }

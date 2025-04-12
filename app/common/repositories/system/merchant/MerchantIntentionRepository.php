@@ -159,7 +159,9 @@ class MerchantIntentionRepository extends BaseRepository
         Db::transaction(function () use ($config, $intention, $data, $create,$margin,$merData,$smsData) {
             if ($data['status'] == 1) {
                 if ($create == 1) {
-                    $merchant = app()->make(MerchantRepository::class)->createMerchant($merData);
+                    /** @var MerchantRepository $merchant */
+                    $merchant = app()->make(MerchantRepository::class);
+                    $merchant=$merchant->createMerchants($merData);
                     app()->make(ConfigValueRepository::class)->setFormData(['mer_certificate' => $intention['images']], $merchant->mer_id);
                     $data['mer_id'] = $merchant->mer_id;
                     Queue::push(SendSmsJob::class, ['tempId' => 'APPLY_MER_SUCCESS', 'id' => $smsData]);
