@@ -58,6 +58,17 @@ class User extends BaseController
         return app('json')->success($res);
     }
 
+    /**
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function extract_image()
+    {
+        $res = $this->repository->extractImage($this->user);
+        return app('json')->success($res);
+    }
+
     public function spread_image_v2()
     {
         $type = $this->request->param('type');

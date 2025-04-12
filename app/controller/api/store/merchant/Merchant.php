@@ -114,6 +114,12 @@ class Merchant extends BaseController
         return app('json')->success(compact('url'));
     }
 
+    // 付款码
+    public function payCode($id)
+    {
+        return app('json')->success($this->repository->getPayCode(intval($id)));
+    }
+
     public function localLst()
     {
         [$page, $limit] = $this->getPage();

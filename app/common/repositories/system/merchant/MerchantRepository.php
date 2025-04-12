@@ -514,6 +514,46 @@ class MerchantRepository extends BaseRepository
         return $urlCode;
     }
 
+    public function getPayCode($id)
+    {
+        $merchant = $this->dao->apiGetOne($id)->hidden([
+            "real_name", "mer_phone", "reg_admin_id", "sort", "is_del", "is_audit", "is_best", "mer_state", "bank", "bank_number", "bank_name", 'update_time',
+            'financial_alipay', 'financial_bank', 'financial_wechat', 'financial_type','mer_take_phone'
+        ]);
+        if (!$merchant) throw new ValidateException('商户不存在');
+        $shopId=$id;
+        $mer_avatar=$merchant['mer_avatar'];
+        // 如果头像为空不能生成
+        if (empty($mer_avatar)) throw new ValidateException('商户头像不能为空，请上传后再生成');
+        $ratio=$merchant['commission_rate'];// 默认积分比例
+        $siteUrl = rtrim(systemConfig('site_url'), '/');
+        $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
+        $name = md5('shop' . $shopId . date('Ymd')) . '.jpg';
+        $logoPath = $mer_avatar; // Logo 图片路径
+        $imageInfo = app()->make(QrcodeService::class)->getQRCodeLogoPath($codeUrl, $name,$logoPath);
+        if (is_string($imageInfo)) throw new ValidateException('二维码生成失败');
+        $imageInfo['dir'] = tidy_url($imageInfo['dir'], null, $siteUrl);
+        $attachmentRepository = app()->make(AttachmentRepository::class);
+        $attachmentRepository->create(systemConfig('upload_type') ?: 1, -2, $shopId, [
+            'attachment_category_id' => 0,
+            'attachment_name' => $imageInfo['name'],
+            'attachment_src' => $imageInfo['dir']
+        ]);
+        $urlCode = $imageInfo['dir'];
+        // 保存
+        $merchant->mer_qrcode = $urlCode;
+        $merchant->save();
+        // 获取海报背景
+        $pay_image = systemConfig('pay_image');
+        return [
+            'qrcode' => $urlCode,
+            'ratio' => $ratio,
+            'mer_name' => $merchant['mer_name'],
+            'pay_image' => $pay_image
+        ];
+
+    }
+
     public function routineQrcode($merId)
     {
         $name = md5('smrt' . $merId . date('Ymd')) . '.jpg';
