@@ -372,7 +372,7 @@ vjs.cleanUpEvents = function(elem, type) {
   if (data.handlers[type].length === 0) {
     delete data.handlers[type];
     // data.handlers[type] = null;
-    // Setting to null was causing an error with data.handlers
+    // SettingMer to null was causing an error with data.handlers
 
     // Remove the meta-handler from the element
     if (document.removeEventListener) {
@@ -3923,7 +3923,7 @@ vjs.Player.prototype.listenForUserActivity = function(){
     // we consider them active even if they're not moving their finger or mouse.
     // So we want to continue to update that they are active
     clearInterval(mouseInProgress);
-    // Setting userActivity=true now and setting the interval to the same time
+    // SettingMer userActivity=true now and setting the interval to the same time
     // as the activityCheck interval (250) should ensure we never miss the
     // next activityCheck
     mouseInProgress = setInterval(vjs.bind(this, onMouseActivity), 250);
@@ -4415,6 +4415,7 @@ vjs.SeekBar.prototype.onMouseMove = function(event){
 
 vjs.SeekBar.prototype.onMouseUp = function(event){
   vjs.Slider.prototype.onMouseUp.call(this, event);
+
   this.player_.scrubbing = false;
   if (this.videoWasPlaying) {
     this.player_.play();
@@ -5531,7 +5532,7 @@ vjs.Flash = vjs.MediaTechController.extend({
         // Not sure why that's a security issue, but apparently it is.
         iDoc.write(vjs.Flash.getEmbedCode(options['swf'], flashVars, params, attributes));
 
-        // Setting variables on the window needs to come after the doc write because otherwise they can get reset in some browsers
+        // SettingMer variables on the window needs to come after the doc write because otherwise they can get reset in some browsers
         // So far no issues with swf ready event being called before it's set on the window.
         iWin['player'] = this.player_;
 

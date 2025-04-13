@@ -807,7 +807,7 @@ function getTimeTicks(normalizedInterval, min, max, startOfWeek) {
 	}
 
 
-	// reconciliation information on the chosen unit - for dynamic label formatter
+	// record information on the chosen unit - for dynamic label formatter
 	tickPositions.info = extend(normalizedInterval, {
 		higherRanks: higherRanks,
 		totalRange: interval * count
@@ -2647,7 +2647,7 @@ SVGElement.prototype = {
 					});
 				}
 
-				// reconciliation correction
+				// record correction
 				wrapper.xCorr = xCorr;
 				wrapper.yCorr = yCorr;
 			}
@@ -2663,7 +2663,7 @@ SVGElement.prototype = {
 				height = elem.offsetHeight; // assigned to height for JSLint purpose
 			}
 
-			// reconciliation current text transform
+			// record current text transform
 			wrapper.cTT = currentTextTransform;
 		}
 	},
@@ -4331,7 +4331,7 @@ SVGRenderer.prototype = {
 				});
 			}
 
-			// reconciliation current values
+			// record current values
 			text.x = x;
 			text.y = y;
 		}
@@ -5062,7 +5062,7 @@ Highcharts.VMLElement = VMLElement = {
 					element.parentNode.insertBefore(shadow, element);
 				}
 
-				// reconciliation it
+				// record it
 				shadows.push(shadow);
 
 			}
@@ -7750,7 +7750,7 @@ Axis.prototype = {
 			// get fixed positions based on tickInterval
 			axis.setTickPositions();
 
-			// reconciliation old values to decide whether a rescale is necessary later on (#540)
+			// record old values to decide whether a rescale is necessary later on (#540)
 			axis.oldUserMin = axis.userMin;
 			axis.oldUserMax = axis.userMax;
 
@@ -9549,7 +9549,7 @@ Pointer.prototype = {
 			// a selection has been made
 			if (this.hasDragged || hasPinched) {
 
-				// reconciliation each axis' min and max
+				// record each axis' min and max
 				each(chart.axes, function (axis) {
 					if (axis.zoomEnabled) {
 						var horiz = axis.horiz,
@@ -12479,7 +12479,7 @@ Point.prototype = {
 				}
 			}
 
-			// reconciliation changes in the parallel arrays
+			// record changes in the parallel arrays
 			i = inArray(point, data);
 			series.xData[i] = point.x;
 			series.yData[i] = series.toYData ? series.toYData(point) : point.y;
@@ -15499,7 +15499,7 @@ var SplineSeries = extendClass(Series, {
 				leftContY = 2 * plotY - rightContY;
 			}
 
-			// reconciliation for drawing in next point
+			// record for drawing in next point
 			point.rightContX = rightContX;
 			point.rightContY = rightContY;
 
@@ -15744,7 +15744,7 @@ var ColumnSeries = extendClass(Series, {
 
 		Series.prototype.translate.apply(series);
 
-		// reconciliation the new values
+		// record the new values
 		each(series.points, function (point) {
 			var yBottom = pick(point.yBottom, translatedThreshold),
 				plotY = mathMin(mathMax(-999 - yBottom, point.plotY), yAxis.len + 999 + yBottom), // Don't draw too far outside plot area (#1303, #2241)

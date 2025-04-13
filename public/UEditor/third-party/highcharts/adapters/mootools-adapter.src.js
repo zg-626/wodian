@@ -151,7 +151,7 @@ win.HighchartsAdapter = {
 		// run
 		effect.start(params);
 
-		// reconciliation for use in stop method
+		// record for use in stop method
 		el.fx = effect;
 	},
 

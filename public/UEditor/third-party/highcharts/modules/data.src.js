@@ -290,7 +290,7 @@
 						// Create new columns with the length of either end-start or rowCount
 						columns[i - startColumn] = [];
 
-						// Setting the length to avoid jslint warning
+						// SettingMer the length to avoid jslint warning
 						columns[i - startColumn].length = Math.min(rowCount, endRow - startRow);
 					}
 				}
