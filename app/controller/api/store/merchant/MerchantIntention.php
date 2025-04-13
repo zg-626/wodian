@@ -106,7 +106,7 @@ class MerchantIntention extends BaseController
 
     protected function checkParams()
     {
-        $data = $this->request->params(['phone','salesman_id','is_online', 'mer_banner', 'mer_name', 'name', 'code', 'images', 'merchant_category_id', 'mer_type_id','commission_rate','inside','id_card','email','bank_card','bank_open_name']);
+        $data = $this->request->params(['phone','salesman_id','is_online', 'mer_banner', 'mer_name', 'name', 'code', 'images', 'merchant_category_id', 'mer_type_id','commission_rate','inside','id_card','email','bank_card','bank_open_name','address']);
         app()->make(MerchantIntentionValidate::class)->check($data);
         $check = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['code'], 'intention');
         $data['mer_type_id'] = (int)$data['mer_type_id'];

@@ -57,6 +57,9 @@ class MerchantIntentionRepository extends BaseRepository
         if ($this->dao->existsWhere(['mer_intention_id' => $id, 'status' => '1']))
             throw new ValidateException('当前状态不能修改');
         $data['images'] = implode(',', (array)$data['images']);
+        $data['mer_banner'] = implode(',', (array)$data['mer_banner']);
+        $data['id_card'] = implode(',', (array)$data['id_card']);
+        $data['inside'] = implode(',', (array)$data['inside']);
         $data['status'] = 0;
         $data['fail_msg'] = '';
         return $this->dao->update($id, $data);
@@ -128,6 +131,7 @@ class MerchantIntentionRepository extends BaseRepository
                 'is_online' => $intention['is_online'],
                 'salesman_id' => $intention['salesman_id'],
                 'commission_rate' => $intention['commission_rate'],
+                'mer_address' => $intention['mer_address'],
                 'status' => 1,
                 'commission_switch' => 1,
                 'is_audit' => 1,
