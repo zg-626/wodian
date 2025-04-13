@@ -250,7 +250,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 // 赠送积分
                 $this->giveIntegral($order);
                 // 赠送商户积分
-                //$this->giveMerIntegral($order->mer_id,$groupOrder);
+                //$this->giveMerIntegral($order->mer_id,$offlineOrder);
                 app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
 
                 return $this->payAfter($res, $res);
@@ -258,16 +258,16 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
-    public function giveIntegral($groupOrder)
+    public function giveIntegral($offlineOrder)
     {
-        if ($groupOrder->give_integral > 0) {
-            app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'lock', [
-                'link_id' => $groupOrder['order_id'],
+        if ($offlineOrder->give_integral > 0) {
+            app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
+                'link_id' => $offlineOrder['order_id'],
                 'status' => 0,
                 'title' => '下单赠送积分',
-                'number' => $groupOrder->give_integral,
-                'mark' => '线下成功消费' . floatval($groupOrder['pay_price']) . '元,赠送积分' . floatval($groupOrder->give_integral),
-                'balance' => $groupOrder->user->integral
+                'number' => $offlineOrder->give_integral,
+                'mark' => '线下成功消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
+                'balance' => $offlineOrder->user->integral
             ]);
         }
     }
@@ -305,68 +305,39 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function cancel($id, $uid = null)
     {
-        $groupOrder = $this->search(['paid' => 0, 'uid' => $uid ?? ''])->where('order_id', $id)->find();
-        if (!$groupOrder)
+        $offlineOrder = $this->search(['paid' => 0, 'uid' => $uid ?? ''])->where('order_id', $id)->find();
+        if (!$offlineOrder)
             throw new ValidateException('订单不存在');
-        if ($groupOrder['paid'] != 0)
+        if ($offlineOrder['paid'] != 0)
             throw new ValidateException('订单状态错误,无法删除');
         //TODO 关闭订单
-        Db::transaction(function () use ($groupOrder, $id, $uid) {
-            $groupOrder->is_del = 1;
+        Db::transaction(function () use ($offlineOrder, $id, $uid) {
+            $offlineOrder->is_del = 1;
             $orderStatus = [];
 
             //退回积分
-            if ($groupOrder->integral > 0) {
+            if ($offlineOrder->integral > 0) {
                 $make = app()->make(UserRepository::class);
-                $make->update($groupOrder->uid, ['integral' => Db::raw('integral+' . $groupOrder->integral)]);
-                app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'cancel', [
-                    'link_id' => $groupOrder['order_id'],
+                $make->update($offlineOrder->uid, ['integral' => Db::raw('integral+' . $offlineOrder->integral)]);
+                app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'cancel', [
+                    'link_id' => $offlineOrder['order_id'],
                     'status' => 1,
                     'title' => '退回积分',
-                    'number' => $groupOrder['integral'],
-                    'mark' => '订单自动关闭,退回' . intval($groupOrder->integral) . '积分',
-                    'balance' => $make->get($groupOrder->uid)->integral
+                    'number' => $offlineOrder['integral'],
+                    'mark' => '订单自动关闭,退回' . intval($offlineOrder->integral) . '积分',
+                    'balance' => $make->get($offlineOrder->uid)->integral
                 ]);
+                // 退回商家积分
+                app()->make(MerchantRepository::class)->subMerIntegral($offlineOrder->mer_id, 'mer_integral', $offlineOrder->order_id, $offlineOrder->integral);
             }
-            // 退回商家积分
-            app()->make(MerchantRepository::class)->subMerIntegral($groupOrder->mer_id, 'mer_integral', $groupOrder->order->order_id, $groupOrder->integral);
 
             // 退回抵扣金
-            if($groupOrder->deduction > 0){
+            if($offlineOrder->deduction > 0){
                 $make = app()->make(UserRepository::class);
-                $make->update($groupOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $groupOrder->deduction)]);
+                $make->update($offlineOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $offlineOrder->deduction)]);
             }
-            //订单记录
-            /*$storeOrderStatusRepository = app()->make(StoreOrderStatusRepository::class);
-            foreach ($groupOrder->orderList as $order) {
-                if ($order->activity_type == 3 && $order->presellOrder) {
-                    $order->presellOrder->status = 0;
-                    $order->presellOrder->save();
-                }
-                $order->is_del = 1;
-                $order->save();
-                $orderStatus[] = [
-                    'order_id' => $order->order_id,
-                    'order_sn' => $order->order_sn,
-                    'type' => $storeOrderStatusRepository::TYPE_ORDER,
-                    'change_message' => '取消订单',
-                    'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
-                    'uid' => $uid ?:0 ,
-                    'nickname' => $uid ? $order->user->nickname : '系统',
-                    'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
-                ];
-            }*/
-            /*$orderStatus[] = [
-                'order_id' => $groupOrder->order_id,
-                'order_sn' => $groupOrder->order_sn,
-                'type' => $storeOrderStatusRepository::TYPE_ORDER,
-                'change_message' => '取消订单',
-                'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
-                'uid' => $uid ?:0 ,
-                'nickname' => $uid ? $order->user->nickname : '系统',
-                'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
-            ];*/
-            $groupOrder->save();
+
+            $offlineOrder->save();
             //$storeOrderStatusRepository->batchCreateLog($orderStatus);
         });
         Queue::push(CancelGroupOrderJob::class, $id);
