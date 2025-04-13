@@ -61,7 +61,7 @@ div.edui-box {
 }
 
 .edui-default .edui-popup {
-    position: absolute;
+    position: relative;
     -webkit-user-select: none;
     -moz-user-select: none;
 }
@@ -270,7 +270,7 @@ div.edui-box {
     position: absolute;
     bottom: -25px;
     left: 0;
-    z-index: 1009;
+    z-index: 2009;
     width: 99.9%;
 }
 
@@ -1060,6 +1060,7 @@ div.edui-box {
     background-clip: padding-box;
     padding: 5px;
     background:#ffffff;
+  width: 200px;
 }
 
 .edui-default .edui-popup .edui-bordereraser {

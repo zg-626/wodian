@@ -34,17 +34,17 @@
 
         // 工具栏上的所有的功能按钮和下拉框，可以在new编辑器的实例时选择自己需要的重新定义
         toolbars: [[
-            'source', '|', 'undo', 'redo', '|',
+          'previewmobile', 'source', '|', 'undo', 'redo', '|',
             'bold', 'italic', 'underline', 'strikethrough', '|', 'superscript', 'subscript', '|', 'forecolor', 'backcolor', '|',
             'removeformat', '|', 'insertorderedlist', 'insertunorderedlist', '|', 'selectall', 'cleardoc', 'paragraph', '|',
             'fontfamily', 'fontsize', '|', 'justifyleft', 'justifycenter', 'justifyright', 'justifyjustify', '|',
-            'horizontal', 'print',  'drafts', 'formula',
+            '|', 'horizontal', 'print',  'drafts', 'formula'
             // 'preview',
         ]],
         // 当鼠标放在工具栏上时显示的tooltip提示,留空支持自动多语言配置，否则以配置值为准
-        //, labelMap:{
-        //    'anchor':'', 'undo':''
-        // }
+         labelMap:{
+           'previewmobile':'手机预览'
+        },
 
         // 语言配置项,默认是zh-cn。有需要的话也可以使用如下这样的方式来自动多语言切换，当然，前提条件是lang文件夹下存在对应的语言文件：
         // lang值也可以通过自动获取 (navigator.language||navigator.browserLanguage ||navigator.userLanguage).toLowerCase()
@@ -56,7 +56,7 @@
         //, theme:'default'
         //, themePath:URL +"themes/"
 
-         zIndex : 2008,     //编辑器层级的基数,默认是900
+        //, zIndex : 900     //编辑器层级的基数,默认是900
 
         // 针对getAllHtml方法，会在对应的head标签中增加该编码设置。
         //, charset:"utf-8"
@@ -418,10 +418,7 @@
             tt: [],
             u: [],
             ul: ['class', 'style'],
-            video: ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style'],
-            source: ['src', 'type'],
-            embed: ['type', 'class', 'pluginspage', 'src', 'width', 'height', 'align', 'style', 'wmode', 'play',  'autoplay','loop', 'menu', 'allowscriptaccess', 'allowfullscreen', 'controls', 'preload'],
-            iframe: ['src', 'class', 'height', 'width', 'max-width', 'max-height', 'align', 'frameborder', 'allowfullscreen']
+            video: ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style']
         }
     };
 
