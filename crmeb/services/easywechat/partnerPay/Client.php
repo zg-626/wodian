@@ -65,7 +65,8 @@ class Client extends PartnerClient
             'settle_info' => [
                 'profit_sharing' => false // 不分帐
             ],
-            'notify_url' => rtrim(systemConfig('site_url'), '/') . Route::buildUrl($this->app['config']['service_payment']['type'] . 'CombinePayNotify', ['type' => $order['attach']])->build(),
+            'notify_url' => systemConfig('site_url') . Route::buildUrl('partnerNotify')->build(),
+            //'notify_url' => rtrim(systemConfig('site_url'), '/') . Route::buildUrl($this->app['config']['service_payment']['type'] . 'CombinePayNotify', ['type' => $order['attach']])->build(),
         ];
 
         if (isset($order['openid'])) {
