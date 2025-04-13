@@ -429,7 +429,7 @@ class OfflineMiniProgramService
     public function handleNotifyV3()
     {
         return $this->service->v3Pay->handleNotify(function ($notify, $successful) {
-            Log::info('小程序支付回调v3' . var_export([$notify, $successful], 1));
+            Log::info('小程序服务商支付回调v3' . var_export([$notify, $successful], 1));
             if (!$successful) return;
             try {
                 event('pay_success_' . $notify['attach'], ['order_sn' => $notify['out_trade_no'], 'data' => $notify]);

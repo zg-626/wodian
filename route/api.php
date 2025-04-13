@@ -655,6 +655,8 @@ Route::group('api/', function () {
 
     //小程序支付回调
     Route::any('notice/routine_pay', 'api.Common/routineNotify')->name('routineNotify');
+    //小程序服务商支付回调
+    Route::any('notice/partner_pay', 'api.Common/partnerNotify')->name('partnerNotify');
     //支付宝支付回调
     Route::any('notice/alipay_pay/:type', 'api.Common/alipayNotify')->name('alipayNotify');
     Route::any('getVersion', 'api.Common/getVersion')->name('getVersion');

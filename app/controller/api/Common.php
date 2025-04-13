@@ -39,6 +39,7 @@ use crmeb\basic\BaseController;
 use crmeb\services\AlipayService;
 use crmeb\services\CopyCommand;
 use crmeb\services\MiniProgramService;
+use crmeb\services\OfflineMiniProgramService;
 use crmeb\services\UploadService;
 use crmeb\services\WechatService;
 use Exception;
@@ -289,6 +290,19 @@ class Common extends BaseController
                 return response(MiniProgramService::create()->handleNotifyV3()->getContent());
             }
             return response(MiniProgramService::create()->handleNotify()->getContent());
+        } catch (Exception $e) {
+            Log::info('支付回调失败:' . var_export([$e->getMessage(), $e->getFile() . ':' . $e->getLine(),$this->request->header()], true));
+        }
+    }
+
+    public function partnerNotify()
+    {
+        try {
+            Log::info('服务商支付回调header:' . var_export([$this->request->header()], true));
+            if($this->request->header('content-type') === 'application/json'){
+                return response(OfflineMiniProgramService::create()->handleNotifyV3()->getContent());
+            }
+            //return response(OfflineMiniProgramService::create()->handleNotify()->getContent());
         } catch (Exception $e) {
             Log::info('支付回调失败:' . var_export([$e->getMessage(), $e->getFile() . ':' . $e->getLine(),$this->request->header()], true));
         }
