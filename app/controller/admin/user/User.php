@@ -20,6 +20,7 @@ use app\common\repositories\user\UserHistoryRepository;
 use app\common\repositories\user\UserSignRepository;
 use app\common\repositories\user\UserSpreadLogRepository;
 use app\common\repositories\user\UserVisitRepository;
+use app\validate\admin\UserCouponValidate;
 use crmeb\basic\BaseController;
 use app\common\repositories\store\coupon\StoreCouponRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
@@ -474,14 +475,14 @@ class User extends BaseController
         return app('json')->success('修改成功');
     }
 
-    public function changeIntegral($id, UserNowMoneyValidate $validate)
+    public function changeIntegral($id, UserCouponValidate $validate)
     {
-        $data = $this->request->params(['now_money', 'type']);
+        $data = $this->request->params(['coupon_amount', 'type']);
         $validate->check($data);
         if (!$this->repository->exists($id))
             return app('json')->fail('数据不存在');
         //$this->repository->changeIntegral($id, $this->request->adminId(), $data['type'], $data['now_money']);
-        $this->repository->changeDeduction($id, $this->request->adminId(), $data['type'], $data['now_money']);
+        $this->repository->changeDeduction($id, $this->request->adminId(), $data['type'], $data['coupon_amount']);
 
         return app('json')->success('修改成功');
     }

@@ -16,8 +16,10 @@ namespace app\common\repositories\user;
 
 use app\common\dao\BaseDao;
 use app\common\dao\user\UserBillDao;
+use app\common\model\user\UserBill;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\product\ProductRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use crmeb\jobs\SendSmsJob;
 use think\facade\Queue;
 use think\Model;
@@ -319,6 +321,29 @@ class UserBillRepository extends BaseRepository
             }
         }
         return false;
+    }
+
+    public function dayFieldCount($day, $merId = null, $field = 'mer_integral')
+    {
+        return getModelTime(UserBill::getDB()->where(['status' => 1, 'category' => $field,'pm' => 1])->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'create_time')->sum('number');
+    }
+
+    // 所有积分
+    public function allIntegralCount($merId = null,$field = 'mer_integral')
+    {
+        /*return getModelTime(UserBill::getDB()->where(['status' => 1, 'category' => 'integral','pm' => 1])->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), 'all', 'create_time')->sum('number');*/
+        // 总积分
+        return app()->make(MerchantRepository::class)->search(['mer_id' => $merId])->sum('integral');
+    }
+
+    // 所有抵用券
+    public function allCouponCount($merId = null,$field = 'coupon_amount')
+    {
+        return app()->make(MerchantRepository::class)->search(['mer_id' => $merId])->sum('coupon_amount');
     }
 
 

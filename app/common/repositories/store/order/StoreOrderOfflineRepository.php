@@ -413,4 +413,53 @@ class StoreOrderOfflineRepository extends BaseRepository
         return $order;
     }
 
+    /**
+     *  获取订单列表头部统计数据
+     * @Author:Qinii
+     * @Date: 2020/9/12
+     * @param int|null $merId
+     * @param int|null $orderType
+     * @return array
+     */
+    public function OrderTitleNumber(?int $merId, ?int $orderType)
+    {
+        $where = [];
+        $sysDel = $merId ? 0 : null;                    //商户删除
+        if ($merId) $where['mer_id'] = $merId;          //商户订单
+
+        //1: 未支付 2: 已支付 7: 已删除
+        $all = $this->dao->search($where, $sysDel)->where($this->getOrderType(0))->count();
+        $statusAll = $all;
+        $unpaid = $this->dao->search($where, $sysDel)->where($this->getOrderType(1))->count();
+        $unshipped = $this->dao->search($where, $sysDel)->where($this->getOrderType(2))->count();
+        $del = $this->dao->search($where, $sysDel)->where($this->getOrderType(7))->count();
+
+        return compact('all', 'statusAll', 'unpaid', 'unshipped', 'del');
+    }
+
+    /**
+     * @param $status
+     * @return mixed
+     * @author Qinii
+     */
+    public function getOrderType($status)
+    {
+        $param['StoreOrderOffline.is_del'] = 0;
+        switch ($status) {
+            case 1:
+                $param['StoreOrderOffline.paid'] = 0;
+                break;    // 未支付
+            case 2:
+                $param['StoreOrderOffline.paid'] = 1;
+                break;  // 已支付
+            case 7:
+                $param['StoreOrderOffline.is_del'] = 1;
+                break;  // 已删除
+            default:
+                unset($param['StoreOrderOffline.is_del']);
+                break;  //全部
+        }
+        return $param;
+    }
+
 }

@@ -15,10 +15,12 @@ namespace app\controller\api\server;
 
 
 use app\common\repositories\delivery\DeliveryStationRepository;
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
-use app\controller\merchant\Common;
+use app\common\repositories\user\UserBillRepository;
+use app\controller\merchant\OfflineCommon;
 use crmeb\basic\BaseController;
 use think\App;
 use think\exception\HttpResponseException;
@@ -33,16 +35,23 @@ class StoreOrderOffline extends BaseController
         parent::__construct($app);
     }
 
-    public function orderStatistics($merId, StoreOrderRepository $repository)
+    public function orderStatistics($merId, StoreOrderOfflineRepository $repository)
     {
+        /** @var UserBillRepository $billRepository */
+        $billRepository = app()->make(UserBillRepository::class);
         $order = $repository->OrderTitleNumber($merId, null);
-        $order['refund'] = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['is_system_del' => 0, 'mer_id' => $merId]);
-        $common = app()->make(Common::class);
+        //$order['refund'] = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['is_system_del' => 0, 'mer_id' => $merId]);
+        /** @var OfflineCommon $offline_common */
+        $offline_common = app()->make(OfflineCommon::class);
         $data = [];
-        $data['today'] = $common->mainGroup('today', $merId);
-        $data['yesterday'] = $common->mainGroup('yesterday', $merId);
-        $data['month'] = $common->mainGroup('month', $merId);
-        return app('json')->success(compact('order', 'data'));
+        $data['today'] = $offline_common->mainGroup('today', $merId);
+        $data['yesterday'] = $offline_common->mainGroup('yesterday', $merId);
+        $data['month'] = $offline_common->mainGroup('month', $merId);
+        // 所有积分
+        $integral = $billRepository->allIntegralCount($merId,'mer_integral');
+        // 所有抵扣金
+        $deduction = $billRepository->allCouponCount($merId,'coupon_amount');
+        return app('json')->success(compact('order','integral', 'deduction', 'data'));
     }
 
     public function orderDetail($merId, StoreOrderRepository $repository)
