@@ -80,7 +80,6 @@ class Merchant extends BaseController
         return app('json')->success($this->repository->lst($where, $page, $limit));
     }
 
-
     /**
      * @return mixed
      * @throws FormBuilderException

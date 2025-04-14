@@ -436,7 +436,7 @@ class Community extends BaseController
             return app('json')->success($data);
 
         }
-        return app('json')->fail('该用户不是商户');
+        return app('json')->fail('只有商务才能查看');
     }
 
     public function getSpuByOrder($id)

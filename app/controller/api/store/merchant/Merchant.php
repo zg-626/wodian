@@ -47,6 +47,14 @@ class Merchant extends BaseController
         return app('json')->success($this->repository->getList($where, $page, $limit, $this->userInfo));
     }
 
+    // 代理商邀请的商户列表
+    public function agentLst()
+    {
+        [$page, $limit] = $this->getPage();
+        $where['salesman_id'] = $this->request->uid();
+        return app('json')->success($this->repository->lst($where, $page, $limit));
+    }
+
     /**
      * @Author:Qinii
      * @Date: 2020/5/29

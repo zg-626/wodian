@@ -22,6 +22,7 @@ use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\service\StoreServiceLogRepository;
 use app\common\repositories\system\config\ConfigValueRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserExtractRepository;
 use app\common\repositories\user\UserHistoryRepository;
@@ -255,6 +256,7 @@ class User extends BaseModel
             ->where('status', 1)
             ->field('mer_id,mer_name,mer_avatar');
     }
+
 
     public function topService()
     {

@@ -443,6 +443,26 @@ class Auth extends BaseController
      * @author xaboy
      * @day 2020/6/1
      */
+    public function getUserInfo()
+    {
+        $user = $this->request->userInfo()->hidden(['label_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price','wechat_user_id','brokerage_level','is_svip','user_type','main_uid']);
+        $user->append(['group','total_integral']);
+        // 普通会议不能查看
+        if($user->group_id === 1) {
+            return app('json')->fail('无权查看');
+        }
+        $data = $user->toArray();
+        /** @var MerchantRepository $merchantRepository */
+        $merchantRepository = app()->make(MerchantRepository::class);
+        $data['merchant_count'] = $merchantRepository->getMerchantCount($user->uid);
+        return app('json')->success($data);
+    }
+
+    /**
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/1
+     */
     public function actingInfo()
     {
         $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);

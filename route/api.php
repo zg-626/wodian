@@ -36,6 +36,9 @@ Route::group('api/', function () {
         //用户信息
         Route::get('user', 'api.Auth/userInfo');
 
+        //用户信息
+        Route::get('user_info', 'api.Auth/getUserInfo');
+
         //绑定推荐人
         Route::post('user/spread', 'api.Auth/spread');
 
@@ -544,6 +547,7 @@ Route::group('api/', function () {
         //商户
         Route::group('store/merchant/', function () {
             Route::get('/lst', 'Merchant/lst');
+            Route::get('/agentLst', 'Merchant/agentLst');
             Route::get('/product/lst/:id', 'Merchant/productList');
             Route::get('/category/lst/:id', 'Merchant/categoryList');
             Route::get('/detail/0', 'Merchant/systemDetail');

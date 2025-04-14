@@ -1106,4 +1106,15 @@ class MerchantRepository extends BaseRepository
         $data['mer_certificate'] = merchantConfig($id, 'mer_certificate');
         return $data;
     }
+
+    /**
+     * @param $uid
+     * @return float
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function getMerchantCount($uid): float
+    {
+        return $this->dao->search(['salesman_id' => $uid])->count();
+    }
 }

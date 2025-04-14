@@ -85,10 +85,21 @@ class StoreOrderOffline extends BaseController
         ], true);
 
         if ($month) {
-            $base_month = $specify_month ?? 'this month'; // 支持指定月份
-            $start = date('Y/m/d', strtotime('first day of '.$base_month));
-            $front = date('Y/m/d', strtotime('first Day of this month', strtotime('-1 day', strtotime('first Day of this month'))));
-            $end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
+            $base_month = $specify_month ?? 'this month'; // 支持 "2023-05" 或默认当前月
+
+            // 1. 计算 START（指定月份的 1 号）
+            $start = date('Y/m/d', strtotime('first day of ' . $base_month));
+
+            // 2. 计算 STOP（如果指定月份，则到月末 23:59:59；否则到今天）
+            $stop = $specify_month
+                ? date('Y/m/d 23:59:59', strtotime('last day of ' . $base_month))
+                : date('Y/m/d H:i:s', strtotime('+1 day'));
+
+            // 3. 计算 FRONT（上个月的 1 号）
+            //$front = date('Y/m/d', strtotime('first day of ' . $base_month . ' -1 month'));
+
+            // 4. 计算 END（上个月最后一天的 23:59:59）
+            //$end = date('Y/m/d 23:59:59', strtotime('last day of ' . $base_month . ' -1 month'));
         } else {
             if ($start == $stop) return app('json')->fail('参数有误');
             if ($start > $stop) {
@@ -96,22 +107,22 @@ class StoreOrderOffline extends BaseController
                 $stop = $start;
                 $start = $middle;
             }
-            $space = bcsub($stop, $start, 0);//间隔时间段
-            $front = bcsub($start, $space, 0);//第一个时间段
+            //$space = bcsub($stop, $start, 0);//间隔时间段
+            //$front = bcsub($start, $space, 0);//第一个时间段
 
-            $front = date('Y/m/d H:i:s', $front);
+            //$front = date('Y/m/d H:i:s', $front);
             $start = date('Y/m/d H:i:s', $start);
             $stop = date('Y/m/d H:i:s', $stop);
-            $end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
+            //$end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
         }
-
-        $order = $repository->dateOrderInfo($front . '-' . $end, $merId);
+        //echo $start . '-' . $stop;exit();
+        $order = $repository->dateOrderInfo($start . '-' . $stop, $merId);
 
         $where['status'] = $this->request->param('status');
         $where['order_sn'] = $this->request->param('order_sn');
         $where['mer_id'] = $merId;
         //$where['is_del'] = 0;
-        $data= $repository->merchantGetList($where, $page, $limit,$front . '-' . $end);
+        $data= $repository->merchantGetList($where, $page, $limit,$start . '-' . $stop);
         return app('json')->success(compact('order', 'data'));
     }
 
