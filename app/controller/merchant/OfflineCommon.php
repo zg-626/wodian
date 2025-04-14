@@ -101,16 +101,23 @@ class OfflineCommon extends BaseController
         /** @var UserBillRepository $billRepository */
         $billRepository = app()->make(UserBillRepository::class);
 
+        // 下单量
         $orderNum = (float)$repository->dayOrderNum($date, $merId);
+        // 营业额
         $payPrice = (float)$repository->dayOrderPrice($date, $merId);
+        // 手续费
+        $payFee = (float)$repository->dayOrderCommission($date, $merId);
+        // 实际收款
+        $actualPrice=$payPrice-$payFee;
+        // 下单用户
         $payUser = (float)$repository->dayOrderUserNum($date, $merId);
         $visitNum = (float)$userVisitRepository->dateVisitUserNum($date, $merId);
         $likeStore = (float)$relationRepository->dayLikeStore($date, $merId);
-        // 今日积分
+        // 积分
         $integral = (float)$billRepository->dayFieldCount($date, $merId, 'mer_integral');
-        // 今日抵扣金
+        // 抵扣金
         $deduction = (float)$billRepository->dayFieldCount($date, $merId, 'coupon_amount');
-        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore', 'integral', 'deduction');
+        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore','actualPrice','payFee', 'integral', 'deduction');
     }
 
     /**

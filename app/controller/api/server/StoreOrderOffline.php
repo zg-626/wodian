@@ -54,7 +54,7 @@ class StoreOrderOffline extends BaseController
         return app('json')->success(compact('order','integral', 'deduction', 'data'));
     }
 
-    public function orderDetail($merId, StoreOrderRepository $repository)
+    public function orderDetail($merId, StoreOrderOfflineRepository $repository)
     {
         [$page, $limit] = $this->getPage();
         list($start, $stop) = $this->request->params([
@@ -68,20 +68,51 @@ class StoreOrderOffline extends BaseController
             $start = $middle;
         }
         $where = $this->request->has('start') ? ['dateRange' => compact('start', 'stop')] : [];
+        //print_r(strtotime(date('Y-m')));exit();
         $list = $repository->orderGroupNumPage($where, $page, $limit, $merId);
         return app('json')->success($list);
     }
 
-    public function orderList($merId, StoreOrderRepository $repository)
+    public function orderList($merId, StoreOrderOfflineRepository $repository)
     {
         [$page, $limit] = $this->getPage();
+
+        list($start, $stop, $month, $specify_month) = $this->request->params([
+            ['start', strtotime(date('Y-m'))],
+            ['stop', time()],
+            'month',
+            ['specify_month', null] // 新增：格式 "2023-05"
+        ], true);
+
+        if ($month) {
+            $base_month = $specify_month ?? 'this month'; // 支持指定月份
+            $start = date('Y/m/d', strtotime('first day of '.$base_month));
+            $front = date('Y/m/d', strtotime('first Day of this month', strtotime('-1 day', strtotime('first Day of this month'))));
+            $end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
+        } else {
+            if ($start == $stop) return app('json')->fail('参数有误');
+            if ($start > $stop) {
+                $middle = $stop;
+                $stop = $start;
+                $start = $middle;
+            }
+            $space = bcsub($stop, $start, 0);//间隔时间段
+            $front = bcsub($start, $space, 0);//第一个时间段
+
+            $front = date('Y/m/d H:i:s', $front);
+            $start = date('Y/m/d H:i:s', $start);
+            $stop = date('Y/m/d H:i:s', $stop);
+            $end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
+        }
+
+        $order = $repository->dateOrderInfo($front . '-' . $end, $merId);
+
         $where['status'] = $this->request->param('status');
-        $where['is_verify'] = $this->request->param('is_verify');
-        $where['search'] = $this->request->param('store_name');
+        $where['order_sn'] = $this->request->param('order_sn');
         $where['mer_id'] = $merId;
-        $where['is_del'] = 0;
-        if($where['status'] == 2) $where['order_type'] = 0;
-        return app('json')->success($repository->merchantGetList($where, $page, $limit));
+        //$where['is_del'] = 0;
+        $data= $repository->merchantGetList($where, $page, $limit,$front . '-' . $end);
+        return app('json')->success(compact('order', 'data'));
     }
 
     public function order($merId, $id, StoreOrderRepository $repository)

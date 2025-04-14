@@ -462,4 +462,32 @@ class StoreOrderOfflineRepository extends BaseRepository
         return $param;
     }
 
+    /**
+     * @param array $where
+     * @param $page
+     * @param $limit
+     * @return array
+     * @author Qinii
+     */
+    public function merchantGetList(array $where, $page, $limit,$date)
+    {
+        $status = $where['status'];
+        unset($where['status']);
+        $query = $this->dao->search($where)->where($this->getOrderType($status))->when($date, function ($query, $date) {
+            getModelTime($query, $date, 'pay_time');
+        })->with([
+                'user' => function($query){
+                    $query->field('uid,nickname,phone');
+                }
+            ]);
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        // 手机号脱敏
+        foreach ($list as $k => $v) {
+            $list[$k]['user']['phone'] = substr_replace($v['user']['phone'], '****', 3, 4);
+        }
+
+        return compact('count', 'list');
+    }
+
 }

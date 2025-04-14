@@ -500,7 +500,11 @@ if (!function_exists('getStartModelTime')) {
             case 'week':
                 return date('Y-m-d', strtotime('this week'));
             case 'month':
+                if (preg_match('/^\d{4}-\d{2}$/', $section)) {
+                    return date('Y-m-d', strtotime('first day of '.$section));
+                }
                 return date('Y-m-d', strtotime('first Day of this month'));
+
             case 'year':
                 return date('Y-m-d', strtotime('this year 1/1'));
             case 'quarter':
