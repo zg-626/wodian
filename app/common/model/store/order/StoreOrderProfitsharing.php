@@ -49,6 +49,11 @@ class StoreOrderProfitsharing extends BaseModel
         return $this->hasOne(StoreOrder::class, 'order_id', 'order_id');
     }
 
+    public function orderOffline()
+    {
+        return $this->hasOne(StoreOrderOffline::class, 'order_id', 'order_id');
+    }
+
     public function merchant()
     {
         return $this->hasOne(Merchant::class, 'mer_id', 'mer_id');

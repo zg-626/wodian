@@ -14,6 +14,7 @@ namespace app\controller\api\article;
 
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\repositories\store\CityAreaRepository;
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\system\attachment\AttachmentRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
@@ -82,6 +83,12 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
+        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        try {
+            $storeOrderOfflineRepository->cancel(927);
+        } catch (\Exception $e) {
+            return $e->getMessage().$e->getLine();
+                }
         // 修改商户省市区
         /*try {
             // 获取需要更新的商户数据（只查询有城市ID的商户）

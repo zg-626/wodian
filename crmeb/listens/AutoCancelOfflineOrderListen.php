@@ -23,7 +23,7 @@ class AutoCancelOfflineOrderListen extends TimerService implements ListenerInter
                 try {
                     $storeOrderOfflineRepository->cancel($id);
                 } catch (\Exception $e) {
-                    Log::info('自动关闭线下支付订单失败' . var_export($id, 1));
+                    Log::info('自动关闭线下支付订单失败' . $e->getMessage() . $e->getLine() . var_export($id, 1));
                 }
             }
         });

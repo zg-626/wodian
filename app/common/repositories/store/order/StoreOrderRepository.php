@@ -429,7 +429,7 @@ class StoreOrderRepository extends BaseRepository
             //$this->giveMerIntegral($order->mer_id,$groupOrder);
             app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $groupOrder->give_integral);
             // 代理赠送佣金 TODO  有bug需要修复
-            //$this->addCommission($order->mer_id,$groupOrder);
+            $this->addCommission($order->mer_id,$groupOrder);
             if (count($profitsharing)) {
                 $storeOrderProfitsharingRepository->insertAll($profitsharing);
             }

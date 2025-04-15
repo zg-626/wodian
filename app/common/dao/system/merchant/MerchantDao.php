@@ -55,6 +55,9 @@ class MerchantDao extends BaseDao
             ->when(isset($where['is_margin']) && $where['is_margin'] !== '', function ($query) use ($where) {
                 $query->where('is_margin', $where['is_margin']);
             })
+            ->when(isset($where['salesman_id']) && $where['salesman_id'] !== '', function ($query) use ($where) {
+                $query->where('salesman_id', $where['salesman_id']);
+            })
             //补缴
             ->when(isset($where['margin']) && $where['margin'] !== '', function ($query) use ($where) {
                 if ($where['margin']) {

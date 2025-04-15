@@ -15,10 +15,12 @@ namespace app\controller\api\server;
 
 
 use app\common\repositories\delivery\DeliveryStationRepository;
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
-use app\controller\merchant\Common;
+use app\common\repositories\user\UserBillRepository;
+use app\controller\merchant\OfflineCommon;
 use crmeb\basic\BaseController;
 use think\App;
 use think\exception\HttpResponseException;
@@ -33,19 +35,26 @@ class StoreOrderOffline extends BaseController
         parent::__construct($app);
     }
 
-    public function orderStatistics($merId, StoreOrderRepository $repository)
+    public function orderStatistics($merId, StoreOrderOfflineRepository $repository)
     {
+        /** @var UserBillRepository $billRepository */
+        $billRepository = app()->make(UserBillRepository::class);
         $order = $repository->OrderTitleNumber($merId, null);
-        $order['refund'] = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['is_system_del' => 0, 'mer_id' => $merId]);
-        $common = app()->make(Common::class);
+        //$order['refund'] = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['is_system_del' => 0, 'mer_id' => $merId]);
+        /** @var OfflineCommon $offline_common */
+        $offline_common = app()->make(OfflineCommon::class);
         $data = [];
-        $data['today'] = $common->mainGroup('today', $merId);
-        $data['yesterday'] = $common->mainGroup('yesterday', $merId);
-        $data['month'] = $common->mainGroup('month', $merId);
-        return app('json')->success(compact('order', 'data'));
+        $data['today'] = $offline_common->mainGroup('today', $merId);
+        $data['yesterday'] = $offline_common->mainGroup('yesterday', $merId);
+        $data['month'] = $offline_common->mainGroup('month', $merId);
+        // 所有积分
+        $integral = $billRepository->allIntegralCount($merId,'mer_integral');
+        // 所有抵扣金
+        $deduction = $billRepository->allCouponCount($merId,'coupon_amount');
+        return app('json')->success(compact('order','integral', 'deduction', 'data'));
     }
 
-    public function orderDetail($merId, StoreOrderRepository $repository)
+    public function orderDetail($merId, StoreOrderOfflineRepository $repository)
     {
         [$page, $limit] = $this->getPage();
         list($start, $stop) = $this->request->params([
@@ -59,20 +68,62 @@ class StoreOrderOffline extends BaseController
             $start = $middle;
         }
         $where = $this->request->has('start') ? ['dateRange' => compact('start', 'stop')] : [];
+        //print_r(strtotime(date('Y-m')));exit();
         $list = $repository->orderGroupNumPage($where, $page, $limit, $merId);
         return app('json')->success($list);
     }
 
-    public function orderList($merId, StoreOrderRepository $repository)
+    public function orderList($merId, StoreOrderOfflineRepository $repository)
     {
         [$page, $limit] = $this->getPage();
+
+        list($start, $stop, $month, $specify_month) = $this->request->params([
+            ['start', strtotime(date('Y-m'))],
+            ['stop', time()],
+            'month',
+            ['specify_month', null] // 新增：格式 "2023-05"
+        ], true);
+
+        if ($month) {
+            $base_month = $specify_month ?? 'this month'; // 支持 "2023-05" 或默认当前月
+
+            // 1. 计算 START（指定月份的 1 号）
+            $start = date('Y/m/d', strtotime('first day of ' . $base_month));
+
+            // 2. 计算 STOP（如果指定月份，则到月末 23:59:59；否则到今天）
+            $stop = $specify_month
+                ? date('Y/m/d 23:59:59', strtotime('last day of ' . $base_month))
+                : date('Y/m/d H:i:s', strtotime('+1 day'));
+
+            // 3. 计算 FRONT（上个月的 1 号）
+            //$front = date('Y/m/d', strtotime('first day of ' . $base_month . ' -1 month'));
+
+            // 4. 计算 END（上个月最后一天的 23:59:59）
+            //$end = date('Y/m/d 23:59:59', strtotime('last day of ' . $base_month . ' -1 month'));
+        } else {
+            if ($start == $stop) return app('json')->fail('参数有误');
+            if ($start > $stop) {
+                $middle = $stop;
+                $stop = $start;
+                $start = $middle;
+            }
+            //$space = bcsub($stop, $start, 0);//间隔时间段
+            //$front = bcsub($start, $space, 0);//第一个时间段
+
+            //$front = date('Y/m/d H:i:s', $front);
+            $start = date('Y/m/d H:i:s', $start);
+            $stop = date('Y/m/d H:i:s', $stop);
+            //$end = date('Y/m/d H:i:s', strtotime($start . ' -1 second'));
+        }
+        //echo $start . '-' . $stop;exit();
+        $order = $repository->dateOrderInfo($start . '-' . $stop, $merId);
+
         $where['status'] = $this->request->param('status');
-        $where['is_verify'] = $this->request->param('is_verify');
-        $where['search'] = $this->request->param('store_name');
+        $where['order_sn'] = $this->request->param('order_sn');
         $where['mer_id'] = $merId;
-        $where['is_del'] = 0;
-        if($where['status'] == 2) $where['order_type'] = 0;
-        return app('json')->success($repository->merchantGetList($where, $page, $limit));
+        //$where['is_del'] = 0;
+        $data= $repository->merchantGetList($where, $page, $limit,$start . '-' . $stop);
+        return app('json')->success(compact('order', 'data'));
     }
 
     public function order($merId, $id, StoreOrderRepository $repository)

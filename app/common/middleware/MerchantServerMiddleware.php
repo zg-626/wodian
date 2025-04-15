@@ -14,8 +14,10 @@
 namespace app\common\middleware;
 
 use app\common\repositories\store\service\StoreServiceRepository;
+use app\common\repositories\system\merchant\MerchantAdminRepository;
 use think\exception\HttpResponseException;
 use app\Request;
+use think\exception\ValidateException;
 use think\Response;
 use Throwable;
 
@@ -41,10 +43,13 @@ class MerchantServerMiddleware extends BaseMiddleware
         if (!$service && $userInfo->main_uid) {
             $service = app()->make(StoreServiceRepository::class)->getService($userInfo->main_uid, $this->merId);
         }
+        // 如果是申请人
+        $adminRepository = app()->make(MerchantAdminRepository::class);
+        $admin = $adminRepository->fieldExists('account', $userInfo['phone']);
 
-        if (!$service || !$service->{$field}) {
+        /*if (!$service || !$service->{$field}) {
             throw new HttpResponseException(app('json')->fail('您没有权限操作'));
-        }
+        }*/
         $request->macro('serviceInfo', function () use (&$service) {
             return $service;
         });

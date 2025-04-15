@@ -28,7 +28,18 @@ class MerchantIntentionValidate extends Validate
         'mer_type_id|店铺类型' => 'integer',
         'code|验证码' => 'require',
         'images|资质' => 'array',
-        //'id_card|法人身份证正反面' => 'array',
-        //'inside|经营区域内部照片' => 'array',
+        'id_card|法人身份证正反面' => 'array',
+        'inside|经营区域内部照片' => 'array',
+        //'address|经营地址' => 'require',
+        // 邮箱
+        //'email|邮箱' => 'require|email',
+        // 银行卡号
+        //'bank_card|银行卡号' => 'require',
+        // 银行名称
+        //'bank_name|银行名称' => 'require',
+        // 开户行名称
+        //'bank_open_name|开户行名称' => 'require',
+        // 开户行支行名称
+        //'bank_branch_name|开户行支行名称' => 'require',
     ];
 }

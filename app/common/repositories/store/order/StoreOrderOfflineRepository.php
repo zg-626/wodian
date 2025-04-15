@@ -25,10 +25,12 @@ use app\common\repositories\system\merchant\FinancialRecordRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\OfflinePayService;
 use crmeb\services\PayService;
+use crmeb\services\SwooleTaskService;
 use FormBuilder\Factory\Elm;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
@@ -242,55 +244,107 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($type == self::TYPE_SVIP) {
             return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
+                $res->transaction_id = $data['data']['transaction_id'];
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
                 // 商户增加余额
-                app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
+                //app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
                 // 赠送积分
                 $this->giveIntegral($order);
                 // 赠送商户积分
-                //$this->giveMerIntegral($order->mer_id,$groupOrder);
+                //$this->giveMerIntegral($order->mer_id,$order);
                 app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+                // 代理赠送佣金 TODO  有bug需要修复
+                /** @var StoreOrderRepository $storeOrderRepository */
+                $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                $storeOrderRepository->addCommission($order->mer_id,$order);
+                /** @var UserMerchantRepository $userMerchantRepository */
+                $userMerchantRepository = app()->make(UserMerchantRepository::class);
+                $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id);
+                SwooleTaskService::merchant('notice', [
+                    'type' => 'new_order',
+                    'data' => [
+                        'title' => '新订单',
+                        'message' => '您有一个新的订单',
+                        'id' => $order->order_id
+                    ]
+                ], $order->mer_id);
 
-                return $this->payAfter($res, $res);
+                // 创建分账账单
+                /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+                $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+                $profitsharing= [
+                    'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
+                    'order_id' => $order->order_id,
+                    'transaction_id' => $order->transaction_id ?? '',
+                    'mer_id' => $order->mer_id,
+                    'profitsharing_price' => $order->pay_price,
+                    'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                    'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
+                ];
+
+                $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+
+                return $this->payAfter($res,$profitsharingInfo->profitsharing_id);
             });
         }
     }
 
-    public function giveIntegral($groupOrder)
+    public function giveMerIntegral($mer_id, $groupOrder)
     {
         if ($groupOrder->give_integral > 0) {
-            app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'lock', [
-                'link_id' => $groupOrder['order_id'],
+            /**
+             * @var MerchantDao $merchant
+             */
+            $merchant = app()->make(MerchantDao::class);
+            $merchant->addIntegral($mer_id, $groupOrder->give_integral);
+        }
+    }
+
+    public function giveIntegral($offlineOrder)
+    {
+        if ($offlineOrder->give_integral > 0) {
+            app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
+                'link_id' => $offlineOrder['order_id'],
                 'status' => 0,
                 'title' => '下单赠送积分',
-                'number' => $groupOrder->give_integral,
-                'mark' => '线下成功消费' . floatval($groupOrder['pay_price']) . '元,赠送积分' . floatval($groupOrder->give_integral),
-                'balance' => $groupOrder->user->integral
+                'number' => $offlineOrder->give_integral,
+                'mark' => '线下成功消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
+                'balance' => $offlineOrder->user->integral
             ]);
         }
     }
 
-    public function payAfter($data, $ret)
+    public function payAfter($ret, $profitsharing_id)
     {
-        $financialRecordRepository = app()->make(FinancialRecordRepository::class);
         $userBillRepository = app()->make(UserBillRepository::class);
-
-        $user = app()->make(UserRepository::class)->get($ret['uid']);
 
         $title = '线下门店支付';
 
         $mark = '线下门店支付';
 
-        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_SVIP_PAY,'offline_order',[
+        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_NOW_MONEY,'offline_order',[
             'link_id' => $ret->order_id,
             'title' => $title,
             'number'=> $ret->pay_price,
             'status'=> 1,
             'mark' => $mark,
         ]);
-
+        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+        // 执行服务商分账
+        if (!$model = $storeOrderProfitsharingRepository->get($profitsharing_id)) {
+            Log::info('微信线下分账单不存在' . var_export($ret, 1));
+            return false;
+        }
+        if ($model->status !== 0) {
+            Log::info('分账单状态操作,不能分账' . var_export($ret, 1));
+            return false;
+        }
+        if ($storeOrderProfitsharingRepository->partnerProfitsharing($model)) {
+            Log::info('分账成功' . var_export($ret, 1));
+        }
         return true;
     }
 
@@ -305,71 +359,41 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function cancel($id, $uid = null)
     {
-        $groupOrder = $this->search(['paid' => 0, 'uid' => $uid ?? ''])->where('order_id', $id)->find();
-        if (!$groupOrder)
+        $offlineOrder = $this->search(['paid' => 0, 'uid' => $uid ?? ''])->where('order_id', $id)->find();
+        if (!$offlineOrder)
             throw new ValidateException('订单不存在');
-        if ($groupOrder['paid'] != 0)
+        if ($offlineOrder['paid'] != 0)
             throw new ValidateException('订单状态错误,无法删除');
         //TODO 关闭订单
-        Db::transaction(function () use ($groupOrder, $id, $uid) {
-            $groupOrder->is_del = 1;
+        Db::transaction(function () use ($offlineOrder, $id, $uid) {
+            $offlineOrder->is_del = 1;
             $orderStatus = [];
 
             //退回积分
-            if ($groupOrder->integral > 0) {
+            if ($offlineOrder->integral > 0) {
                 $make = app()->make(UserRepository::class);
-                $make->update($groupOrder->uid, ['integral' => Db::raw('integral+' . $groupOrder->integral)]);
-                app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'cancel', [
-                    'link_id' => $groupOrder['order_id'],
+                $make->update($offlineOrder->uid, ['integral' => Db::raw('integral+' . $offlineOrder->integral)]);
+                app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'cancel', [
+                    'link_id' => $offlineOrder['order_id'],
                     'status' => 1,
                     'title' => '退回积分',
-                    'number' => $groupOrder['integral'],
-                    'mark' => '订单自动关闭,退回' . intval($groupOrder->integral) . '积分',
-                    'balance' => $make->get($groupOrder->uid)->integral
+                    'number' => $offlineOrder['integral'],
+                    'mark' => '订单自动关闭,退回' . intval($offlineOrder->integral) . '积分',
+                    'balance' => $make->get($offlineOrder->uid)->integral
                 ]);
+                // 退回商家积分
+                app()->make(MerchantRepository::class)->subMerIntegral($offlineOrder->mer_id, 'mer_integral', $offlineOrder->order_id, $offlineOrder->integral);
             }
-            // 退回商家积分
-            app()->make(MerchantRepository::class)->subMerIntegral($groupOrder->mer_id, 'mer_integral', $groupOrder->order->order_id, $groupOrder->integral);
 
             // 退回抵扣金
-            if($groupOrder->deduction > 0){
+            if($offlineOrder->deduction > 0){
                 $make = app()->make(UserRepository::class);
-                $make->update($groupOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $groupOrder->deduction)]);
+                $make->update($offlineOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $offlineOrder->deduction)]);
             }
-            //订单记录
-            /*$storeOrderStatusRepository = app()->make(StoreOrderStatusRepository::class);
-            foreach ($groupOrder->orderList as $order) {
-                if ($order->activity_type == 3 && $order->presellOrder) {
-                    $order->presellOrder->status = 0;
-                    $order->presellOrder->save();
-                }
-                $order->is_del = 1;
-                $order->save();
-                $orderStatus[] = [
-                    'order_id' => $order->order_id,
-                    'order_sn' => $order->order_sn,
-                    'type' => $storeOrderStatusRepository::TYPE_ORDER,
-                    'change_message' => '取消订单',
-                    'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
-                    'uid' => $uid ?:0 ,
-                    'nickname' => $uid ? $order->user->nickname : '系统',
-                    'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
-                ];
-            }*/
-            /*$orderStatus[] = [
-                'order_id' => $groupOrder->order_id,
-                'order_sn' => $groupOrder->order_sn,
-                'type' => $storeOrderStatusRepository::TYPE_ORDER,
-                'change_message' => '取消订单',
-                'change_type' => $storeOrderStatusRepository::ORDER_STATUS_CANCEL,
-                'uid' => $uid ?:0 ,
-                'nickname' => $uid ? $order->user->nickname : '系统',
-                'user_type' => $storeOrderStatusRepository::U_TYPE_SYSTEM,
-            ];*/
-            $groupOrder->save();
+
+            $offlineOrder->save();
             //$storeOrderStatusRepository->batchCreateLog($orderStatus);
         });
-        Queue::push(CancelGroupOrderJob::class, $id);
     }
 
     public function v2CartIdByOrderInfo($user, $money, bool $userDeduction = false)
@@ -440,6 +464,83 @@ class StoreOrderOfflineRepository extends BaseRepository
             return null;
         }
         return $order;
+    }
+
+    /**
+     *  获取订单列表头部统计数据
+     * @Author:Qinii
+     * @Date: 2020/9/12
+     * @param int|null $merId
+     * @param int|null $orderType
+     * @return array
+     */
+    public function OrderTitleNumber(?int $merId, ?int $orderType)
+    {
+        $where = [];
+        $sysDel = $merId ? 0 : null;                    //商户删除
+        if ($merId) $where['mer_id'] = $merId;          //商户订单
+
+        //1: 未支付 2: 已支付 7: 已删除
+        $all = $this->dao->search($where, $sysDel)->where($this->getOrderType(0))->count();
+        $statusAll = $all;
+        $unpaid = $this->dao->search($where, $sysDel)->where($this->getOrderType(1))->count();
+        $unshipped = $this->dao->search($where, $sysDel)->where($this->getOrderType(2))->count();
+        $del = $this->dao->search($where, $sysDel)->where($this->getOrderType(7))->count();
+
+        return compact('all', 'statusAll', 'unpaid', 'unshipped', 'del');
+    }
+
+    /**
+     * @param $status
+     * @return mixed
+     * @author Qinii
+     */
+    public function getOrderType($status)
+    {
+        $param['StoreOrderOffline.is_del'] = 0;
+        switch ($status) {
+            case 1:
+                $param['StoreOrderOffline.paid'] = 0;
+                break;    // 未支付
+            case 2:
+                $param['StoreOrderOffline.paid'] = 1;
+                break;  // 已支付
+            case 7:
+                $param['StoreOrderOffline.is_del'] = 1;
+                break;  // 已删除
+            default:
+                unset($param['StoreOrderOffline.is_del']);
+                break;  //全部
+        }
+        return $param;
+    }
+
+    /**
+     * @param array $where
+     * @param $page
+     * @param $limit
+     * @return array
+     * @author Qinii
+     */
+    public function merchantGetList(array $where, $page, $limit,$date)
+    {
+        $status = $where['status'];
+        unset($where['status']);
+        $query = $this->dao->search($where)->where($this->getOrderType($status))->when($date, function ($query, $date) {
+            getModelTime($query, $date, 'pay_time');
+        })->with([
+                'user' => function($query){
+                    $query->field('uid,nickname,phone');
+                }
+            ]);
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        // 手机号脱敏
+        foreach ($list as $k => $v) {
+            $list[$k]['user']['phone'] = substr_replace($v['user']['phone'], '****', 3, 4);
+        }
+
+        return compact('count', 'list');
     }
 
 }

@@ -16,6 +16,7 @@ namespace app\controller\merchant;
 
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\repositories\system\CountRepository;
+use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\basic\BaseController;
 use app\common\repositories\store\order\StoreOrderProductRepository;
@@ -37,7 +38,7 @@ use think\facade\Db;
  * @author xaboy
  * @day 2020/6/25
  */
-class Common extends BaseController
+class OfflineCommon extends BaseController
 {
     /**
      * @var int|null
@@ -89,15 +90,34 @@ class Common extends BaseController
      */
     public function mainGroup($date, $merId)
     {
+        /** @var UserVisitRepository $userVisitRepository */
         $userVisitRepository = app()->make(UserVisitRepository::class);
-        $repository = app()->make(StoreOrderRepository::class);
+
+        /** @var StoreOrderOfflineDao $repository */
+        $repository = app()->make(StoreOrderOfflineDao::class);
+
+        /** @var UserRelationRepository $relationRepository */
         $relationRepository = app()->make(UserRelationRepository::class);
+        /** @var UserBillRepository $billRepository */
+        $billRepository = app()->make(UserBillRepository::class);
+
+        // 下单量
         $orderNum = (float)$repository->dayOrderNum($date, $merId);
+        // 营业额
         $payPrice = (float)$repository->dayOrderPrice($date, $merId);
+        // 手续费
+        $payFee = (float)$repository->dayOrderCommission($date, $merId);
+        // 实际收款
+        $actualPrice=$payPrice-$payFee;
+        // 下单用户
         $payUser = (float)$repository->dayOrderUserNum($date, $merId);
         $visitNum = (float)$userVisitRepository->dateVisitUserNum($date, $merId);
         $likeStore = (float)$relationRepository->dayLikeStore($date, $merId);
-        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore');
+        // 积分
+        $integral = (float)$billRepository->dayFieldCount($date, $merId, 'mer_integral');
+        // 抵扣金
+        $deduction = (float)$billRepository->dayFieldCount($date, $merId, 'coupon_amount');
+        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore','actualPrice','payFee', 'integral', 'deduction');
     }
 
     /**

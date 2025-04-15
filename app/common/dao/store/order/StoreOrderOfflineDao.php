@@ -14,8 +14,10 @@
 namespace app\common\dao\store\order;
 
 use app\common\dao\BaseDao;
+use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\LabelRule;
+use think\facade\Db;
 
 class StoreOrderOfflineDao extends BaseDao
 {
@@ -192,6 +194,14 @@ class StoreOrderOfflineDao extends BaseDao
         }), $day, 'pay_time')->sum('pay_price');
     }
 
+    // 手续费
+    public function dayOrderCommission($day, $merId = null)
+    {
+        return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'pay_time')->sum('handling_fee');
+    }
+
     public function dateOrderPrice($date, $merId = null)
     {
         return StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
@@ -199,6 +209,29 @@ class StoreOrderOfflineDao extends BaseDao
         })->when($date, function ($query, $date) {
             getModelTime($query, $date, 'pay_time');
         })->sum('pay_price');
+    }
+
+    public function dateOrderInfo($date, $merId = null)
+    {
+        // 实际付款金额
+        $pay_price = StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        })->when($date, function ($query, $date) {
+            getModelTime($query, $date, 'pay_time');
+        })->sum('pay_price');
+        // 手续费
+        $handling_fee =StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        })->when($date, function ($query, $date) {
+            getModelTime($query, $date, 'pay_time');
+        })->sum('handling_fee');
+        // 实际到账
+        $actualPrice =$pay_price-$handling_fee;
+        // 获取商家信息
+        $MerchantDao = app()->make(MerchantDao::class);
+        $merchant = $MerchantDao->search(['mer_id' => $merId])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+        $integral=$merchant['integral'];
+        return ['pay_price' => $pay_price, 'handling_fee' => $handling_fee, 'actualPrice' => $actualPrice, 'integral' => $integral];
     }
 
     public function dateOrderNum($date, $merId = null)

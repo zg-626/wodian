@@ -77,6 +77,7 @@ class WechatService
         $this->application->register(new \crmeb\services\easywechat\certficates\ServiceProvider());
         $this->application->register(new \crmeb\services\easywechat\merchant\ServiceProvider);
         $this->application->register(new \crmeb\services\easywechat\combinePay\ServiceProvider);
+        $this->application->register(new \crmeb\services\easywechat\partnerPay\ServiceProvider);
         $this->application->register(new \crmeb\services\easywechat\pay\ServiceProvider);
         $this->application->register(new \crmeb\services\easywechat\batches\ServiceProvider);
         $this->application->register(new \crmeb\services\easywechat\wechatTemplate\ServiceProvider);

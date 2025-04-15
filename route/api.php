@@ -36,6 +36,9 @@ Route::group('api/', function () {
         //用户信息
         Route::get('user', 'api.Auth/userInfo');
 
+        //用户信息
+        Route::get('user_info', 'api.Auth/getUserInfo');
+
         //绑定推荐人
         Route::post('user/spread', 'api.Auth/spread');
 
@@ -544,13 +547,14 @@ Route::group('api/', function () {
         //商户
         Route::group('store/merchant/', function () {
             Route::get('/lst', 'Merchant/lst');
+            Route::get('/agentLst', 'Merchant/agentLst');
             Route::get('/product/lst/:id', 'Merchant/productList');
             Route::get('/category/lst/:id', 'Merchant/categoryList');
             Route::get('/detail/0', 'Merchant/systemDetail');
             Route::get('/detail/:id', 'Merchant/detail');
             Route::get('/qrcode/:id', 'Merchant/qrcode');
             // 付款码
-            Route::get('/pay_code', '/payCode');
+            Route::get('/pay_code/:id', 'Merchant/payCode');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');
