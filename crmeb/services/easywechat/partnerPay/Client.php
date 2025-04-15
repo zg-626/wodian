@@ -54,6 +54,7 @@ class Client extends PartnerClient
             'description' => $order['description'],
             'sp_appid' => $this->app['config']['app_id'],// 服务商APPID
             'sub_mchid' => $order['sub_mchid'],// 子商户id
+            'attach' => $order['attach'],
             'scene_info' => [
                 'device_id' => 'shop system',
                 'payer_client_ip' => request()->ip(),
