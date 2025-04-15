@@ -69,7 +69,7 @@ class StoreOrderProfitsharing extends BaseModel
                 [
                     'amount' => bcsub($this->profitsharing_price, $this->profitsharing_mer_price, 2),
                     'body' => '订单分账',
-                    'receiver_account' => 1709024127,
+                    'receiver_account' => systemConfig('wechat_service_merid'),
                 ]
             ]
         ];

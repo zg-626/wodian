@@ -108,7 +108,7 @@ class StoreOrderProfitsharingRepository extends BaseRepository
         $error_msg = '';
         $flag = true;
         try {
-            //print_r($profitsharing->getProfitsharingParmas());exit();
+
             if (bcsub($profitsharing->profitsharing_price, $profitsharing->profitsharing_mer_price, 2) > 0) {
                 WechatService::create()->partnerPay()->profitsharingOrder($profitsharing->getProfitsharingParmas());
             }
