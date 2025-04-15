@@ -15,6 +15,7 @@ namespace app\controller\api\article;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
+use app\common\repositories\store\order\StoreOrderProfitsharingRepository;
 use app\common\repositories\system\attachment\AttachmentRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
@@ -22,6 +23,7 @@ use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\services\QrcodeService;
 use crmeb\services\SwooleTaskService;
+use crmeb\services\WechatService;
 use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
@@ -83,12 +85,53 @@ class Article extends BaseController
     // 测试接口
     public function test()
     {
-        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+        $model = $storeOrderProfitsharingRepository->get(1);
+        /*try {
+            $storeOrderProfitsharingRepository->partnerProfitsharing($model);
+        } catch (\Exception $e) {
+            return app('json')->fail($e->getMessage());
+        }*/
+        try {
+            WechatService::create()->partnerPay()->profitsharingAddReceiver([
+                'sub_mchid' => '你的子商户号', // 发起分账的子商户
+                'name'      => '中仁商业商贸服务', // 必须与注册名称一致
+            ]);
+
+        } catch (\Exception $e) {
+            return  $e->getMessage();
+
+        }
+        // 测试支付回调
+        /*$data=array (
+            'order_sn' => 'wxs174453838729585037',
+            'appid' => 'wx4409eaedbd62b213',
+            'attach' => 'user_order',
+            'bank_type' => 'OTHERS',
+            'cash_fee' => '1',
+            'fee_type' => 'CNY',
+            'is_subscribe' => 'N',
+            'mch_id' => '1288093001',
+            'nonce_str' => '6397efa100165',
+            'openid' => 'oOdvCvjvCG0FnCwcMdDD_xIODRO0',
+            'out_trade_no' => 'wxs174453838729585037',
+            'result_code' => 'SUCCESS',
+            'return_code' => 'SUCCESS',
+            'sign' => '125C56DE030A461E45D421E44C88BC30',
+            'time_end' => '20221213112118',
+            'total_fee' => '1',
+            'trade_type' => 'JSAPI',
+            'transaction_id' => '4200001656202212131458556229',
+        );
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+
+       /* $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
         try {
             $storeOrderOfflineRepository->cancel(927);
         } catch (\Exception $e) {
             return $e->getMessage().$e->getLine();
-                }
+                }*/
         // 修改商户省市区
         /*try {
             // 获取需要更新的商户数据（只查询有城市ID的商户）
@@ -183,7 +226,7 @@ class Article extends BaseController
         $extension_one = bcmul($commission/100, $money, 2);*/
         //print_r($money);
         //print_r($extension_one);
-        $shopId=77;
+        /*$shopId=77;
         $ratio=3.00;
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
@@ -199,7 +242,7 @@ class Article extends BaseController
             'attachment_src' => $imageInfo['dir']
         ]);
         $urlCode = $imageInfo['dir'];
-        print_r($urlCode);
+        print_r($urlCode);*/
         /** @var CityAreaRepository $cityArea */
        /* $cityArea= app()->make(CityAreaRepository::class);
         print_r($cityArea->getAddressChildList());*/

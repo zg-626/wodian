@@ -151,10 +151,12 @@ class Client extends PartnerClient
     public function profitsharingOrder(array $options)
     {
         $params = [
-            'appid' => $this->app['config']['app_id'],
+            //'appid' => $this->app['config']['app_id'],
+            'appid' => 'wxda2922aa5121cc98',
             'sub_mchid' => $options['sub_mchid'],
             'transaction_id' => $options['transaction_id'],
             'out_order_no' => $options['out_order_no'],
+            'unfreeze_unsplit' => $receiver['unfreeze_unsplit'] ?? true,
             'receivers' => []
         ];
 
@@ -162,9 +164,8 @@ class Client extends PartnerClient
             $data = [
                 'amount' => intval($receiver['amount'] * 100),
                 'description' => $receiver['body'] ?? $options['body'] ?? '',
-                'unfreeze_unsplit' => $receiver['unfreeze_unsplit'] ?? true
             ];
-            $data['account 　'] = $receiver['receiver_account'];
+            $data['account'] = $receiver['receiver_account'];
             $data['type'] = 'MERCHANT_ID';
 
             $params['receivers'][] = $data;
@@ -176,6 +177,53 @@ class Client extends PartnerClient
         $res = $this->request('/v3/profitsharing/orders', 'POST', ['sign_body' => $content]);
         if (isset($res['code'])) {
             throw new ValidateException('微信接口报错:' . $res['message']);
+        }
+        return $res;
+    }
+
+    /**
+     * 服务商添加分账接收方（必须加密 name，适用于 MERCHANT_ID 方式）
+     * @param array $options [
+     *     'sub_mchid' => '子商户号', // 发起分账的子商户
+     *     'name' => '商户全称',    // 必传，必须是商户的注册全称（加密后传输）
+     *     'receiver_account' => '1709305541', // 接收方商户号
+     * ]
+     * @return array 微信返回结果
+     * @throws ValidateException
+     */
+    public function profitsharingAddReceiver(array $options)
+    {
+        // 如果未传入 name，直接报错（因为 MERCHANT_ID 必须传）
+        if (empty($options['name'])) {
+            throw new ValidateException('分账接收方 name（商户全称）必须填写！');
+        }
+
+        $encryptedName = $this->encryptSensitiveInformation($options['name']);
+
+        // 2. 准备请求参数
+        $params = [
+            'sub_mchid' => '1713931286', // 子商户号
+            'appid' => 'wxda2922aa5121cc98', // 服务商APPID
+            'type' => 'MERCHANT_ID', // 固定
+            'account' => '1709305541', // 接收方商户号（你自己的服务商商户号）
+            'name' => $encryptedName, // 已加密的商户全称
+            'relation_type' => 'SERVICE_PROVIDER', // 服务商身份
+        ];
+
+        // 3. 记录请求日志（可选）
+        Log::info('接收方请求参数（加密后）：'.var_export($params,true));
+
+        // 4. 发起请求
+        $content = json_encode($params);
+        $res = $this->request(
+            '/v3/profitsharing/receivers/add',
+            'POST',
+            ['sign_body' => $content]
+        );
+
+        // 5. 错误处理
+        if (isset($res['code'])) {
+            throw new ValidateException('微信接口报错: ' . $res['message']);
         }
         return $res;
     }
