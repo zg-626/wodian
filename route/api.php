@@ -554,7 +554,7 @@ Route::group('api/', function () {
             Route::get('/detail/:id', 'Merchant/detail');
             Route::get('/qrcode/:id', 'Merchant/qrcode');
             // 付款码
-            Route::get('/pay_code', 'Merchant/payCode');
+            Route::get('/pay_code/:id', 'Merchant/payCode');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');
