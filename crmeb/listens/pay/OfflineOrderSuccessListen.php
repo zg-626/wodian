@@ -21,8 +21,10 @@ class OfflineOrderSuccessListen
                 $orders[$order['out_trade_no']] = $order;
             }
         }*/
-        //Log::info('微信支付成功回调执行队列' . var_export([$data,$groupOrder], 1));
-        app()->make(StoreOrderOfflineRepository::class)->paySuccess($data);
+        Log::info('微信服务商支付成功回调执行队列' . var_export([$data], 1));
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        $storeOrderOfflineRepository->paySuccess($data);
     }
 
 }

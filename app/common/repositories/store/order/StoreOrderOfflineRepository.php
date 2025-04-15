@@ -25,10 +25,12 @@ use app\common\repositories\system\merchant\FinancialRecordRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\OfflinePayService;
 use crmeb\services\PayService;
+use crmeb\services\SwooleTaskService;
 use FormBuilder\Factory\Elm;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
@@ -246,15 +248,40 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $res->save();
                 $order = $res;
                 // 商户增加余额
-                app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
+                //app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
                 // 赠送积分
                 $this->giveIntegral($order);
                 // 赠送商户积分
-                //$this->giveMerIntegral($order->mer_id,$offlineOrder);
+                //$this->giveMerIntegral($order->mer_id,$order);
                 app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
-
+                // 代理赠送佣金 TODO  有bug需要修复
+                /** @var StoreOrderRepository $storeOrderRepository */
+                $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                $storeOrderRepository->addCommission($order->mer_id,$order);
+                /** @var UserMerchantRepository $userMerchantRepository */
+                $userMerchantRepository = app()->make(UserMerchantRepository::class);
+                $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id);
+                SwooleTaskService::merchant('notice', [
+                    'type' => 'new_order',
+                    'data' => [
+                        'title' => '新订单',
+                        'message' => '您有一个新的订单',
+                        'id' => $order->order_id
+                    ]
+                ], $order->mer_id);
                 return $this->payAfter($res, $res);
             });
+        }
+    }
+
+    public function giveMerIntegral($mer_id, $groupOrder)
+    {
+        if ($groupOrder->give_integral > 0) {
+            /**
+             * @var MerchantDao $merchant
+             */
+            $merchant = app()->make(MerchantDao::class);
+            $merchant->addIntegral($mer_id, $groupOrder->give_integral);
         }
     }
 
@@ -274,10 +301,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
     public function payAfter($data, $ret)
     {
-        $financialRecordRepository = app()->make(FinancialRecordRepository::class);
         $userBillRepository = app()->make(UserBillRepository::class);
-
-        $user = app()->make(UserRepository::class)->get($ret['uid']);
 
         $title = '线下门店支付';
 
@@ -290,6 +314,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             'status'=> 1,
             'mark' => $mark,
         ]);
+
+        // 执行服务商分账
 
         return true;
     }
