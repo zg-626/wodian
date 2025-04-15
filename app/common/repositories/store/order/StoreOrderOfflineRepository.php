@@ -244,6 +244,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($type == self::TYPE_SVIP) {
             return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
+                $res->transaction_id = $data['transaction_id'];
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
@@ -269,7 +270,23 @@ class StoreOrderOfflineRepository extends BaseRepository
                         'id' => $order->order_id
                     ]
                 ], $order->mer_id);
-                return $this->payAfter($res, $res);
+
+                // 创建分账账单
+                /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+                $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+                $profitsharing= [
+                    'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
+                    'order_id' => $order->order_id,
+                    'transaction_id' => $order->transaction_id ?? '',
+                    'mer_id' => $order->mer_id,
+                    'profitsharing_price' => $order->pay_price,
+                    'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                    'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
+                ];
+
+                $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+
+                return $this->payAfter($res,$profitsharingInfo->profitsharing_id);
             });
         }
     }
@@ -299,7 +316,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
-    public function payAfter($data, $ret)
+    public function payAfter($ret, $profitsharing_id)
     {
         $userBillRepository = app()->make(UserBillRepository::class);
 
@@ -307,16 +324,27 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         $mark = '线下门店支付';
 
-        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_SVIP_PAY,'offline_order',[
+        $userBillRepository->incBill($ret['uid'],UserBillRepository::CATEGORY_NOW_MONEY,'offline_order',[
             'link_id' => $ret->order_id,
             'title' => $title,
             'number'=> $ret->pay_price,
             'status'=> 1,
             'mark' => $mark,
         ]);
-
+        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
         // 执行服务商分账
-
+        if (!$model = $storeOrderProfitsharingRepository->get($profitsharing_id)) {
+            Log::info('微信线下分账单不存在' . var_export($ret, 1));
+            return false;
+        }
+        if ($model->status !== 0) {
+            Log::info('分账单状态操作,不能分账' . var_export($ret, 1));
+            return false;
+        }
+        if ($storeOrderProfitsharingRepository->partnerProfitsharing($model)) {
+            Log::info('分账成功' . var_export($ret, 1));
+        }
         return true;
     }
 

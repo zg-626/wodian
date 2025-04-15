@@ -127,33 +127,52 @@ class Client extends PartnerClient
         return $this->pay('native', $options);
     }
 
-    public function profitsharingOrder(array $options, bool $finish = false)
+    // 服务商请求分账
+    /*
+     * array (
+          'appid' => 'wxaa4bb5782ea68d7e',
+          'sub_mchid' => '1713506668',
+          'transaction_id' => '4200001656202212131458556229',
+          'out_order_no' => 'pr174470435280019259',
+          'receivers' =>
+          array (
+            0 =>
+            array (
+              'amount' => 400,
+              'description' => '订单分账',
+              'unfreeze_unsplit' => true,
+              'account 　' => 1709024127,
+              'type' => 'MERCHANT_ID',
+            ),
+          ),
+        )
+     * */
+    public function profitsharingOrder(array $options)
     {
         $params = [
             'appid' => $this->app['config']['app_id'],
             'sub_mchid' => $options['sub_mchid'],
             'transaction_id' => $options['transaction_id'],
             'out_order_no' => $options['out_order_no'],
-            'receivers' => [],
-            'finish' => $finish
+            'receivers' => []
         ];
 
         foreach ($options['receivers'] as $receiver) {
             $data = [
                 'amount' => intval($receiver['amount'] * 100),
                 'description' => $receiver['body'] ?? $options['body'] ?? '',
+                'unfreeze_unsplit' => $receiver['unfreeze_unsplit'] ?? true
             ];
-            $data['receiver_account'] = $receiver['receiver_account'];
-            if (isset($receiver['receiver_name'])) {
-                $data['receiver_name'] = $receiver['receiver_name'];
-                $data['type'] = 'PERSONAL_OPENID';
-            } else {
-                $data['type'] = 'MERCHANT_ID';
-            }
+            $data['account 　'] = $receiver['receiver_account'];
+            $data['type'] = 'MERCHANT_ID';
+
             $params['receivers'][] = $data;
         }
+
+        Log::info('微信服务商v3分账：'.var_export($params,true));
         $content = json_encode($params);
-        $res = $this->request('/v3/ecommerce/profitsharing/orders', 'POST', ['sign_body' => $content]);
+
+        $res = $this->request('/v3/profitsharing/orders', 'POST', ['sign_body' => $content]);
         if (isset($res['code'])) {
             throw new ValidateException('微信接口报错:' . $res['message']);
         }

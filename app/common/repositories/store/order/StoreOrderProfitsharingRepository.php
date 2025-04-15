@@ -101,4 +101,27 @@ class StoreOrderProfitsharingRepository extends BaseRepository
         return $flag;
     }
 
+    //服务商分账
+    public function partnerProfitsharing(StoreOrderProfitsharing $profitsharing)
+    {
+        $status = 1;
+        $error_msg = '';
+        $flag = true;
+        try {
+            //print_r($profitsharing->getProfitsharingParmas());exit();
+            if (bcsub($profitsharing->profitsharing_price, $profitsharing->profitsharing_mer_price, 2) > 0) {
+                WechatService::create()->partnerPay()->profitsharingOrder($profitsharing->getProfitsharingParmas());
+            }
+            $profitsharing->profitsharing_time = date('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            $status = -2;
+            $error_msg = $e->getMessage();
+            $flag = false;
+        }
+        $profitsharing->status = $status;
+        $profitsharing->error_msg = $error_msg;
+        $profitsharing->save();
+        return $flag;
+    }
+
 }

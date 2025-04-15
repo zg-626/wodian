@@ -49,6 +49,11 @@ class StoreOrderProfitsharing extends BaseModel
         return $this->hasOne(StoreOrder::class, 'order_id', 'order_id');
     }
 
+    public function orderOffline()
+    {
+        return $this->hasOne(StoreOrderOffline::class, 'order_id', 'order_id');
+    }
+
     public function merchant()
     {
         return $this->hasOne(Merchant::class, 'mer_id', 'mer_id');
@@ -64,7 +69,7 @@ class StoreOrderProfitsharing extends BaseModel
                 [
                     'amount' => bcsub($this->profitsharing_price, $this->profitsharing_mer_price, 2),
                     'body' => '订单分账',
-                    'receiver_account' => systemConfig('wechat_service_merid'),
+                    'receiver_account' => 1709024127,
                 ]
             ]
         ];
