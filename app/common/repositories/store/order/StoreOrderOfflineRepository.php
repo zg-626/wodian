@@ -340,7 +340,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             $offlineOrder->save();
             //$storeOrderStatusRepository->batchCreateLog($orderStatus);
         });
-        Queue::push(CancelGroupOrderJob::class, $id);
     }
 
     public function v2CartIdByOrderInfo($user, $money, bool $userDeduction = false)
