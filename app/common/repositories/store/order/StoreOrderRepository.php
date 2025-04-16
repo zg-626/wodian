@@ -494,14 +494,14 @@ class StoreOrderRepository extends BaseRepository
                 'title' => '获得商务推广佣金',
                 'number' => $extension_one,
                 'mark' => '成功消费' . floatval(20) . '元,奖励商务推广佣金' . floatval($extension_one),
-                'balance' => $salesman->coupon_amount + (int)$extension_one
+                'balance' => $salesman->coupon_amount + $extension_one
             ]);
 
-            $salesman->coupon_amount += (int)$extension_one;
+            $salesman->coupon_amount += $extension_one;
 
             $salesman->save();
             // 业务员绑定的区域经理
-            if(!$salesman->superior_uid){
+            if($salesman->superior_uid!==0){
                 // 查询区域经理信息
                 $superiorInfo = app()->make(UserRepository::class)->get($salesman->superior_id);
                 // 查询区域经理分组
@@ -518,10 +518,10 @@ class StoreOrderRepository extends BaseRepository
                     'title' => '获得经理推广佣金',
                     'number' => $superior_extension,
                     'mark' => '成功消费' . floatval(20) . '元,奖励经理推广佣金' . floatval($superior_extension),
-                    'balance' => $superiorInfo->coupon_amount + (int)$superior_extension
+                    'balance' => $superiorInfo->coupon_amount + $superior_extension
                 ]);
 
-                $superiorInfo->coupon_amount += (int)$superior_extension;
+                $superiorInfo->coupon_amount += $superior_extension;
                 $superiorInfo->save();
 
             }

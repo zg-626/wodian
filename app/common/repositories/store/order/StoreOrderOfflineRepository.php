@@ -140,6 +140,30 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
+        $isSelfBuy = $user->is_promoter && systemConfig('extension_self') ? 1 : 0;
+        if ($isSelfBuy) {
+            $spreadUser = $user;
+            $topUser = $user->valid_spread;
+        } else {
+            $spreadUser = $user->valid_spread;
+            $topUser = $user->valid_top;
+        }
+
+        $spreadUid = $spreadUser->uid ?? 0;
+        $topUid = $topUser->uid ?? 0;
+        $extension_one=0;
+        $extension_two=0;
+        if ($spreadUid) {
+            $org_extension = 0.3;
+
+            $extension_one = $money > 0 ? bcmul($money, $org_extension, 2) : 0;
+        }
+        if ($topUid) {
+            $org_extension = 0.2;
+
+            $extension_two = $money > 0 ? bcmul($money, $org_extension, 2) : 0;
+        }
+
         $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
         $data = [
             'title'     => '线下门店支付',
@@ -156,6 +180,11 @@ class StoreOrderOfflineRepository extends BaseRepository
             'mer_id'     => $mer_id,
             'give_integral' => $total_give_integral,
             'other'     => 0,
+            'spread_uid' => $spreadUid,
+            'top_uid' => $topUid,
+            'is_selfbuy' => $isSelfBuy,
+            'extension_one' => $extension_one,
+            'extension_two' => $extension_two,
             'total_price' => $total_price,
             'deduction' => $params['user_deduction']?: 0,
             'deduction_money' => $params['user_deduction']?: 0,
@@ -287,7 +316,11 @@ class StoreOrderOfflineRepository extends BaseRepository
 
                     $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
                 }
-
+                $user = app()->make(UserRepository::class)->get($res['uid']);
+                // 发放推广佣金
+                /** @var StoreOrderRepository $storeOrderRepository */
+                $storeOrderRepository = app()->make(StoreOrderRepository::class);
+                //$storeOrderRepository->computed($res,$user);
 
                 return $this->payAfter($res);
             });
@@ -334,22 +367,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             'status'=> 1,
             'mark' => $mark,
         ]);
-        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
-        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
-        // 执行服务商分账
-        /*if (!$model = $storeOrderProfitsharingRepository->get($profitsharing_id)) {
-            Log::info('微信线下分账单不存在' . var_export($ret, 1));
-            return false;
-        }
-        if ($model->status !== 0) {
-            Log::info('分账单状态操作,不能分账' . var_export($ret, 1));
-            return false;
-        }*/
-        // 延迟60秒执行 (单位：秒)
-        //(new Queue)->later(60, OrderProfitsharingJob::class, $profitsharing_id);
-        /*if ($storeOrderProfitsharingRepository->partnerProfitsharing($model)) {
-            Log::info('分账成功' . var_export($ret, 1));
-        }*/
         return true;
     }
 
