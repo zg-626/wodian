@@ -111,23 +111,21 @@ class StoreOrderOfflineRepository extends BaseRepository
         //积分配置
         $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
 
-        $svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
+        //$svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
 
         $pay_price = $money;
 
-        $svip_integral_rate = $svip_status ? app()->make(MemberinterestsRepository::class)->getSvipInterestVal(MemberinterestsRepository::HAS_TYPE_PAY) : 0;
+        //$svip_integral_rate = $svip_status ? app()->make(MemberinterestsRepository::class)->getSvipInterestVal(MemberinterestsRepository::HAS_TYPE_PAY) : 0;
 
         //计算赠送积分, 只有普通商品赠送积分
-        $giveIntegralFlag = $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_order_rate'] > 0;
+        //$giveIntegralFlag = $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_order_rate'] > 0;
+        $giveIntegralFlag = 1;
 
         $total_give_integral = 0;
 
         //$order_total_give_integral = 0;
-        if ($giveIntegralFlag  && $pay_price > 0 && $rate) {
+        if ($pay_price > 0 && $rate) {
             $total_give_integral = floor(bcmul($pay_price, $rate, 0));
-            if ($total_give_integral > 0 && $svip_status && $svip_integral_rate > 0) {
-                $total_give_integral = bcmul($svip_integral_rate, $total_give_integral, 0);
-            }
         }
 
         // 抵扣金额
@@ -139,7 +137,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             $user->save();
 
         }
-
 
         //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
@@ -157,7 +154,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'handling_fee' => $handling_fee,
             'status'     => 1,
             'mer_id'     => $mer_id,
-            'gieve_integral' => $total_give_integral,
+            'give_integral' => $total_give_integral,
             'other'     => 0,
             'total_price' => $total_price,
             'deduction' => $params['user_deduction']?: 0,
@@ -245,7 +242,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($type == self::TYPE_SVIP) {
             return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
-                $res->transaction_id = $data['data']['transaction_id'];
+                $res->transaction_id = $data['data']['transaction_id']??'';
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
@@ -260,6 +257,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 /** @var StoreOrderRepository $storeOrderRepository */
                 $storeOrderRepository = app()->make(StoreOrderRepository::class);
                 $storeOrderRepository->addCommission($order->mer_id,$order);
+                // 更新用户支付时间
                 /** @var UserMerchantRepository $userMerchantRepository */
                 $userMerchantRepository = app()->make(UserMerchantRepository::class);
                 $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id);
@@ -275,19 +273,23 @@ class StoreOrderOfflineRepository extends BaseRepository
                 // 创建分账账单
                 /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                 $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
-                $profitsharing= [
-                    'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
-                    'order_id' => $order->order_id,
-                    'transaction_id' => $order->transaction_id ?? '',
-                    'mer_id' => $order->mer_id,
-                    'profitsharing_price' => $order->pay_price,
-                    'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
-                    'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
-                ];
+                // 支付金額不是0
+                if ($order->pay_price !== 0) {
+                    $profitsharing= [
+                        'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
+                        'order_id' => $order->order_id,
+                        'transaction_id' => $order->transaction_id ?? '',
+                        'mer_id' => $order->mer_id,
+                        'profitsharing_price' => $order->pay_price,
+                        'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                        'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
+                    ];
 
-                $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+                    $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+                }
 
-                return $this->payAfter($res,$profitsharingInfo->profitsharing_id);
+
+                return $this->payAfter($res);
             });
         }
     }
@@ -317,7 +319,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
-    public function payAfter($ret, $profitsharing_id)
+    public function payAfter($ret)
     {
         $userBillRepository = app()->make(UserBillRepository::class);
 
