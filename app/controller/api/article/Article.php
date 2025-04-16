@@ -21,6 +21,8 @@ use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
+use crmeb\jobs\OrderOfflineProfitsharingJob;
+use crmeb\jobs\SendSmsJob;
 use crmeb\services\QrcodeService;
 use crmeb\services\SwooleTaskService;
 use crmeb\services\WechatService;
@@ -28,6 +30,7 @@ use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
 use think\exception\ValidateException;
+use think\facade\Queue;
 
 class Article extends BaseController
 {
@@ -87,22 +90,28 @@ class Article extends BaseController
     {
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
-        $model = $storeOrderProfitsharingRepository->get(1);
+        $ids =$storeOrderProfitsharingRepository ->getAutoOfflineProfitsharing();
+        print_r($ids);
+
+        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+        /*$storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+        $model = $storeOrderProfitsharingRepository->get(1);*/
         /*try {
             $storeOrderProfitsharingRepository->partnerProfitsharing($model);
         } catch (\Exception $e) {
             return app('json')->fail($e->getMessage());
         }*/
-        try {
+        /*try {
             WechatService::create()->partnerPay()->profitsharingAddReceiver([
-                'sub_mchid' => '你的子商户号', // 发起分账的子商户
+                'sub_mchid' => '1709305541', // 发起分账的子商户
+                'account' => '1709305541', // 接收方商户号（你自己的服务商商户号）
                 'name'      => '中仁商业商贸服务', // 必须与注册名称一致
             ]);
 
         } catch (\Exception $e) {
             return  $e->getMessage();
 
-        }
+        }*/
         // 测试支付回调
         /*$data=array (
             'order_sn' => 'wxs174453838729585037',

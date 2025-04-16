@@ -64,7 +64,7 @@ class Client extends PartnerClient
                 'currency' => 'CNY',
             ],
             'settle_info' => [
-                'profit_sharing' => false // 不分帐
+                'profit_sharing' => true // 分帐
             ],
             'notify_url' => systemConfig('site_url') . Route::buildUrl('partnerNotify')->build(),
             //'notify_url' => rtrim(systemConfig('site_url'), '/') . Route::buildUrl($this->app['config']['service_payment']['type'] . 'CombinePayNotify', ['type' => $order['attach']])->build(),
@@ -151,8 +151,8 @@ class Client extends PartnerClient
     public function profitsharingOrder(array $options)
     {
         $params = [
-            //'appid' => $this->app['config']['app_id'],
-            'appid' => 'wxda2922aa5121cc98',
+            'appid' => $this->app['config']['app_id'],
+            //'appid' => 'wxda2922aa5121cc98',
             'sub_mchid' => $options['sub_mchid'],
             'transaction_id' => $options['transaction_id'],
             'out_order_no' => $options['out_order_no'],
@@ -202,10 +202,11 @@ class Client extends PartnerClient
 
         // 2. 准备请求参数
         $params = [
-            'sub_mchid' => '1713931286', // 子商户号
-            'appid' => 'wxda2922aa5121cc98', // 服务商APPID
+            'sub_mchid' => $options['sub_mchid'], // 子商户号
+            'appid' => $this->app['config']['app_id'], // 服务商APPID
+            //'appid' => 'wxda2922aa5121cc98', // 服务商APPID
             'type' => 'MERCHANT_ID', // 固定
-            'account' => '1709305541', // 接收方商户号（你自己的服务商商户号）
+            'account' => $options['account'], // 接收方商户号（你自己的服务商商户号）
             'name' => $encryptedName, // 已加密的商户全称
             'relation_type' => 'SERVICE_PROVIDER', // 服务商身份
         ];
@@ -227,6 +228,7 @@ class Client extends PartnerClient
         }
         return $res;
     }
+
 
     public function profitsharingFinishOrder(array $params)
     {

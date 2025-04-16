@@ -114,9 +114,8 @@ class PartnerClient extends AbstractAPI
             'Accept' => 'application/json',
             'Authorization' => $this->getAuthorization($endpoint, $method, $sign_body),
             // 必须明确区分服务商/子商户证书
-            'Wechatpay-Serial' => $this->isService
-                ? $this->app['config']['service_payment']['serial_no']
-                : $this->app['config']['payment']['serial_no']
+            'Wechatpay-Serial' => '733A4FF1B653CAED8F587CA5E5A3DBE8DEC31141'
+
         ];
 
         $options['headers'] = array_merge($headers, ($options['headers'] ?? []));
@@ -124,9 +123,8 @@ class PartnerClient extends AbstractAPI
         /*if ($serial)
             $options['headers']['Wechatpay-Serial'] = $this->app->certficates->setServiceStatus($this->isService)->get()['serial_no'];*/
         if ($serial) {
-            $serialNo = $this->isService
-                ? $this->app['config']['service_payment']['serial_no']
-                : $this->app['config']['payment']['serial_no'];
+            $serialNo = '733A4FF1B653CAED8F587CA5E5A3DBE8DEC31141'
+            ;
             $options['headers']['Wechatpay-Serial'] = $serialNo;
         }
 

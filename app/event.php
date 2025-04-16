@@ -33,6 +33,7 @@ return [
         'swoole.workerStop' => [\crmeb\listens\SwooleWorkerExitListen::class],
         'create_timer' => env('INSTALLED', false) ? [
             \crmeb\listens\AutoOrderProfitsharingListen::class,
+            \crmeb\listens\AutoOrderOfflineProfitsharingListen::class,
             \crmeb\listens\AuthTakeOrderListen::class,
             \crmeb\listens\AutoCancelGroupOrderListen::class,
             \crmeb\listens\AutoCancelOfflineOrderListen::class,

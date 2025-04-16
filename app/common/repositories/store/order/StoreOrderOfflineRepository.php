@@ -27,6 +27,7 @@ use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
+use crmeb\jobs\OrderProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\OfflinePayService;
 use crmeb\services\PayService;
@@ -334,17 +335,19 @@ class StoreOrderOfflineRepository extends BaseRepository
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
         // 执行服务商分账
-        if (!$model = $storeOrderProfitsharingRepository->get($profitsharing_id)) {
+        /*if (!$model = $storeOrderProfitsharingRepository->get($profitsharing_id)) {
             Log::info('微信线下分账单不存在' . var_export($ret, 1));
             return false;
         }
         if ($model->status !== 0) {
             Log::info('分账单状态操作,不能分账' . var_export($ret, 1));
             return false;
-        }
-        if ($storeOrderProfitsharingRepository->partnerProfitsharing($model)) {
+        }*/
+        // 延迟60秒执行 (单位：秒)
+        //(new Queue)->later(60, OrderProfitsharingJob::class, $profitsharing_id);
+        /*if ($storeOrderProfitsharingRepository->partnerProfitsharing($model)) {
             Log::info('分账成功' . var_export($ret, 1));
-        }
+        }*/
         return true;
     }
 

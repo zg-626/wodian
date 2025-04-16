@@ -58,4 +58,17 @@ class StoreOrderProfitsharingDao extends BaseDao
                 $query->whereNotNull('B.verify_time')->where('B.verify_time', '<', $time);
             })->column('A.profitsharing_id');
     }
+
+    public function getAutoOfflineProfitsharing()
+    {
+        $now = date('Y-m-d H:i:s');
+        $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-1 minute'));
+
+        return StoreOrderProfitsharing::getDB()
+            ->where('status', 0) // 未分账状态
+            ->where('create_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
+            ->where('create_time', '>', '1970-01-01') // 过滤无效时间
+            ->select();
+    }
+
 }
