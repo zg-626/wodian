@@ -1,0 +1,82 @@
+<html>
+    <head>
+        <title>发送通知</title>
+        <meta charset="UTF-8">
+<script>
+    function generate() {
+        var h = document.getElementById('h').value;
+        var url = document.getElementById('url').value;
+        var body = document.getElementById('body').value;
+        body = JSON.parse(body);
+        body = JSON.stringify(body);
+
+        var headers = JSON.parse(h);
+        console.log(headers);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: body
+        })
+        .then(response => response.text())
+        .then(text => {
+            document.getElementById('to').value = text;
+        });
+    }
+</script>
+    </head>
+    <body>
+        <table border="0">
+            <tr>
+<td>headers:<br /><textarea id="h" cols="40" rows="15">
+{
+    "Authorization": "LKLAPI-SHA256withRSA timestamp=\"1630905585\",nonce_str=\"9003323344\",signature=\"tnjIAcEISq/ClrOppv/nojeZnE/pB1wNfQC/hMTME+rQMapWzvs9v1J68ueDpVzs1RW22dNotmUVy2sM6thNFRkaOx4qQGslX6kIttwvlsJsSEIR3qrjdPdUAkbP2KDRLujspxE9X0daJ6BU+rOoJ8p4c6y1/QSOMtDJoO3EABOF4O6RFHR3N7JW8o4qcf7lOOO7D4rlAB2vw6tV8WeG+OEyJ++Q0K3V1oM5uJEIPPuJkb2qlEqVYKiYLyvIdEJ1Z5qMbC9U7rKuHdeTQPl7last/h5nd6WauzDfYPKlAjZBEPYjiDqRv6Dm+4FeNtALoy6Mg7Ruxeq1pJudfj0iKg==\""
+}
+</textarea></td>
+<td>post json body:<br /><textarea id="body" cols="40" rows="15">
+{
+    "payOrderNo": "21090611012001970631000463034",
+    "merchantOrderNo": "CH2021090613190866292",
+    "orderInfo": null,
+    "merchantNo": "822126090640003",
+    "termId": "47781282",
+    "tradeMerchantNo": "822126090640003",
+    "tradeTermId": "47781282",
+    "channelId": "10000038",
+    "currency": "156",
+    "amount": 1,
+    "tradeType": "PAY",
+    "payStatus": "S",
+    "notifyStatus": 0,
+    "orderCreateTime": "2021-09-06T05:19:43.000+00:00",
+    "orderEfficientTime": "2021-09-06T05:19:43.000+00:00",
+    "extendField": null,
+    "payTime": "2021-09-06T05:19:43.000+00:00",
+    "remark": "",
+    "noticeNum": 1,
+    "sign": null,
+    "notifyUrl": null,
+    "notifyMode": "2",
+    "payInfo": "1#1#ALIPAY#0#2021090622001432581427657317",
+    "lklOrderNo": "2021090666210003610012",
+    "crdFlg": "92",
+    "payerId1": "2088702852632582",
+    "payerId2": "rob***@126.com",
+    "smCrdFlg": "01",
+    "tradeTime": "20210906131943",
+    "accountChannelOrderNo": "2021090622001432581427657317",
+    "actualPayAmount": 1,
+    "logNo": "66210003610012"
+}
+</textarea></td>
+            </tr>
+<tr>
+    <td colspan="2">
+        <input type="text" id="url" size="50" value="http://localhost/sdk/example/v3/notify.php" placeholder="接收通知URL地址" />
+        <input type="button" onclick="generate()" value="Post" />
+    </td>
+</tr>
+        </table>
+        <textarea id="to" cols="80" rows="40"></textarea><br />
+    </body>
+</html>
