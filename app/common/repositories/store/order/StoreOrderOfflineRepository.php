@@ -216,7 +216,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $config = $service->pay($user);
                 return app('json')->status($type, $config + ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
-                return app('json')->status('error', $e->getMessage(), ['order_id' => $info->order_id]);
+                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
             }
         } else {
             $res = $this->paySuccess($data);

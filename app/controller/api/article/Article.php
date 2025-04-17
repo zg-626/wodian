@@ -89,9 +89,9 @@ class Article extends BaseController
     public function test()
     {
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
-        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
-        $ids =$storeOrderProfitsharingRepository ->getAutoOfflineProfitsharing();
-        print_r($ids);
+        /*$storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+        $ids =$storeOrderProfitsharingRepository ->getAutoOfflineProfitsharing();*/
+        //print_r($ids);
 
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         /*$storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
@@ -113,8 +113,8 @@ class Article extends BaseController
 
         }*/
         // 测试支付回调
-        /*$data=array (
-            'order_sn' => 'wxs174453838729585037',
+        $data=array (
+            'order_sn' => 'wxs174472359436025170',
             'appid' => 'wx4409eaedbd62b213',
             'attach' => 'user_order',
             'bank_type' => 'OTHERS',
@@ -124,7 +124,7 @@ class Article extends BaseController
             'mch_id' => '1288093001',
             'nonce_str' => '6397efa100165',
             'openid' => 'oOdvCvjvCG0FnCwcMdDD_xIODRO0',
-            'out_trade_no' => 'wxs174453838729585037',
+            'out_trade_no' => 'wxs174472359436025170',
             'result_code' => 'SUCCESS',
             'return_code' => 'SUCCESS',
             'sign' => '125C56DE030A461E45D421E44C88BC30',
@@ -133,14 +133,14 @@ class Article extends BaseController
             'trade_type' => 'JSAPI',
             'transaction_id' => '4200001656202212131458556229',
         );
-        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository  **/
 
-       /* $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
         try {
-            $storeOrderOfflineRepository->cancel(927);
+            $storeOrderOfflineRepository->paySuccess($data);
         } catch (\Exception $e) {
             return $e->getMessage().$e->getLine();
-                }*/
+                }
         // 修改商户省市区
         /*try {
             // 获取需要更新的商户数据（只查询有城市ID的商户）
