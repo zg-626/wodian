@@ -231,7 +231,7 @@ if (!function_exists('getModelTime')) {
      * @author xaboy
      * @day 2020-04-29
      */
-    function getModelTime(BaseQuery $model, string $section, $prefix = 'create_time', $field = '-',$time = '')
+    function getModelTime(BaseQuery $model, string $section, $prefix = 'create_time', $field = '-', $time = '')
     {
         if (!isset($section)) return $model;
         switch ($section) {
@@ -269,7 +269,7 @@ if (!function_exists('getModelTime')) {
                     } else {
                         if ($startTime == $endTime) {
                             $model = $model->whereBetweenTime($prefix, date('Y-m-d 0:0:0', strtotime($startTime)), date('Y-m-d 23:59:59', strtotime($endTime)));
-                        } else if(strpos($startTime, ':')) {
+                        } else if (strpos($startTime, ':')) {
                             $model = $model->whereBetweenTime($prefix, $startTime, $endTime);
                         } else {
                             $model = $model->whereBetweenTime($prefix, date('Y-m-d H:i:s', strtotime($startTime)), date('Y-m-d H:i:s', strtotime($endTime . ' +1day -1second')));
@@ -283,7 +283,7 @@ if (!function_exists('getModelTime')) {
 }
 
 if (!function_exists('hasMany')) {
-    function hasMany($collection, $field, $model, $searchKey, $insertKey, $where = [] ,$select = '*')
+    function hasMany($collection, $field, $model, $searchKey, $insertKey, $where = [], $select = '*')
     {
         $ids = [];
         $link = [];
@@ -330,25 +330,25 @@ if (!function_exists('activeProductSku')) {
         $make = app()->make(\app\common\repositories\store\product\ProductRepository::class);
         $price = 0;
         $data = [];
-        foreach($activeData as $key => $value) {
+        foreach ($activeData as $key => $value) {
             $maxPrice = 0;
             $must_price = 0;
             $attrValue = [];
-            if(is_null($value['product'])) continue;
+            if (is_null($value['product'])) continue;
             $productSku = $value['productSku'];
             $productAttr = $value['product']['attr'];
             $productAttrValue = $value['product']['attrValue'];
             unset($value['productSku'], $value['product']['attrValue'], $value['product']['attr']);
             foreach ($productAttrValue as $attr_value) {
-                if (!empty($productSku)){
+                if (!empty($productSku)) {
                     foreach ($productSku as $sk => $sv) {
-                        if ( $sv['unique'] == $attr_value['unique']) {
+                        if ($sv['unique'] == $attr_value['unique']) {
                             if ($type == 'discounts') {
                                 unset($attr_value['ot_price'], $attr_value['price']);
                                 $attr_value['ot_price'] = $sv['price'];
                                 $attr_value['price']    = $sv['active_price'];
                                 $_price = bcsub($sv['price'], $sv['active_price'], 2);
-                                if ($value['type']){
+                                if ($value['type']) {
                                     $must_price = $must_price > $_price ? $must_price : $_price;
                                 } else {
                                     $maxPrice = $maxPrice > $_price ? $maxPrice : $_price;
@@ -365,15 +365,14 @@ if (!function_exists('activeProductSku')) {
             if ($type == 'discounts') {
                 $sku = $make->detailAttrValue($attrValue, null);
                 $value['product']['sku'] = $sku;
-
             } else {
                 $value['product']['attrValue'] = $attrValue;
             }
             $value['product']['attr'] = $attr;
-            $price = bcadd($price, bcadd($must_price,$maxPrice,2), 2);
+            $price = bcadd($price, bcadd($must_price, $maxPrice, 2), 2);
             if ($value['type'] == 1) {
-                array_unshift($data,$value);
-            }else {
+                array_unshift($data, $value);
+            } else {
                 $data[] = $value;
             }
         }
@@ -462,7 +461,7 @@ if (!function_exists('merchantConfig')) {
      */
     function merchantConfig(int $merId, $key)
     {
-        return app()->make(ConfigValueRepository::class)->getConfig($merId,$key);
+        return app()->make(ConfigValueRepository::class)->getConfig($merId, $key);
     }
 }
 
@@ -501,7 +500,7 @@ if (!function_exists('getStartModelTime')) {
                 return date('Y-m-d', strtotime('this week'));
             case 'month':
                 if (preg_match('/^\d{4}-\d{2}$/', $section)) {
-                    return date('Y-m-d', strtotime('first day of '.$section));
+                    return date('Y-m-d', strtotime('first day of ' . $section));
                 }
                 return date('Y-m-d', strtotime('first Day of this month'));
 
@@ -629,7 +628,7 @@ if (!function_exists('image_to_base64')) {
         checkSuffix($avatar);
         try {
             $url = parse_url($avatar);
-            if (is_file($file = public_path().$url['path'])) {
+            if (is_file($file = public_path() . $url['path'])) {
                 return "data:image/jpeg;base64," . base64_encode(file_get_contents($file, 1));
             }
             $url = $url['host'];
@@ -975,7 +974,7 @@ if (!function_exists('update_crmeb_compiled')) {
         $file = $root . 'install/compiled/' . $key . '.zip';
         $toPath = $root . 'crmeb/basic';
         $toConfigPath = $root . 'config/crmeb.php';
-        $demoImage = $root.'public/uploads'.'images.zip';
+        $demoImage = $root . 'public/uploads' . 'images.zip';
         try {
             if (is_file($file)) {
                 $zip = new ZipArchive();
@@ -998,7 +997,7 @@ if (!function_exists('update_crmeb_compiled')) {
         } catch (\Exception $exception) {
             return false;
         }
-        try{
+        try {
             if (is_file($demoImage)) {
                 $zip = new ZipArchive();
                 if ($zip->open($demoImage) === true) {
@@ -1006,8 +1005,7 @@ if (!function_exists('update_crmeb_compiled')) {
                     $zip->close();
                 }
             }
-        }catch (\Exception $exception) {
-
+        } catch (\Exception $exception) {
         }
         return true;
     }
@@ -1076,7 +1074,7 @@ if (!function_exists('gcj02ToBd09')) {
 
         $lng = $z * cos($theta) + 0.0065;
         $lat = $z * sin($theta) + 0.006;
-        return [$lng,$lat];
+        return [$lng, $lat];
     }
 }
 
@@ -1123,7 +1121,7 @@ if (!function_exists('aj_captcha_check_two')) {
      * @param string $pointJson
      * @return bool
      */
-    function aj_captcha_check_two(string $captchaType, string $captchaVerification )
+    function aj_captcha_check_two(string $captchaType, string $captchaVerification)
     {
         aj_get_serevice($captchaType)->verificationByEncryptCode($captchaVerification);
         return true;
@@ -1152,11 +1150,11 @@ if (!function_exists('aj_get_serevice')) {
                 $service = new \Fastknife\Service\ClickWordCaptchaService($config);
                 break;
             case "blockPuzzle":
-//                $service = new \Fastknife\Service\BlockPuzzleCaptchaService($config);
+                //                $service = new \Fastknife\Service\BlockPuzzleCaptchaService($config);
                 $service = new  \crmeb\services\BlockPuzzleCaptchaService($config);
                 break;
             default:
-                throw new \think\exception\ValidateException('captchaType参数不正确：'.$captchaType);
+                throw new \think\exception\ValidateException('captchaType参数不正确：' . $captchaType);
         }
         return $service;
     }
@@ -1166,24 +1164,24 @@ if (!function_exists('checkSuffix')) {
     function checkSuffix($data)
     {
         $suffix = \think\facade\Config::get('upload.fileExt');
-        if (is_array($data)){
+        if (is_array($data)) {
             foreach ($data as $datum) {
-                if (strpos($datum,'phar://') !== false)
+                if (strpos($datum, 'phar://') !== false)
                     throw new \think\exception\ValidateException('操作失败');
                 $result = pathinfo($datum);
-                if (isset($result['extension']) && !in_array($result['extension'],$suffix)) {
+                if (isset($result['extension']) && !in_array($result['extension'], $suffix)) {
                     throw new \think\exception\ValidateException('文件后缀不允许');
                 }
             }
         } else {
-            if (strpos($data,'phar://') !== false )
+            if (strpos($data, 'phar://') !== false)
                 throw new \think\exception\ValidateException('操作失败');
             $result = pathinfo($data);
-            if (isset($result['extension']) && !in_array($result['extension'],$suffix)) {
+            if (isset($result['extension']) && !in_array($result['extension'], $suffix)) {
                 throw new \think\exception\ValidateException('文件后缀不允许');
             }
         }
-        return ;
+        return;
     }
 }
 
@@ -1194,5 +1192,31 @@ if (!function_exists('strUcwords')) {
     }
 }
 
+if (!function_exists('record_log')) {
+    function record_log($value = '', $filename = '', $path = './logs/')
+    {
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
 
+        $file = $path . $filename;
+        $res  = error_log(print_r($value, 1) . PHP_EOL, 3, $file);
+    }
+}
 
+if (!function_exists('imageUrl')) {
+    /*
+    * 拼接 图片地址
+    */
+    function imageUrl($img)
+    {
+        if (!$img) {
+            return '';
+        }
+        if (strpos($img, 'http') !== false) {
+            return $img;
+        } else {
+            return 'https://' . $_SERVER['SERVER_NAME'] . $img;
+        }
+    }
+}
