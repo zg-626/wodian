@@ -4,6 +4,9 @@ namespace app\controller\api\lakala;
 
 use crmeb\basic\BaseController;
 use think\response\Json;
+use Lakala\OpenAPISDK\V2\V2Configuration;
+use Lakala\OpenAPISDK\V2\Api\V2LakalaNotifyApi;
+use think\facade\Db;
 
 class Lakala extends BaseController
 {
@@ -13,4 +16,32 @@ class Lakala extends BaseController
         return app('json')->success('请求成功');
     }
 
+    /**
+     * @desc 电子合同签约结果回调通知
+     * @author ZhouTing
+     * @date 2025-04-17 18:44
+     */
+    public function lklEcApplyNotify()
+    {
+        $config = new V2Configuration();
+        $api = new V2LakalaNotifyApi($config);
+        try {
+            $request = $api->notiApi();
+            // $headers = $request->getHeaders();
+            $originalText = $request->getOriginalText();
+            Db::name('third_notify')->insert(['title' => '电子合同签约回调', 'content' => $originalText, 'createtime' => time()]);
+
+            $obj = json_decode($originalText, true);
+            //1、更新电子合同签约状态
+            $ecInfo = Db::name('merchant_ec_lkl')->where(['lkl_ec_apply_id' => $obj['ecApplyId']])->find();
+            if (!empty($ecInfo)) {
+                Db::name('merchant_ec_lkl')->where('id', $ecInfo['id'])->update(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus'], 'updatetime' => time()]);
+            }
+
+            $api->success();
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉电子合同签约回调异常: ' . $e->getMessage(), 'lkl');
+            $api->fail($e->getMessage());
+        }
+    }
 }

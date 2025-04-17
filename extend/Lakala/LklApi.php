@@ -86,7 +86,7 @@ class LklApi
             'acctNo' => $param['acct_no'],
             'acctName' => $param['acct_name'],
             'agentTag' => $param['agent_tag'],
-            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/notify/lklEcApplyNotify'
+            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklEcApplyNotify'
         ];
         //个体工商户/企业(有营业执照)
         if (!empty($param['merchant_type'])) {
