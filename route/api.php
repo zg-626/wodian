@@ -582,6 +582,12 @@ Route::group('api/', function () {
             Route::any('/pay', 'Meituan/pay');
         })->prefix('api.meituan.');
 
+        // 拉卡拉回调接口
+        Route::group('lakala', function () {
+            // 支付回调
+            Route::any('/notify', 'Lakala/notify');
+        })->prefix('api.lakala.');
+
         // 分红
         Route::group('dividend', function () {
             Route::get('/dividend', 'Dividend/dividend');
