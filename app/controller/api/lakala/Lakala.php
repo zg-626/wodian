@@ -35,7 +35,7 @@ class Lakala extends BaseController
             //1、更新电子合同签约状态
             $ecInfo = Db::name('merchant_ec_lkl')->where(['lkl_ec_apply_id' => $obj['ecApplyId']])->find();
             if (!empty($ecInfo)) {
-                Db::name('merchant_ec_lkl')->where('id', $ecInfo['id'])->update(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus'], 'updatetime' => time()]);
+                Db::name('merchant_ec_lkl')->where('id', $ecInfo['id'])->update(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
             }
 
             $api->success();
