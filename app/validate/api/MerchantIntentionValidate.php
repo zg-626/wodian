@@ -70,8 +70,8 @@ class MerchantIntentionValidate extends Validate
         'B33|联系人地址' => 'require',
         'mer_blis_name|营业执照名称/个人真实姓名' => 'requireIf:merchant_type,1',
         'mer_blis|营业执照号' => 'requireIf:merchant_type,1',
-        'openning_bank_code|企业/经营者结算开户行号' => 'requireIf:merchant_type,57',
-        'openning_bank_name|企业/经营者结算开户行名称' => 'requireIf:merchant_type,57',
+        'openning_bank_code|企业/经营者结算开户行号' => 'requireIf:acct_type_code,57',
+        'openning_bank_name|企业/经营者结算开户行名称' => 'requireIf:acct_type_code,57',
     ];
 
     protected $message = [
