@@ -23,6 +23,7 @@ use crmeb\services\YunxinSmsService;
 use think\App;
 use crmeb\basic\BaseController;
 use app\common\repositories\system\merchant\MerchantIntentionRepository as repository;
+use think\Exception;
 use think\exception\ValidateException;
 
 class MerchantIntention extends BaseController
@@ -35,6 +36,52 @@ class MerchantIntention extends BaseController
         parent::__construct($app);
         $this->repository = $repository;
         $this->userInfo = $this->request->isLogin() ? $this->request->userInfo() : null;
+    }
+
+    /**
+     * 签约电子合同
+     *
+     * @return mixed
+     **/
+    public function create_first()
+    {
+        $data = $this->checkParamsFirst();
+
+        $data['lkl_ec_status'] = 'UNDONE';
+        try {
+            $result = $this->repository->create($data);
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
+        return app('json')->successful('提交成功', ['id'=>$result->id]);
+    }
+
+    protected function checkParamsFirst()
+    {
+        $data = $this->request->params([
+            'merchant_type',
+            'cert_name',
+            'cert_no',
+            'ec_mobile',
+            'acct_type_code',
+            'acct_no',
+            'acct_name',
+            'agent_tag',
+            'agent_name',
+            'agent_cert_no',
+            'agent_file_path',
+            'A1', 'B1', 'B2', 'B9', 'B10', 'B19', 'B20', 'B24', 'B25', 'B26', 'B27', 'B28', 'B29', 'B30', 'B33',
+            'mer_blis_name',
+            'mer_blis',
+            'openning_bank_code',
+            'openning_bank_name'
+        ]);
+//        try {
+//            validate(MerchantIntentionValidate::class)->scene('create')->check($data);
+//        } catch (ValidateException $e) {
+//            return app('json')->fail($e->getError());
+//        }
+        return $data;
     }
 
     public function create()
@@ -106,11 +153,11 @@ class MerchantIntention extends BaseController
 
     protected function checkParams()
     {
-        $data = $this->request->params(['phone','salesman_id','is_online', 'mer_banner', 'mer_name', 'name', 'code', 'images', 'merchant_category_id', 'mer_type_id','commission_rate','inside','id_card','email','bank_card','bank_open_name','address']);
+        $data = $this->request->params(['phone', 'salesman_id', 'is_online', 'mer_banner', 'mer_name', 'name', 'code', 'images', 'merchant_category_id', 'mer_type_id', 'commission_rate', 'inside', 'id_card', 'email', 'bank_card', 'bank_open_name', 'address']);
         app()->make(MerchantIntentionValidate::class)->check($data);
         $check = app()->make(SmsService::class)->checkSmsCode($data['phone'], $data['code'], 'intention');
         $data['mer_type_id'] = (int)$data['mer_type_id'];
-        if($data['code'] != 123456){
+        if ($data['code'] != 123456) {
             if (!$check) throw new ValidateException('验证码不正确');
         }
         if (!app()->make(MerchantCategoryRepository::class)->get($data['merchant_category_id'])) throw new ValidateException('商户分类不存在');

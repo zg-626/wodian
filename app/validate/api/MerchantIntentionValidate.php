@@ -41,5 +41,28 @@ class MerchantIntentionValidate extends Validate
         //'bank_open_name|开户行名称' => 'require',
         // 开户行支行名称
         //'bank_branch_name|开户行支行名称' => 'require',
+
+        ''
+    ];
+
+    protected $scene = [
+        'create' => [
+            'merchant_type',
+            'cert_name',
+            'cert_no',
+            'ec_mobile',
+            'acct_type_code',
+            'acct_no',
+            'acct_name',
+            'agent_tag',
+            'agent_name',
+            'agent_cert_no',
+            'agent_file_path',
+            'A1', 'B1', 'B2', 'B9', 'B10', 'B19', 'B20', 'B24', 'B25', 'B26', 'B27', 'B28', 'B29', 'B30', 'B33',
+            'mer_blis_name',
+            'mer_blis',
+            'openning_bank_code',
+            'openning_bank_name'
+        ],
     ];
 }
