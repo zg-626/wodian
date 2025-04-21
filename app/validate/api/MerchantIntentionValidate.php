@@ -111,7 +111,7 @@ class MerchantIntentionValidate extends Validate
     ];
 
     protected $scene = [
-        'create' => [
+        'create_first' => [
             'merchant_type',
             'cert_name',
             'cert_no',
