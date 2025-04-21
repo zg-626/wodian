@@ -48,6 +48,7 @@ class MerchantIntention extends BaseController
         $data = $this->checkParamsFirst();
 
         $data['lkl_ec_status'] = 'UNDONE';
+        p($data);exit;
         try {
             $result = $this->repository->create($data);
         } catch (Exception $e) {

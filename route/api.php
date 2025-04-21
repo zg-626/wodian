@@ -601,6 +601,7 @@ Route::group('api/', function () {
         Route::post('intention/create', 'api.store.merchant.MerchantIntention/create');
         Route::get('intention/cate', 'api.store.merchant.MerchantIntention/cateLst');
         Route::get('intention/type', 'api.store.merchant.MerchantIntention/typeLst');
+        Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first');
         //浏览
         Route::post('common/visit', 'api.Common/visit');
         Route::get('store/product/assist/count', 'api.store.product.StoreProductAssist/userCount');
