@@ -97,6 +97,7 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
+        var_dump('111111111111111111111111111111');exit;
         $params = $this->validateParams(__FUNCTION__);
         var_dump($params);exit;
         $uid = $this->userInfo->uid;
@@ -136,6 +137,7 @@ class MerchantIntention extends BaseController
 
     protected function validateParams($function)
     {
+
         switch ($function){
             case 'create_first':
                 $params = $this->request->params([
