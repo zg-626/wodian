@@ -77,10 +77,8 @@ class MerchantIntention extends BaseController
         $uid = $this->userInfo->uid;
         switch ($params['step']) {
             case 1:
-                $info = MerchantEcLkl::where('uid', $uid)->find();
-                break;
             case 2:
-                $info = 2;
+                $info = MerchantEcLkl::where('uid', $uid)->find();
                 break;
             case 3:
                 $info = 3;
@@ -97,6 +95,7 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
+        var_dump('33333333333333333333333333333333333');
         var_dump('111111111111111111111111111111');
         $params = $this->validateParams(__FUNCTION__);
         var_dump($params);
@@ -187,6 +186,26 @@ class MerchantIntention extends BaseController
                     'branch_bank_no',
                     'branch_bank_name',
                     'clear_no',
+                    'settle_province_code',
+                    'settle_province_name',
+                    'settle_city_code',
+                    'settle_city_name',
+                    'acct_no',
+                    'acct_name',
+                    'acct_type_code',
+                    'acct_id_card',
+                    'z_idcard_img',
+                    'f_idcard_img',
+                    'license_pic_img',
+                    'acct_img',
+                    'agree_ment_img',
+                    'openining_permit_img',
+                    'checkstand_img',
+                    'shop_outside_img',
+                    'shop_inside_img',
+                    'z_settle_img',
+                    'f_settle_img',
+                    'legal_auth_img',
                 ]);
                 break;
         }
