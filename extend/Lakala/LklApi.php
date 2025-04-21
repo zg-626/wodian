@@ -356,7 +356,6 @@ class LklApi
             ];
         }
 
-
         //个体工商户/企业
         if ($param['merchant_type'] == 1) {
             $sepParam['licenseNo'] = $param['mer_blis'];
@@ -391,31 +390,46 @@ class LklApi
         }
         $sepParam['attachments'] = $attchments;
 
+        $multipartData = [];
+        foreach ($sepParam as $key => $value) {
+            if (is_array($value)) {
+                $multipartData[] = [
+                    'name' => $key,
+                    'contents' => json_encode($value, JSON_UNESCAPED_UNICODE)
+                ];
+            } else {
+                $multipartData[] = [
+                    'name' => $key,
+                    'contents' => (string) $value
+                ];
+            }
+        }
+
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
-        $param = [
+        $requestData = [
             'headers' => [
                 'Authorization' => 'bearer ' . $token['access_token']
             ],
-            'multipart' => $sepParam
+            'multipart' => $multipartData
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData), 'lkl');
 
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->post(self::$config['merchant_url'], $sepParam);
+            $response = $client->post(self::$config['merchant_url'], $requestData);
 
             $rawBody = (string) $response->getBody();
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传结果: ' . $rawBody, 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
 
             return json_decode($rawBody, true);
         } catch (Exception $e) {
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传异常: ' . $e->getMessage(), 'lkl');
-            return self::setErrorInfo('拉卡拉拓客文件上传失败，' . $e->getMessage());
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
         }
     }
 

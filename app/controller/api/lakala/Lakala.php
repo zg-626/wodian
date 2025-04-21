@@ -44,4 +44,18 @@ class Lakala extends BaseController
             $api->fail($e->getMessage());
         }
     }
+
+    /**
+     * @desc 商户进件 回调通知
+     * @author ZhouTing
+     * @date 2025-04-21 19:38
+     */
+    public function lklMerchantApplyNotify()
+    {
+        $content = $_POST;
+        Db::name('third_notify')->insert(['title' => '商户进件回调1', 'content' => json_encode($content), 'createtime' => time()]);
+
+        $data = file_get_contents("php://input");
+        Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
+    }
 }
