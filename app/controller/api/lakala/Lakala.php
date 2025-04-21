@@ -16,6 +16,12 @@ class Lakala extends BaseController
         return app('json')->success('请求成功');
     }
 
+    // 回调
+    public function lklMerchantApplyNotify()
+    {
+        return app('json')->success('请求成功');
+    }
+
     /**
      * @desc 电子合同签约结果回调通知
      * @author ZhouTing

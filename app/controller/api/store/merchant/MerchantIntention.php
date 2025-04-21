@@ -97,8 +97,11 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
+        var_dump('111111111111111111111111111111');
         $params = $this->validateParams(__FUNCTION__);
-        var_dump($params);exit;
+        var_dump($params);
+        var_dump('1111111111122222222222222222');
+        exit;
         $uid = $this->userInfo->uid;
         $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
         if ($info) {
@@ -124,11 +127,11 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
-        $api = new \Lakala\LklApi();
-        $result = $api::lklEcApply($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
+//        $api = new \Lakala\LklApi();
+//        $result = $api::lklEcApply($params);
+//        if (!$result) {
+//            return app('json')->fail($api->getErrorInfo());
+//        }
         $save_data['lkl_ec_apply_id'] = '12344';
         MerchantEcLkl::where('id', $info->id)->update($save_data);
         return app('json')->success('提交成功', []);
@@ -136,6 +139,7 @@ class MerchantIntention extends BaseController
 
     protected function validateParams($function)
     {
+
         switch ($function){
             case 'create_first':
                 $params = $this->request->params([
