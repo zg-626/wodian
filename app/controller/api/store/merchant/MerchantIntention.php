@@ -51,7 +51,7 @@ class MerchantIntention extends BaseController
         $uid = $this->userInfo->uid;
         $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
         if ($info) {
-            if ($info['lkl_ec_status'] == 'APPLY') {
+            if ($info['lkl_ec_status'] == 'APPLY' && !empty($info['lkl_ec_apply_id'])) {
                 return app('json')->fail('您已提交申请，请耐心等待后台审核...');
             }
             if ($info['lkl_ec_status'] == 'COMPLETED') {
