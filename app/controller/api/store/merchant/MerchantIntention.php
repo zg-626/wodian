@@ -97,9 +97,11 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
-        var_dump('111111111111111111111111111111');exit;
+        var_dump('111111111111111111111111111111');
         $params = $this->validateParams(__FUNCTION__);
-        var_dump($params);exit;
+        var_dump($params);
+        var_dump('1111111111122222222222222222');
+        exit;
         $uid = $this->userInfo->uid;
         $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
         if ($info) {
