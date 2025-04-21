@@ -127,11 +127,11 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
-        $api = new \Lakala\LklApi();
-        $result = $api::lklEcApply($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
+//        $api = new \Lakala\LklApi();
+//        $result = $api::lklEcApply($params);
+//        if (!$result) {
+//            return app('json')->fail($api->getErrorInfo());
+//        }
         $save_data['lkl_ec_apply_id'] = '12344';
         MerchantEcLkl::where('id', $info->id)->update($save_data);
         return app('json')->success('提交成功', []);
