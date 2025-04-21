@@ -23,6 +23,7 @@ use crmeb\services\YunxinSmsService;
 use think\App;
 use crmeb\basic\BaseController;
 use app\common\repositories\system\merchant\MerchantIntentionRepository as repository;
+use app\common\model\system\merchant\MerchantEcLkl;
 use think\Exception;
 use think\exception\ValidateException;
 
@@ -48,7 +49,7 @@ class MerchantIntention extends BaseController
         $data = $this->checkParamsFirst();
         $data['lkl_ec_status'] = 'UNDONE';
         try {
-            $result = $this->repository->create($data);
+            $result = MerchantEcLkl::create($data);
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
