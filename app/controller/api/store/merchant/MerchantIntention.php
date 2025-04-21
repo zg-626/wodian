@@ -53,7 +53,7 @@ class MerchantIntention extends BaseController
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
-        return app('json')->successful('提交成功', ['id'=>$result->id]);
+        return app('json')->success('提交成功', ['id'=>$result->id]);
     }
 
     protected function checkParamsFirst()
