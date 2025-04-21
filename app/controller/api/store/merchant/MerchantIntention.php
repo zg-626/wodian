@@ -46,19 +46,46 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
-        $data = $this->checkParamsFirst();
-        $data['lkl_ec_status'] = 'UNDONE';
+        $params = $this->checkParamsFirst();
+
+        $uid = $this->userInfo->uid;
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
+        if ($info) {
+            if ($info['lkl_ec_status'] == 'APPLY') {
+                return app('json')->fail('您已提交申请，请耐心等待后台审核...');
+            }
+            if ($info['lkl_ec_status'] == 'COMPLETED') {
+                return app('json')->fail('电子合同已签约成功');
+            }
+        }
+
+        $data = $params;
+        $data['uid'] = $uid;
+        $data['lkl_ec_status'] = 'APPLY';
+        $data['lkl_ec_apply_time'] = time();
         try {
-            $result = MerchantEcLkl::create($data);
+            if($info){
+                $info->save($data);
+            } else{
+                $info = MerchantEcLkl::create($data);
+            }
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
-        return app('json')->success('提交成功', ['id'=>$result->id]);
+
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcApply($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
+        MerchantEcLkl::where('id', $info->id)->update($save_data);
+        return app('json')->success('提交成功', $result);
     }
 
     protected function checkParamsFirst()
     {
-        $data = $this->request->params([
+        $params = $this->request->params([
             'merchant_type',
             'cert_name',
             'cert_no',
@@ -77,11 +104,11 @@ class MerchantIntention extends BaseController
             'openning_bank_name'
         ]);
         try {
-            validate(MerchantIntentionValidate::class)->scene('create')->check($data);
+            validate(MerchantIntentionValidate::class)->scene('create')->check($params);
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
-        return $data;
+        return $params;
     }
 
     public function create()
