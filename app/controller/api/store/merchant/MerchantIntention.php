@@ -77,10 +77,9 @@ class MerchantIntention extends BaseController
             'openning_bank_code',
             'openning_bank_name'
         ]);
-        var_dump($data);exit;
         try {
             validate(MerchantIntentionValidate::class)->scene('create')->check($data);
-        } catch (ValidateException $e) {
+        } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
         return $data;
