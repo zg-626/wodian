@@ -30,8 +30,11 @@ class LklApi
         'access_token_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkauth/oauth/token' : 'https://tkapi.lakala.com/auth/oauth/token', //请求获取token
         'merchant_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/merchant' : 'https://htkactvi.lakala.com/registration/merchant', //商户进件
         'organization_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration' : 'https://htkactvi.lakala.com/registration', //地区信息
-        'bank_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/bank' : 'https://htkactvi.lakala.com/registration/bank',
+        'bank_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/bank' : 'https://htkactvi.lakala.com/registration/bank', //银行地区信息
+        'htk_file_upload_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/file/upload' : 'https://htkactvi.lakala.com/registration/file/upload', //拓客 文件上传
+        'customer_cate_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/customer/category' : 'https://htkactvi.lakala.com/registration/customer/category', //商户类别(进件获取mcc使用)
         'user_no' => '20000101', //商户归属用户信息
+        'activity_id' => '4', //归属活动信息
     ];
 
     /**
@@ -246,6 +249,27 @@ class LklApi
      * @param branch_bank_no 结算账户开户行号 银行列表(lklBankInfo)获取
      * @param branch_bank_name 结算账户开户行名称 银行列表(lklBankInfo)获取
      * @param clear_no 结算账户清算行号 银行列表(lklBankInfo)获取
+     * @param settle_province_code 结算信息省份代码 银行地区(lklBankOrganization)获取
+     * @param settle_province_name 结算信息省份名称 银行地区(lklBankOrganization)获取
+     * @param settle_city_code 结算信息城市代码 银行地区(lklBankOrganization)获取
+     * @param settle_city_name 结算信息城市名称 银行地区(lklBankOrganization)获取
+     * @param acct_no 结算人银行卡号
+     * @param acct_name 结算人账户名称
+     * @param acct_type_code 结算账户类型 57对公，58对私
+     * @param acct_id_card 结算人证件号码
+     * @param z_idcard_img 身份证正面
+     * @param f_idcard_img 身份证反面
+     * @param license_pic_img 营业执照照片 企业必传
+     * @param acct_img 银行卡照
+     * @param agree_ment_img 入网协议
+     * @param openining_permit_img 开户许可证（对公必传）
+     * @param checkstand_img 收银台照片
+     * @param shop_outside_img 门头照片
+     * @param shop_inside_img 店铺内部照片
+     * @param z_settle_img 结算人身份证正面照
+     * @param f_settle_img 结算人身份证反面照
+     * @param legal_auth_img  法人授权函(非法人进件时，必传)
+     * @param lkl_ec_no 电子合同编号
      * @date 2025-04-18 10:08
      */
     public static function lklMerchantApply($param)
@@ -271,14 +295,77 @@ class LklApi
             'openningBankCode' => $param['branch_bank_no'],
             'openningBankName' => $param['branch_bank_name'],
             'clearingBankCode' => $param['clear_no'],
-            'settleProvinceCode' => ''
+            'settleProvinceCode' => $param['settle_province_code'],
+            'settleProvinceName' => $param['settle_province_name'],
+            'settleCityCode' => $param['settle_city_code'],
+            'settleCityName' => $param['settle_city_name'],
+            'accountNo' => $param['acct_no'],
+            'accountName' => $param['acct_name'],
+            'accountType' => $param['acct_type_code'],
+            'accountIdCard' => $param['acct_id_card'],
+            'bizContent' => [
+                'termNum' => '1',
+                'activityId' => self::$config['activity_id'],
+                'mcc' => '',
+                'fees' => [
+                    [
+                        'feeCode' => 'WECHAT',
+                        'feeValue' => 0.3
+                    ],
+                    [
+                        'feeCode' => 'ALIPAY',
+                        'feeValue' => 0.3
+                    ],
+                    [
+                        'feeCode' => 'CREDIT_CARD',
+                        'feeValue' => 0.6
+                    ],
+                    [
+                        'feeCode' => 'DEBIT_CARD',
+                        'feeValue' => 0.5,
+                        'topFee' => 20
+                    ]
+                ]
+            ],
+            'settleType' => 'D1', //结算类型 D0秒到， D1次日结算
+            'settlementType' => 'AUTOMATIC', //结算方式 MANUAL:手动结算(结算至拉卡拉APP钱包),AUTOMATIC:自动结算到银行卡,REGULAR:定时结算（仅企业商户支持）
+            'contractNo' => $param['lkl_ec_no'],
         ];
+
+        //附件信息
+        $imageTypes = [
+            ['file' => $param['z_idcard_img'], 'type' => 'ID_CARD_FRONT'],
+            ['file' => $param['f_idcard_img'], 'type' => 'ID_CARD_BEHIND'],
+            ['file' => $param['acct_img'], 'type' => 'BANK_CARD'],
+            ['file' => $param['agree_ment_img'], 'type' => 'AGREE_MENT'],
+            ['file' => $param['checkstand_img'], 'type' => 'CHECKSTAND_IMG'],
+            ['file' => $param['shop_outside_img'], 'type' => 'SHOP_OUTSIDE_IMG'],
+            ['file' => $param['shop_inside_img'], 'type' => 'SHOP_INSIDE_IMG'],
+            ['file' => $param['z_settle_img'], 'type' => 'SETTLE_ID_CARD_BEHIND'],
+            ['file' => $param['f_settle_img'], 'type' => 'SETTLE_ID_CARD_FRONT'],
+        ];
+        $attchments = [];
+        foreach ($imageTypes as $imageType) {
+            $sImg = self::lklHtkFileUpload($imageType);
+            if (!$sImg) {
+                return self::setErrorInfo(self::getErrorInfo());
+            }
+            $attchments[] = [
+                'id' => $sImg['url'],
+                'type' => $imageType['type']
+            ];
+        }
+
 
         //个体工商户/企业
         if ($param['merchant_type'] == 1) {
             $sepParam['licenseNo'] = $param['mer_blis'];
             $sepParam['licenseDtStart'] = $param['license_dt_start'];
             $sepParam['licenseDtEnd'] = $param['license_dt_end'];
+            //营业执照照片
+            $sLicenseImg = self::lklHtkFileUpload(['file' => $param['license_pic_img'], 'type' => 'BUSINESS_LICENCE']);
+            if (!$sLicenseImg) return self::setErrorInfo(self::getErrorInfo());
+            $attchments = array_merge($attchments, [['id' => $sLicenseImg['url'], 'type' => 'BUSINESS_LICENCE']]);
         }
 
         //法人进件
@@ -288,6 +375,47 @@ class LklApi
             $sepParam['larIdCard'] = $param['lar_id_card'];
             $sepParam['larIdCardStart'] = $param['lar_id_card_start'];
             $sepParam['larIdCardEnd'] = $param['lar_id_card_end'];
+        } else {
+            //需上传法人授权函
+            $sLegalAuthImg = self::lklHtkFileUpload(['file' => $param['legal_auth_img'], 'type' => 'LETTER_OF_AUTHORIZATION']);
+            if (!$sLegalAuthImg) return self::setErrorInfo(self::getErrorInfo());
+            $attchments = array_merge($attchments, [['id' => $sLegalAuthImg['url'], 'type' => 'LETTER_OF_AUTHORIZATION']]);
+        }
+
+        //对公
+        if ($param['acct_type_code'] == '57') {
+            //开户许可证
+            $oPImg = self::lklHtkFileUpload(['file' => $param['openining_permit_img'], 'type' => 'OPENING_PERMIT']);
+            if (!$oPImg) return self::setErrorInfo(self::getErrorInfo());
+            $attchments = array_merge($attchments, [['id' => $oPImg['url'], 'type' => 'OPENING_PERMIT']]);
+        }
+        $sepParam['attachments'] = $attchments;
+
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
+        $param = [
+            'headers' => [
+                'Authorization' => 'bearer ' . $token['access_token']
+            ],
+            'multipart' => $sepParam
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件请求参数: ' . json_encode($sepParam), 'lkl');
+
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->post(self::$config['merchant_url'], $sepParam);
+
+            $rawBody = (string) $response->getBody();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传结果: ' . $rawBody, 'lkl');
+
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('拉卡拉拓客文件上传失败，' . $e->getMessage());
         }
     }
 
@@ -330,6 +458,47 @@ class LklApi
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
             record_log('Time: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 商户大类（拓客商户进件 获取mcc第一步）
+     * @author ZhouTing
+     * @date 2025-04-21 16:02
+     */
+    public static function lklParentCate()
+    {
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->get(self::$config['customer_cate_url']);
+
+            $rawBody = (string) $response->getBody();
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取商户类别失败，' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 商户小类（拓客商户进件 获取mcc第二步）
+     * @author ZhouTing
+     * @param parent_code 商户大类编码
+     * @date 2025-04-21 17:47
+     */
+    public static function lklChildCate($param)
+    {
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->get(self::$config['customer_cate_url'] . '/' . $param['parent_code']);
+
+            $rawBody = (string) $response->getBody();
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取商户小类别失败，' . $e->getMessage());
         }
     }
 
@@ -414,7 +583,7 @@ class LklApi
     }
 
     /**
-     * @desc 卡BIN信息查询
+     * @desc 卡BIN信息查询(开放平台)
      * @author ZhouTing
      * @param cardNo 银行卡号
      * @doc：https://o.lakala.com/#/home/document/detail?id=179
@@ -451,7 +620,7 @@ class LklApi
     }
 
     /**
-     * @desc 电子合同转码下载
+     * @desc 电子合同转码下载(开放平台)
      * @author ZhouTing
      * @date 2025-04-17 14:59
      */
@@ -474,7 +643,64 @@ class LklApi
     }
 
     /**
-     * @desc 上传附件
+     * @desc 文件上传(拓客平台)
+     * @author ZhouTing
+     * @param file 远程文件
+     * @param type 图片类型
+     * @date 2025-04-21 09:04
+     */
+    public static function lklHtkFileUpload($param)
+    {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+
+        $fileContent = $client->get(imageUrl($param['file']))->getBody()->getContents();
+
+        $sepParam = [
+            'headers' => [
+                'Authorization' => 'bearer ' . $token['access_token']
+            ],
+            'multipart' => [
+                [
+                    'name' => 'imgType',
+                    'contents' => $param['type']
+                ],
+                [
+                    'name' => 'sourcechnl',
+                    'contents' => '0'
+                ],
+                [
+                    'name' => 'isOcr',
+                    'contents' => 'false'
+                ],
+                [
+                    'name' => 'file',
+                    'contents' => $fileContent,
+                    'filename' => basename(imageUrl($param['file']))
+                ]
+            ]
+        ];
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传请求参数: ' . json_encode($sepParam), 'lkl');
+
+        try {
+            $response = $client->post(self::$config['htk_file_upload_url'], $sepParam);
+
+            $rawBody = (string) $response->getBody();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传结果: ' . $rawBody, 'lkl');
+
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('拉卡拉拓客文件上传失败，' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 上传附件(开放平台)
      * @author ZhouTing
      * @param attType 附件类型
      * @param url 附件
