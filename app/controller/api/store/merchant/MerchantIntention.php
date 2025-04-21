@@ -46,7 +46,6 @@ class MerchantIntention extends BaseController
     public function create_first()
     {
         $data = $this->checkParamsFirst();
-
         $data['lkl_ec_status'] = 'UNDONE';
         var_dump($data);exit;
         try {
@@ -77,11 +76,11 @@ class MerchantIntention extends BaseController
             'openning_bank_code',
             'openning_bank_name'
         ]);
-//        try {
-//            validate(MerchantIntentionValidate::class)->scene('create')->check($data);
-//        } catch (ValidateException $e) {
-//            return app('json')->fail($e->getError());
-//        }
+        try {
+            validate(MerchantIntentionValidate::class)->scene('create')->check($data);
+        } catch (ValidateException $e) {
+            return app('json')->fail($e->getError());
+        }
         return $data;
     }
 
