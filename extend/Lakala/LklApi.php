@@ -2,6 +2,8 @@
 
 namespace Lakala;
 
+use Exception;
+use GuzzleHttp\Client;
 use Nette\Utils\Random;
 use Lakala\OpenAPISDK\V2\V2Configuration;
 use Lakala\OpenAPISDK\V2\Api\V2LakalaApi;
@@ -19,8 +21,17 @@ class LklApi
     private static $errorMsg;
 
     const DEFAULT_ERROR_MSG = '操作失败,请稍候再试!';
+    const DEBUG = true; //测试环境
+
     private static $config = [
         'org_code' => '1', //机构号
+        'client_id' => 'testsit', //第三方client_id
+        'client_secret' => 'EguwEckByf2I6u6z', //第三方client_secret
+        'access_token_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkauth/oauth/token' : 'https://tkapi.lakala.com/auth/oauth/token', //请求获取token
+        'merchant_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/merchant' : 'https://htkactvi.lakala.com/registration/merchant', //商户进件
+        'organization_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration' : 'https://htkactvi.lakala.com/registration', //地区信息
+        'bank_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/bank' : 'https://htkactvi.lakala.com/registration/bank',
+        'user_no' => '20000101', //商户归属用户信息
     ];
 
     /**
@@ -181,6 +192,104 @@ class LklApi
         }
     }
 
+    /**
+     * @desc 拉卡拉 商户进件第一步 获取access_token
+     * @author ZhouTing
+     * @date 2025-04-18 09:11
+     */
+    public static function lklAccessToken()
+    {
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->post(self::$config['access_token_url'], [
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => self::$config['client_id'],
+                    'client_secret' => self::$config['client_secret']
+                ]
+            ]);
+
+            $rawBody = (string) $response->getBody();
+            //{"access_token":"98e63557-e428-4419-84ef-e4408a0d72f6","token_type":"bearer","expires_in":1131297,"scope":"all"}
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取access_token失败，' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉 商户进件第二步 商户进件
+     * @author ZhouTing
+     * @param email 商户邮箱
+     * @param mer_reg_name 商户注册名称 - 与营业执照一致 20字内
+     * @param merchant_type 商户类型：0 小微商户，1 企业
+     * @param mer_name 商户名称
+     * @param mer_addr 商户详细地址
+     * @param province_code 省代码
+     * @param city_code 市代码
+     * @param county_code 区县代码
+     * @param mer_blis 营业执照号 企业必传
+     * @param license_dt_start 营业执照开始时间 企业必传 yyyy-MM-dd
+     * @param license_dt_end 营业执照过期时间 企业必传 yyyy-MM-dd
+     * @param latitude 进件所在地址经度
+     * @param longtude 进件所在地址纬度
+     * @param B9 主营业务
+     * @param is_legal_person 是否法人进件 0 否 1 是
+     * @param lar_name 法人姓名
+     * @param lar_id_card 法人证件号码
+     * @param lar_id_card_start 法人证件开始日期 yyyy-MM-dd
+     * @param lar_id_card_end 法人证件过期时间 yyyy-MM-dd 长期传：9999-12-31
+     * @param B30 商户联系人手机号码
+     * @param B27 商户联系人姓名
+     * @param branch_bank_no 结算账户开户行号 银行列表(lklBankInfo)获取
+     * @param branch_bank_name 结算账户开户行名称 银行列表(lklBankInfo)获取
+     * @param clear_no 结算账户清算行号 银行列表(lklBankInfo)获取
+     * @date 2025-04-18 10:08
+     */
+    public static function lklMerchantApply($param)
+    {
+        $sepParam = [
+            'userNo' => self::$config['user_no'],
+            'email' => $param['email'],
+            'busiCode' => 'WECHAT_PAY', //业务类型 专业化扫码
+            'merRegName' => $param['mer_reg_name'],
+            'merType' => empty($param['merchant_type']) ? 'TP_PERSONAL' : 'TP_MERCHANT',
+            'merName' => $param['mer_name'],
+            'merAddr' => $param['mer_addr'],
+            'provinceCode' => $param['province_code'],
+            'cityCode' => $param['city_code'],
+            'countyCode' => $param['county_code'],
+            'latitude' => $param['latitude'],
+            'longtude' => $param['longtude'],
+            'source' => 'APP',
+            'businessContent' => $param['B9'],
+            'isLegalPerson' => $param['is_legal_person'],
+            'contactMobile' => $param['B30'],
+            'contactName' => $param['B27'],
+            'openningBankCode' => $param['branch_bank_no'],
+            'openningBankName' => $param['branch_bank_name'],
+            'clearingBankCode' => $param['clear_no'],
+            'settleProvinceCode' => ''
+        ];
+
+        //个体工商户/企业
+        if ($param['merchant_type'] == 1) {
+            $sepParam['licenseNo'] = $param['mer_blis'];
+            $sepParam['licenseDtStart'] = $param['license_dt_start'];
+            $sepParam['licenseDtEnd'] = $param['license_dt_end'];
+        }
+
+        //法人进件
+        if ($param['is_legal_person']) {
+            $sepParam['larName'] = $param['lar_name'];
+            $sepParam['larIdType'] = '01';
+            $sepParam['larIdCard'] = $param['lar_id_card'];
+            $sepParam['larIdCardStart'] = $param['lar_id_card_start'];
+            $sepParam['larIdCardEnd'] = $param['lar_id_card_end'];
+        }
+    }
 
     /**
      * @desc 拉卡拉电子合同下载
@@ -193,7 +302,7 @@ class LklApi
         $sepParam = [
             'version' => '1.0',
             'orderNo' => date('YmdHis', time()) . Random::numeric(8),
-            'orgId' => config('lkl.org_code'),
+            'orgId' => self::$config['org_code'],
             'ecApplyId' => $param['lkl_ec_apply_id'],
         ];
 
@@ -225,7 +334,86 @@ class LklApi
     }
 
     /**
-     * @desc 
+     * @desc 拉卡拉 地区信息
+     * @author ZhouTing
+     * @param parent_code 编码
+     * @date 2025-04-18 13:53
+     */
+    public static function lklOrganization($param)
+    {
+        $parent_code = empty($param['parent_code']) ? 1 : $param['parent_code'];
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->get(self::$config['organization_url'] . '/organization/' . $parent_code);
+
+            $rawBody = (string) $response->getBody();
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取地区失败，' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉 银行地区信息
+     * @author ZhouTing
+     * @param parent_code 编码
+     * @date 2025-04-19 10:20
+     */
+    public static function lklBankOrganization($param)
+    {
+        $param['parent_code'] = (isset($param['parent_code']) && !empty(empty($param['parent_code']))) ? $param['parent_code'] : 1;
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行地区参数: ' . json_encode($param), 'lkl');
+
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+        try {
+            $response = $client->get(self::$config['organization_url'] . '/organization/bank/' . $param['parent_code']);
+
+            $rawBody = (string) $response->getBody();
+            return json_decode($rawBody, true);
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取银行地区失败，' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉 银行列表查询
+     * @author ZhouTing
+     * @param area_code 地区编码
+     * @param bank_name 银行名称
+     * @date 2025-04-18 16:59
+     */
+    public static function lklBankInfo($param)
+    {
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行列表参数: ' . json_encode($param), 'lkl');
+
+        $client = new Client([
+            'verify' => false // 禁用 SSL 验证
+        ]);
+
+        try {
+            // 发送 GET 请求
+            $response = $client->get(self::$config['bank_url'], [
+                'query' => [
+                    'areaCode' => $param['area_code'],
+                    'bankName' => isset($param['bank_name']) ? $param['bank_name'] : ''
+                ]
+            ]);
+
+            $body = $response->getBody()->getContents();
+            $result = json_decode($body, true); // 解析 JSON 响应
+
+            return $result;
+        } catch (Exception $e) {
+            return self::setErrorInfo('拉卡拉获取银行列表失败，' . $e->getMessage());
+        }
+    }
+
+    /**
      * @desc 卡BIN信息查询
      * @author ZhouTing
      * @param cardNo 银行卡号
@@ -237,7 +425,7 @@ class LklApi
         $sepParam = [
             'version' => '1.0',
             'orderNo' => date('YmdHis', time()) . Random::numeric(8),
-            'orgCode' => config('lkl.org_code'),
+            'orgCode' => self::$config['org_code'],
             'cardNo' => $cardNo
         ];
 
@@ -298,7 +486,7 @@ class LklApi
         $sepParam = [
             'version' => '1.0',
             'orderNo' => date('YmdHis', time()) . Random::numeric(8),
-            'orgCode' => config('lkl.org_code'),
+            'orgCode' => self::$config['org_code'],
             'attType' => $attType,
             'attExtName' => 'pdf',
             'attContext' => base64_encode(file_get_contents($url))
