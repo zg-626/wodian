@@ -16,12 +16,6 @@ class Lakala extends BaseController
         return app('json')->success('请求成功');
     }
 
-    // 回调
-    public function lklMerchantApplyNotify()
-    {
-        return app('json')->success('请求成功');
-    }
-
     /**
      * @desc 电子合同签约结果回调通知
      * @author ZhouTing
@@ -63,5 +57,6 @@ class Lakala extends BaseController
 
         $data = file_get_contents("php://input");
         Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
+        return app('json')->success('请求成功');
     }
 }
