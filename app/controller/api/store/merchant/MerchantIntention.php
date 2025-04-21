@@ -46,6 +46,7 @@ class MerchantIntention extends BaseController
     public function create_first()
     {
         $data = $this->checkParamsFirst();
+        var_dump($data);exit;
         $data['lkl_ec_status'] = 'UNDONE';
         var_dump($data);exit;
         try {
