@@ -77,6 +77,7 @@ class Lakala extends BaseController
             $obj = json_decode($originalText, true);
 
             //更新分账关系绑定申请审核状态
+            //{"optType":"ADD","applyId":956958237062774784,"merCupNo":"82210008699006U","retUrl":"https://sqfamily.lnkj6.com/api/notify/lklApplyBindNotify","entrustFileName":"合作协议","auditStatus":"1","merInnerNo":"5002025032128588892","receiverNo":"SR2024000069899","remark":"仅测试","auditStatusText":"审核通过","uploadAttachType":"SPLIT_ENTRUST_FILE","entrustFilePath":"MMS/20250325/165022-fafd706c212d4bcab580c36406f61699.pdf"}
 
             // 通知拉卡拉，业务处理成功
             $api->success();

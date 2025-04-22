@@ -101,7 +101,6 @@ class LklApi
             'acctNo' => $param['acct_no'],
             'acctName' => $param['acct_name'],
             'agentTag' => $param['agent_tag'],
-//            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklEcApplyNotify',
             'retUrl' => request()->domain() . '/api/lakala/lklEcApplyNotify'
         ];
         //个体工商户/企业(有营业执照)
@@ -613,6 +612,57 @@ class LklApi
             }
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
             record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉 商户分账业务开通申请
+     * @author ZhouTing
+     * @param lkl_mer_cup_no 银联商户号 = 拉卡拉商户编号
+     * @param mobile 联系手机号
+     * @param split_entrust_file_path 分账结算委托书文件
+     * @param lkl_ec_no 电子合同编号
+     * @doc：https://o.lakala.com/#/home/document/detail?id=379
+     * @date 2025-04-22 11:39
+     */
+    public static function lklApplyLedgerMer($param)
+    {
+        //EC003无需上传分账结算授权委托书,只传合同编号即可，EC005必须上传结算授权委托书,合同编号非必传
+        $split_image = self::lklUploadFile('OTHERS', imageUrl($param['split_entrust_file_path']));
+        if (!$split_image) return self::setErrorInfo(self::getErrorInfo());
+
+        $sepParam = [
+            'version' => '1.0',
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
+            'orgCode' => self::$config['org_code'],
+            'merCupNo' => $param['lkl_mer_cup_no'],
+            'contactMobile' => $param['mobile'],
+            'splitLowestRatio' => 80, //最低分账比例
+            'splitEntrustFileName' => '结算授权委托书',
+            'splitEntrustFilePath' => $split_image,
+            'eleContractNo' => $param['lkl_ec_no'],
+            'retUrl' => request()->domain() . '/api/notify/lklApplyLedgerMerNotify'
+        ];
+
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v2/mms/openApi/ledger/applyLedgerMer', $request);
+            $res = $response->getOriginalText();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通申请请求结果: ' . $res, 'lkl');
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return true;
+            } else {
+                return self::setErrorInfo('商户分账业务开通申请失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通申请请求异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
         }
     }
