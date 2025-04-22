@@ -93,7 +93,7 @@ class MerchantIntention extends BaseModel
         return $this->hasOne(User::class, 'uid', 'salesman_id')->field('uid,avatar,nickname');
     }
 
-    public function mer_lkl()
+    public function merchantEcLkl()
     {
         return $this->hasOne(MerchantEcLkl::class, 'id', 'mer_lkl_id')->field('id,lkl_ec_status,merchant_status');
     }
