@@ -170,6 +170,10 @@ Route::group('api/', function () {
             Route::get('bill', 'User/bill');
             //佣金记录
             Route::get('brokerage_list', 'User/brokerage_list');
+            // 抵用卷记录
+            Route::get('coupon_list', 'User/coupon_list');
+            // 商家积分记录
+            Route::get('merchant_integral', 'User/merchant_integral');
             //推广人订单
             Route::get('spread_order', 'User/spread_order');
             //推广人排行榜
