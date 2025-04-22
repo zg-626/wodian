@@ -49,10 +49,9 @@ class MerchantIntention extends BaseController
         // 0=未申请,1=申请中,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
         $info_1 = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
-        if (!$info_1) {
-            $status_1 = 0;
-            $status_2 = 0;
-        } else {
+        $status_1 = 0;
+        $status_2 = 0;
+        if ($info_1) {
             if ($info_1['lkl_ec_status'] == 'APPLY') {
                 $status_1 = 1;
             }
