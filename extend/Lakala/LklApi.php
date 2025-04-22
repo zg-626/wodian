@@ -665,11 +665,18 @@ class LklApi
      */
     public static function lklParentCate()
     {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->get(self::$config['customer_cate_url']);
+            $response = $client->get(self::$config['customer_cate_url'], [
+                'headers' => [
+                    'Authorization' => 'bearer ' . $token['access_token']
+                ]
+            ]);
 
             $rawBody = (string) $response->getBody();
             return json_decode($rawBody, true);
@@ -686,11 +693,18 @@ class LklApi
      */
     public static function lklChildCate($param)
     {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->get(self::$config['customer_cate_url'] . '/' . $param['parent_code']);
+            $response = $client->get(self::$config['customer_cate_url'] . '/' . $param['parent_code'], [
+                'headers' => [
+                    'Authorization' => 'bearer ' . $token['access_token']
+                ]
+            ]);
 
             $rawBody = (string) $response->getBody();
             return json_decode($rawBody, true);
@@ -700,19 +714,26 @@ class LklApi
     }
 
     /**
-     * @desc 拉卡拉 地区信息
+     * @desc 拉卡拉 地区信息(拓客平台)
      * @author ZhouTing
      * @param parent_code 编码
      * @date 2025-04-18 13:53
      */
     public static function lklOrganization($param)
     {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
         $parent_code = empty($param['parent_code']) ? 1 : $param['parent_code'];
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->get(self::$config['organization_url'] . '/organization/' . $parent_code);
+            $response = $client->get(self::$config['organization_url'] . '/organization/' . $parent_code, [
+                'headers' => [
+                    'Authorization' => 'bearer ' . $token['access_token']
+                ]
+            ]);
 
             $rawBody = (string) $response->getBody();
             return json_decode($rawBody, true);
@@ -729,6 +750,9 @@ class LklApi
      */
     public static function lklBankOrganization($param)
     {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
         $param['parent_code'] = (isset($param['parent_code']) && !empty(empty($param['parent_code']))) ? $param['parent_code'] : 1;
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行地区参数: ' . json_encode($param), 'lkl');
@@ -737,7 +761,11 @@ class LklApi
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->get(self::$config['organization_url'] . '/organization/bank/' . $param['parent_code']);
+            $response = $client->get(self::$config['organization_url'] . '/organization/bank/' . $param['parent_code'], [
+                'headers' => [
+                    'Authorization' => 'bearer ' . $token['access_token']
+                ]
+            ]);
 
             $rawBody = (string) $response->getBody();
             return json_decode($rawBody, true);
@@ -755,6 +783,9 @@ class LklApi
      */
     public static function lklBankInfo($param)
     {
+        $token = self::lklAccessToken();
+        if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
+
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行列表参数: ' . json_encode($param), 'lkl');
 
         $client = new Client([
@@ -764,6 +795,9 @@ class LklApi
         try {
             // 发送 GET 请求
             $response = $client->get(self::$config['bank_url'], [
+                'headers' => [
+                    'Authorization' => 'bearer ' . $token['access_token']
+                ],
                 'query' => [
                     'areaCode' => $param['area_code'],
                     'bankName' => isset($param['bank_name']) ? $param['bank_name'] : ''
