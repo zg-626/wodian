@@ -8,6 +8,9 @@ use Nette\Utils\Random;
 use Lakala\OpenAPISDK\V2\V2Configuration;
 use Lakala\OpenAPISDK\V2\Api\V2LakalaApi;
 use Lakala\OpenAPISDK\V2\Model\V2ModelRequest;
+use Lakala\OpenAPISDK\V3\Api\LakalaApi;
+use Lakala\OpenAPISDK\V3\Configuration;
+use Lakala\OpenAPISDK\V3\Model\ModelRequest;
 use think\facade\Log;
 
 require __DIR__ . '/vendor/autoload.php';
@@ -544,7 +547,7 @@ class LklApi
             ];
         }
 
-        record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建申请参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账接收方创建申请参数: ' . json_encode($sepParam), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -553,7 +556,7 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/ledger/applyLedgerReceiver', $request);
             $res = $response->getOriginalText();
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建请求结果: ' . $res, 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账接收方创建请求结果: ' . $res, 'lkl');
 
             $resdata = json_decode($res, true);
             if ($resdata['retCode'] == '000000') {
@@ -564,7 +567,7 @@ class LklApi
                 return self::setErrorInfo('分账接收方创建申请失败，' . $resdata['retMsg']);
             }
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建异常: ' . $e->getMessage(), 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账接收方创建异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
         }
     }
@@ -596,7 +599,7 @@ class LklApi
             'retUrl' => request()->domain() . '/api/lakala/lklApplyBindNotify'
         ];
 
-        record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -605,7 +608,7 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/ledger/applyBind', $request);
             $res = $response->getOriginalText();
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请请求结果: ' . $res, 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请请求结果: ' . $res, 'lkl');
             $resdata = json_decode($res, true);
             if ($resdata['retCode'] == '000000') {
                 return $resdata['respData'];
@@ -613,7 +616,7 @@ class LklApi
                 return self::setErrorInfo('分账关系绑定申请失败，' . $resdata['retMsg']);
             }
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请异常: ' . $e->getMessage(), 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
         }
     }
@@ -647,7 +650,7 @@ class LklApi
             'retUrl' => request()->domain() . '/api/lakala/lklApplyLedgerMerNotify'
         ];
 
-        record_log('Time: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -676,6 +679,7 @@ class LklApi
      * @param lkl_mer_term_no 商户终端号
      * @param total_amount 实付金额(元)
      * @param openid 支付人openid
+     * @param goods_id 商品编码
      * @date 2025-04-22 14:04
      */
     public static function lklPreorder($param)
@@ -698,10 +702,47 @@ class LklApi
                 'timeout_express' => '15', //拉卡拉方预下单的订单有效时间(分钟)=>微信后台并不会依据此失效时间发起关单
                 'sub_appid' => self::$config['app_id'],
                 'user_id' => $param['openid'],
-                'detail' => []
+                'detail' => [
+                    'goods_detail' => [
+                        [
+                            'goods_id' => $param['goods_id'],
+                            'quantity' => 1, //购买数量
+                            'price' => bcmul($param['total_amount'], 100, 0),
+                        ]
+                    ]
+                ]
             ],
             'complete_notify_url' => request()->domain() . '/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
         ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new Configuration();
+        $api = new LakalaApi($config);
+        $request = new ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v3/labs/trans/preorder', $request);
+            if (!empty($response)) {
+                $res = $response->getOriginalText();
+                record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求结果: ' . $res, 'lkl');
+                $resdata = json_decode($res, true);
+                if (!empty($resdata['code']) && $resdata['code'] == 'BBS00000') {
+                    $acc = $resdata['resp_data']['acc_resp_fields'];
+                    $acc['nonceStr'] = $acc['nonce_str'];
+                    $acc['paySign'] = $acc['pay_sign'];
+                    $acc['signType'] = $acc['sign_type'];
+                    $acc['appId'] = $acc['app_id'];
+                    $acc['timeStamp'] = $acc['time_stamp'];
+                    return $acc;
+                } else {
+                    return self::setErrorInfo('lkl' . $resdata['msg']);
+                }
+            }
+        } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
     }
 
     /**
@@ -729,7 +770,7 @@ class LklApi
             $response = $api->tradeApi('/api/v2/mms/openApi/ec/download', $request);
             if (!empty($response)) {
                 $res = $response->getOriginalText();
-                // record_log('Time: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求结果: ' . $res, 'lkl');
+                // record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求结果: ' . $res, 'lkl');
                 $resdata = json_decode($res, true);
                 if (!empty($resdata['retCode']) && $resdata['retCode'] == '000000') {
                     $outputFilePath = self::decodeFromUrlSafeStringToFile($resdata['respData']['ecFile'], $param['ecApplyId'] . '.pdf');
@@ -741,7 +782,7 @@ class LklApi
                 }
             }
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求异常: ' . $e->getMessage(), 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
         }
     }
@@ -925,7 +966,7 @@ class LklApi
             $response = $api->tradeApi('/api/v2/mms/openApi/cardBin', $request);
             $res = $response->getOriginalText();
 
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 卡BIN查询结果: ' . $res, 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 卡BIN查询结果: ' . $res, 'lkl');
             $res = json_decode($res, true);
             if ($res['retCode'] == '000000') {
                 return $res['respData'];
@@ -1038,7 +1079,7 @@ class LklApi
         ];
         $log = $sepParam;
         $log['attContext'] = $url;
-        record_log('Time: ' . date('Y-m-d H:i:s') . ', 上传附件请求参数: ' . json_encode($log), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 上传附件请求参数: ' . json_encode($log), 'lkl');
         unset($log);
 
         $config = new V2Configuration();
@@ -1048,7 +1089,7 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/uploadFile', $request);
             $res = $response->getOriginalText();
-            record_log('Time: ' . date('Y-m-d H:i:s') . ', 上传附件请求结果: ' . $res, 'lkl');
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 上传附件请求结果: ' . $res, 'lkl');
             $resdata = json_decode($res, true);
             if ($resdata['retCode'] == '000000') {
                 return $resdata['respData']['attFileId'];
