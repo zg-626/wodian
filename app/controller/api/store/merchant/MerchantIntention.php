@@ -161,7 +161,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_no,lkl_ec_status,merchant_status,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
+        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
@@ -199,6 +199,7 @@ class MerchantIntention extends BaseController
         $intention_data['mer_name'] = $params['mer_name']; // 商户名称
         $intention_data['mer_banner'] = $params['shop_outside_img']; // 商户banner图片
         $intention_data['name'] = $info['cert_name']; // 客户姓名
+        $intention_data['images'] = $info['license_pic_img']; // 资质照片
         $intention_data['id_card'] = $info['cert_no']; // 身份证
         $intention_data['inside'] = $params['shop_inside_img']; // 区域内部照片
         $intention_data['email'] = $params['email']; // 邮箱
