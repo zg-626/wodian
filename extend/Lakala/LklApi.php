@@ -8,6 +8,7 @@ use Nette\Utils\Random;
 use Lakala\OpenAPISDK\V2\V2Configuration;
 use Lakala\OpenAPISDK\V2\Api\V2LakalaApi;
 use Lakala\OpenAPISDK\V2\Model\V2ModelRequest;
+use think\facade\Log;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -87,7 +88,7 @@ class LklApi
 
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgId' => self::$config['org_code'],
             'ecTypeCode' => 'EC005',
             'certType' => 'RESIDENT_ID', //法人/经营者证件类型 RESIDENT_ID（身份证）
@@ -181,6 +182,7 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/ec/apply', $request);
             $res = $response->getOriginalText();
+            log::write('lkl', $res);
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同申请请求结果: ' . $res, 'lkl');
             $resdata = json_decode($res, true);
             if ($resdata['retCode'] == '000000') {
@@ -476,7 +478,7 @@ class LklApi
 
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgCode' => self::$config['org_code'],
             'receiverName' => $param['receiver_name'],
             'contactMobile' => $param['receiver_mobile'],
@@ -584,7 +586,7 @@ class LklApi
 
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgCode' => self::$config['org_code'],
             'merCupNo' => $param['lkl_mer_cup_no'],
             'receiverNo' => $param['lkl_receiver_no'],
@@ -625,7 +627,7 @@ class LklApi
     {
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgId' => self::$config['org_code'],
             'ecApplyId' => $param['lkl_ec_apply_id'],
         ];
@@ -789,7 +791,7 @@ class LklApi
     {
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgCode' => self::$config['org_code'],
             'cardNo' => $cardNo
         ];
@@ -907,7 +909,7 @@ class LklApi
     {
         $sepParam = [
             'version' => '1.0',
-            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
             'orgCode' => self::$config['org_code'],
             'attType' => $attType,
             'attExtName' => 'pdf',
