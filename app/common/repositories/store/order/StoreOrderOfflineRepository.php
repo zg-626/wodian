@@ -17,6 +17,8 @@ namespace app\common\repositories\store\order;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\dao\user\LabelRuleDao;
+use app\common\model\store\order\StoreOrderOffline;
+use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
@@ -101,6 +103,11 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($merchant['sub_mchid'] == 0) {
             throw new ValidateException('该商家未申请子商户，无法下单');
         }
+
+        if($merchant['commission_rate']==0){
+            throw new ValidateException('该商家未设置积分比例');
+        }
+
         $rate=0;
         // 计算平台手续费
         if(($money > 0) && $merchant['commission_rate'] > 0) {
@@ -153,15 +160,15 @@ class StoreOrderOfflineRepository extends BaseRepository
         $topUid = $topUser->uid ?? 0;
         $extension_one=0;
         $extension_two=0;
-        if ($spreadUid) {
-            $org_extension = 0.3;
+        // 推广比例
+        $extension_one_rate = systemConfig('extension_one_rate')?:0.03;
+        $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
 
-            $extension_one = $money > 0 ? bcmul($money, $org_extension, 2) : 0;
+        if ($spreadUid) {
+            $extension_one = $money > 0 ? bcmul($money, $extension_one_rate, 2) : 0;
         }
         if ($topUid) {
-            $org_extension = 0.2;
-
-            $extension_two = $money > 0 ? bcmul($money, $org_extension, 2) : 0;
+            $extension_two = $money > 0 ? bcmul($money, $extension_two_rate, 2) : 0;
         }
 
         $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
@@ -277,15 +284,19 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $order = $res;
                 // 商户增加余额
                 //app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
+
                 // 赠送积分
                 $this->giveIntegral($order);
+
                 // 赠送商户积分
                 //$this->giveMerIntegral($order->mer_id,$order);
                 app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
-                // 代理赠送佣金 TODO  有bug需要修复
+
+                // 所有身份赠送佣金
                 /** @var StoreOrderRepository $storeOrderRepository */
                 $storeOrderRepository = app()->make(StoreOrderRepository::class);
                 $storeOrderRepository->addCommission($order->mer_id,$order);
+
                 // 更新用户支付时间
                 /** @var UserMerchantRepository $userMerchantRepository */
                 $userMerchantRepository = app()->make(UserMerchantRepository::class);
@@ -317,13 +328,91 @@ class StoreOrderOfflineRepository extends BaseRepository
                     $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
                 }
                 $user = app()->make(UserRepository::class)->get($res['uid']);
-                // 发放推广佣金
-                /** @var StoreOrderRepository $storeOrderRepository */
-                $storeOrderRepository = app()->make(StoreOrderRepository::class);
-                //$storeOrderRepository->computed($res,$user);
+                // 发放推广抵用券
+                $this->computed($res,$user);
 
                 return $this->payAfter($res);
             });
+        }
+    }
+
+    /**
+     * @param StoreOrderOffline $order
+     * @param User $user
+     * @author xaboy
+     * @day 2020/8/3
+     */
+    public function computed(StoreOrderOffline $order, User $user)
+    {
+        $userBillRepository = app()->make(UserBillRepository::class);
+        if ($order->spread_uid) {
+            $spreadUid = $order->spread_uid;
+            $topUid = $order->top_uid;
+        } else if ($order->is_selfbuy) {
+            $spreadUid = $user->uid;
+            $topUid = $user->spread_uid;
+        } else {
+            $spreadUid = $user->spread_uid;
+            $topUid = $user->top_uid;
+        }
+        //TODO 添加冻结佣金
+        if ($order->extension_one > 0 && $spreadUid) {
+            /*$userBillRepository->incBill($spreadUid, 'brokerage', 'order_one', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广佣金',
+                'number' => $order->extension_one,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_one),
+                'balance' => 0
+            ]);*/
+            // 佣金改为抵用券
+            $userBillRepository->incBill($spreadUid, 'brokerage_price', 'order_one', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广抵用券',
+                'number' => $order->extension_one,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广抵用券' . floatval($order->extension_one),
+                'balance' => 0
+            ]);
+            $userRepository = app()->make(UserRepository::class);
+            $userRepository->incBrokerage($spreadUid, $order->extension_one);
+            //            app()->make(FinancialRecordRepository::class)->dec([
+            //                'order_id' => $order->order_id,
+            //                'order_sn' => $order->order_sn,
+            //                'user_info' => $userRepository->getUsername($spreadUid),
+            //                'user_id' => $spreadUid,
+            //                'financial_type' => 'brokerage_one',
+            //                'number' => $order->extension_one,
+            //            ], $order->mer_id);
+        }
+        if ($order->extension_two > 0 && $topUid) {
+            // 获得推广佣金改为获得推广抵用券
+            $userBillRepository->incBill($topUid, 'brokerage_price', 'order_two', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广抵用券',
+                'number' => $order->extension_two,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广抵用券' . floatval($order->extension_two),
+                'balance' => 0
+            ]);
+            /*$userBillRepository->incBill($topUid, 'brokerage', 'order_two', [
+                'link_id' => $order['order_id'],
+                'status' => 0,
+                'title' => '获得推广佣金',
+                'number' => $order->extension_two,
+                'mark' => $user['nickname'] . '成功消费' . floatval($order['pay_price']) . '元,奖励推广佣金' . floatval($order->extension_two),
+                'balance' => 0
+            ]);*/
+            $userRepository = app()->make(UserRepository::class);
+            $userRepository->incBrokerage($topUid, $order->extension_two);
+            //            app()->make(FinancialRecordRepository::class)->dec([
+            //                'order_id' => $order->order_id,
+            //                'order_sn' => $order->order_sn,
+            //                'user_info' => $userRepository->getUsername($topUid),
+            //                'user_id' => $topUid,
+            //                'financial_type' => 'brokerage_two',
+            //                'number' => $order->extension_two,
+            //            ], $order->mer_id);
         }
     }
 
@@ -344,9 +433,10 @@ class StoreOrderOfflineRepository extends BaseRepository
             app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
                 'link_id' => $offlineOrder['order_id'],
                 'status' => 0,
-                'title' => '下单赠送积分',
+                'title' => '用户增加积分',
                 'number' => $offlineOrder->give_integral,
-                'mark' => '线下成功消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
+                'mark' => '用户成功消费,增加积分' . $offlineOrder->give_integral,
+                //'mark' => '线下消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
                 'balance' => $offlineOrder->user->integral
             ]);
         }
