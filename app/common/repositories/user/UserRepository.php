@@ -1474,7 +1474,7 @@ class UserRepository extends BaseRepository
                     'native' => false,
                     'children' => [$user->superior ? (string)$user->superior->nickname : '无']
                 ],*/
-                Elm::frameInputs('spid', '代理：', '/' . config('admin.admin_prefix') . '/setting/referrerList?field=spid')->prop('srcKey', 'src')->value($user->superior ? [
+                Elm::frameInputs('spid', '代理：', '/' . config('admin.admin_prefix') . '/setting/referrerLists?field=spid')->prop('srcKey', 'src')->value($user->superior ? [
                     'src' => $user->superior->avatar,
                     'id' => $user->superior->uid,
                 ] : [])->icon('el-icon-camera')->modal(['modal' => false])->width('1000px')->height('600px')
