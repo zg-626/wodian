@@ -81,6 +81,8 @@ class LklApi
      */
     public static function lklEcApply($param)
     {
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同原始参数: ' . json_encode($param), 'lkl');
+
         //结算卡性质 对私 对接 拉卡拉卡BIN信息查询
         if ($param['acct_type_code'] == '58') {
             $carData = self::lklCardBin($param['acct_no']);
