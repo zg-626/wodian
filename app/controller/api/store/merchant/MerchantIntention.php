@@ -46,12 +46,14 @@ class MerchantIntention extends BaseController
      **/
     public function status()
     {
-        // 0=未申请,1=申请中,2=审核通过,3=审核驳回
+        // 0=未提交,1=已提交,2=审核通过,3=审核驳回
+        // 0=未提交,1=已提交,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
         $info_1 = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
         $status_1 = 0;
         $status_2 = 0;
         if ($info_1) {
+            $status_1 = 1;
             if ($info_1['lkl_ec_status'] == 'APPLY') {
                 $status_1 = 1;
             }
@@ -63,10 +65,10 @@ class MerchantIntention extends BaseController
             }
 
             $status_2 = 0;
-            if ($info_1['merchant_status'] == 'APPLY') {
+            if ($info_1['merchant_status'] == 'WAIT_AUDI') {
                 $status_2 = 1;
             }
-            if ($info_1['merchant_status'] == 'WAIT_AUDI') {
+            if($info_1['merchant_status'] == 'SUCCESS'){
                 $status_2 = 1;
             }
             if ($info_1['merchant_status'] == 'SUCCESS' && $info_1['mer_id'] > 0) {
@@ -115,9 +117,6 @@ class MerchantIntention extends BaseController
         $uid = $this->userInfo->uid;
         $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
         if ($info) {
-            if ($info['lkl_ec_status'] == 'APPLY') {
-                return app('json')->fail('您已提交申请，请耐心等待后台审核...');
-            }
             if ($info['lkl_ec_status'] == 'COMPLETED') {
                 return app('json')->fail('电子合同已签约成功');
             }
@@ -136,7 +135,6 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同签约 create_first: ' . json_encode($params,JSON_UNESCAPED_UNICODE), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklEcApply($params);
         if (!$result) {
@@ -169,14 +167,13 @@ class MerchantIntention extends BaseController
             return app('json')->fail('电子合同未签约成功');
         }
         if ($info['merchant_status'] == 'WAIT_AUDI') {
-            return app('json')->fail('商户进件已提交申请，请耐心等待后台审核...');
+            return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
         if ($info['merchant_status'] == 'SUCCESS') {
             return app('json')->fail('商户进件已审核成功');
         }
 
         $data = $params;
-        $data['merchant_status'] = 'APPLY';
         $data['merchant_time'] = time();
         try {
             $info->save($data);
@@ -185,7 +182,6 @@ class MerchantIntention extends BaseController
         }
 
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件 create_second: ' . json_encode($params,JSON_UNESCAPED_UNICODE), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklMerchantApply($params);
         if (!$result) {
