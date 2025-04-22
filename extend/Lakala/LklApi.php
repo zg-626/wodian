@@ -776,7 +776,7 @@ class LklApi
                 // record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求结果: ' . $res, 'lkl');
                 $resdata = json_decode($res, true);
                 if (!empty($resdata['retCode']) && $resdata['retCode'] == '000000') {
-                    $outputFilePath = self::decodeFromUrlSafeStringToFile($resdata['respData']['ecFile'], $param['ecApplyId'] . '.pdf');
+                    $outputFilePath = self::decodeFromUrlSafeStringToFile($resdata['respData']['ecFile'], $param['lkl_ec_apply_id'] . '.pdf');
                     echo "<pre>";
                     print_r($outputFilePath);
                     die();
