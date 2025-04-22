@@ -1437,21 +1437,77 @@ class UserRepository extends BaseRepository
     {
         $superiorLogRepository = app()->make(UserSuperiorLogRepository::class);
         $user = $this->dao->get($uid);
-
-        Db::transaction(function () use ($user, $superiorLogRepository, $proxy, $admin) {
+        
+        // 解析proxy JSON字符串
+        $proxyData = json_decode($proxy, true);
+        if (!empty($proxyData)) {
+            // 提取所有代理ID
+            $proxyIds = array_column($proxyData, 'id');
+            
+            // 检查所有代理的lecturer绑定状态
+            foreach ($proxyIds as $proxyId) {
+                // 不能选择自己
+                if ($proxyId == $uid) {
+                    throw new ValidateException('不能选择自己');
+                }
+                /*$otherUser = $this->dao->get($proxyId);
+                if ($otherUser && $otherUser->lecturer) {
+                    throw new ValidateException('代理：' . $otherUser['nickname'] . '已绑定讲师');
+                }*/
+            }
+            
+            // 将所有ID转换为逗号分隔的字符串
+            $proxyString = implode(',', $proxyIds);
+        }
+        
+        Db::transaction(function () use ($user, $superiorLogRepository, $proxyString, $proxyIds) {
             $old = $user->proxy ?: 0;
-            $superiorLogRepository->add($user->uid, $proxy, $old, $admin);
-            $user->proxy_time = $proxy ? date('Y-m-d H:i:s') : null;
 
-            $user->proxy = $proxy;
-
+            $user->proxy_time = !empty($proxyString) ? date('Y-m-d H:i:s') : null;
+            $user->proxy = $proxyString ?? '0';
+            
             $user->save();
+
+            // 给所有代理同步讲师id
+            if (!empty($proxyIds)) {
+                foreach ($proxyIds as $proxyId) {
+                    $otherUser = $this->dao->get($proxyId);
+                    if ($otherUser) {
+                        $otherUser->lecturer = $user->uid;
+                        $otherUser->save();
+                    }
+                }
+            }
         });
     }
 
     public function changeProxyForm($id)
     {
         $user = $this->dao->get($id);
+        $proxyDataUid = [];
+        $proxyDataNickname = [];
+        
+        if(!empty($user->proxy)){
+            // 获取所有当前用户的代理信息
+            $proxyIds = explode(',', $user->proxy);
+            $proxyInfo=$this->dao->getSearch([])->whereIn('uid', $proxyIds)->select()->toArray();
+            // 构建代理信息数组
+            foreach ($proxyInfo as $proxy) {
+                $proxyDataUid[] = [
+                    'type' => 'span',
+                    'title' => '代理商 Id：',
+                    'native' => false,
+                    'children' => [$proxy['uid']? (string)$proxy['uid'] : '无']
+                ];
+                $proxyDataNickname[] = [
+                    'type' =>'span',
+                    'title' => '代理商昵称：',
+                    'native' => false,
+                    'children' => [$proxy['nickname']? (string)$proxy['nickname'] : '无']
+                ];
+            }
+        }
+
         $form = Elm::createForm(Route::buildUrl('systemUserProxy', compact('id'))->build());
         $form->setRule(
             [
@@ -1461,19 +1517,8 @@ class UserRepository extends BaseRepository
                     'native' => false,
                     'children' => [$user->nickname]
                 ],
-                /*
-                [
-                    'type' => 'span',
-                    'title' => '上级 Id：',
-                    'native' => false,
-                    'children' => [$user->superior ? (string)$user->superior->uid : '无']
-                ],
-                [
-                    'type' => 'span',
-                    'title' => '上级昵称：',
-                    'native' => false,
-                    'children' => [$user->superior ? (string)$user->superior->nickname : '无']
-                ],*/
+                $proxyDataUid,
+                $proxyDataNickname,
                 Elm::frameImages('spid', '代理：', '/' . config('admin.admin_prefix') . '/setting/referrerLists?field=spid')->prop('srcKey', 'src')->value($user->superior ? [
                     'src' => $user->superior->avatar,
                     'id' => $user->superior->uid,
