@@ -38,7 +38,7 @@ class MerchantIntentionRepository extends BaseRepository
     {
         $query = $this->dao->search($where);
         $count = $query->count();
-        $list = $query->page($page, $limit)->order('create_time DESC , status ASC')->with(['merchantCategory', 'merchantType','user','lkl'])->select();
+        $list = $query->page($page, $limit)->order('create_time DESC , status ASC')->with(['merchantCategory', 'merchantType', 'user', 'lkl'])->select();
 
         return compact('count', 'list');
     }
@@ -112,6 +112,20 @@ class MerchantIntentionRepository extends BaseRepository
             throw new ValidateException('信息不存在');
         if ($intention->status)
             throw new ValidateException('状态有误,修改失败');
+
+        $info = null;
+        if ($create == 1) {
+            if ($intention['mer_lkl_id'] > 0) {
+                $info = \app\common\model\system\merchant\MerchantEcLkl::where('id', $intention['mer_lkl_id'])->field('id,merchant_status')->find();
+                if (!$info) {
+                    throw new ValidateException('拉卡拉商户进件信息不存在');
+                }
+                if ($info['merchant_status'] != 'SUCCESS') {
+                    throw new ValidateException('拉卡拉商户进件未审核通过');
+                }
+            }
+        }
+
         $config = systemConfig(['broadcast_room_type', 'broadcast_goods_type']);
 
         $margin = app()->make(MerchantTypeRepository::class)->get($intention['mer_type_id']);
@@ -162,15 +176,20 @@ class MerchantIntentionRepository extends BaseRepository
             ];
         }
 
-        Db::transaction(function () use ($config, $intention, $data, $create,$margin,$merData,$smsData) {
+        Db::transaction(function () use ($config, $intention, $data, $create, $margin, $merData, $smsData,$info) {
             if ($data['status'] == 1) {
                 if ($create == 1) {
                     /** @var MerchantRepository $merchant */
                     $merchant = app()->make(MerchantRepository::class);
-                    $merchant=$merchant->createMerchants($merData);
+                    $merchant = $merchant->createMerchants($merData);
                     app()->make(ConfigValueRepository::class)->setFormData(['mer_certificate' => $intention['images']], $merchant->mer_id);
                     $data['mer_id'] = $merchant->mer_id;
                     Queue::push(SendSmsJob::class, ['tempId' => 'APPLY_MER_SUCCESS', 'id' => $smsData]);
+
+                    // 拉卡拉 绑定商户ID
+                    if ($intention['mer_lkl_id'] > 0) {
+                        $info->save(['mer_id' => $merchant->mer_id]);
+                    }
                 }
             } else {
                 Queue::push(SendSmsJob::class, ['tempId' => 'APPLY_MER_FAIL', 'id' => $smsData]);
