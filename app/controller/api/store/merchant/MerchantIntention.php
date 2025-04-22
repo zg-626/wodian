@@ -45,9 +45,10 @@ class MerchantIntention extends BaseController
     public function status(){
         // 0=未申请,1=申请中,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
-        $info_1 = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status')->find();
+        $info_1 = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
         if(!$info_1){
             $status_1 = 0;
+            $status_2 = 0;
         } else{
             if($info_1['lkl_ec_status'] == 'APPLY'){
                 $status_1 = 1;
@@ -58,8 +59,15 @@ class MerchantIntention extends BaseController
             if($info_1['lkl_ec_status'] == 'UNDONE'){
                 $status_1 = 3;
             }
+
+            if($info_1['merchant_status'] == 'APPLY'){
+                $status_2 = 1;
+            }
+            if($info_1['merchant_status'] == 'WAIT_AUDI'){
+                $status_2 = 1;
+            }
         }
-        $status_2 = 0;
+
         $status_3 = 0;
         $status_4 = 0;
         $data = compact('status_1','status_2','status_3','status_4');
@@ -95,16 +103,12 @@ class MerchantIntention extends BaseController
      **/
     public function create_first()
     {
-        var_dump('33333333333333333333333333333333333');
-        var_dump('111111111111111111111111111111');
         $params = $this->validateParams(__FUNCTION__);
-        var_dump($params);
-        var_dump('1111111111122222222222222222');
-        exit;
+
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status')->find();
         if ($info) {
-            if ($info['lkl_ec_status'] == 'APPLY' && !empty($info['lkl_ec_apply_id'])) {
+            if ($info['lkl_ec_status'] == 'APPLY') {
                 return app('json')->fail('您已提交申请，请耐心等待后台审核...');
             }
             if ($info['lkl_ec_status'] == 'COMPLETED') {
@@ -114,7 +118,6 @@ class MerchantIntention extends BaseController
 
         $data = $params;
         $data['uid'] = $uid;
-        $data['lkl_ec_status'] = 'APPLY';
         $data['lkl_ec_apply_time'] = time();
         try {
             if($info){
@@ -132,6 +135,7 @@ class MerchantIntention extends BaseController
 //            return app('json')->fail($api->getErrorInfo());
 //        }
         $save_data['lkl_ec_apply_id'] = '12344';
+        $save_data['lkl_ec_status'] = 'APPLY';
         MerchantEcLkl::where('id', $info->id)->update($save_data);
         return app('json')->success('提交成功', []);
     }
@@ -236,16 +240,30 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_apply_id,lkl_ec_status')->find();
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
         if(!$info){
             return app('json')->fail('请返回上一页，先完成第一步');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约成功');
         }
+        if($info['merchant_status'] != '成功'){
+            return app('json')->fail('商户进件未审核成功');
+        }
 
         $data = $params;
         $data['uid'] = $uid;
+        $data['merchant_status'] = 'APPLY';
+        $data['merchant_time'] = time();
+        try {
+            if($info){
+                $info->save($data);
+            } else{
+                $info = MerchantEcLkl::create($data);
+            }
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
     }
 
 
