@@ -114,7 +114,7 @@ class Article extends BaseController
         }*/
         // 测试支付回调
         $data=array (
-            'order_sn' => 'wxs174472359436025170',
+            'order_sn' => 'wxs174528612192293719',
             'appid' => 'wx4409eaedbd62b213',
             'attach' => 'user_order',
             'bank_type' => 'OTHERS',
@@ -124,7 +124,7 @@ class Article extends BaseController
             'mch_id' => '1288093001',
             'nonce_str' => '6397efa100165',
             'openid' => 'oOdvCvjvCG0FnCwcMdDD_xIODRO0',
-            'out_trade_no' => 'wxs174472359436025170',
+            'out_trade_no' => 'wxs174528612192293719',
             'result_code' => 'SUCCESS',
             'return_code' => 'SUCCESS',
             'sign' => '125C56DE030A461E45D421E44C88BC30',
