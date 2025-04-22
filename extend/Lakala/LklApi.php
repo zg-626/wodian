@@ -81,7 +81,7 @@ class LklApi
      */
     public static function lklEcApply($param)
     {
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同原始参数: ' . json_encode($param), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同原始参数: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
 
         //结算卡性质 对私 对接 拉卡拉卡BIN信息查询
         if ($param['acct_type_code'] == '58') {
@@ -181,7 +181,7 @@ class LklApi
         }
         $sepParam['ecContentParameters'] = json_encode($ecContentParameters);
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同申请参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同申请参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
         $request = new V2ModelRequest();
@@ -423,7 +423,7 @@ class LklApi
             'multipart' => $multipartData
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
@@ -549,7 +549,7 @@ class LklApi
             ];
         }
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账接收方创建申请参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账接收方创建申请参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -601,7 +601,7 @@ class LklApi
             'retUrl' => request()->domain() . '/api/lakala/lklApplyBindNotify'
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -652,7 +652,7 @@ class LklApi
             'retUrl' => request()->domain() . '/api/lakala/lklApplyLedgerMerNotify'
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -718,7 +718,7 @@ class LklApi
             'complete_notify_url' => request()->domain() . '/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $config = new Configuration();
         $api = new LakalaApi($config);
@@ -763,7 +763,7 @@ class LklApi
             'ecApplyId' => $param['lkl_ec_apply_id'],
         ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $config = new V2Configuration();
         $api = new V2LakalaApi($config);
@@ -887,7 +887,7 @@ class LklApi
 
         $param['parent_code'] = (isset($param['parent_code']) && !empty(empty($param['parent_code']))) ? $param['parent_code'] : 1;
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行地区参数: ' . json_encode($param), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行地区参数: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
@@ -918,7 +918,7 @@ class LklApi
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行列表参数: ' . json_encode($param), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行列表参数: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $client = new Client([
             'verify' => false // 禁用 SSL 验证
@@ -1047,7 +1047,7 @@ class LklApi
                 ]
             ]
         ];
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         try {
             $response = $client->post(self::$config['htk_file_upload_url'], $sepParam);
@@ -1082,7 +1082,7 @@ class LklApi
         ];
         $log = $sepParam;
         $log['attContext'] = $url;
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 上传附件请求参数: ' . json_encode($log), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 上传附件请求参数: ' . json_encode($log, JSON_UNESCAPED_UNICODE), 'lkl');
         unset($log);
 
         $config = new V2Configuration();
