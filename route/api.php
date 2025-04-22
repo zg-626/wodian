@@ -593,9 +593,12 @@ Route::group('api/', function () {
         Route::group('lakala', function () {
             // 支付回调
             Route::any('/notify', 'Lakala/notify');
-            Route::any('/lklEcApplyNotify', 'Lakala/lklEcApplyNotify');
-            Route::any('/lklMerchantApplyNotify', 'Lakala/lklMerchantApplyNotify');
-            Route::any('/lklApplyBindNotify', 'Lakala/lklApplyBindNotify');
+            Route::any('/lklEcApplyNotify', 'Lakala/lklEcApplyNotify');//电子合同签约结果回调通知
+            Route::any('/lklMerchantApplyNotify', 'Lakala/lklMerchantApplyNotify');//商户进件回调通知
+            Route::any('/lklApplyBindNotify', 'Lakala/lklApplyBindNotify');//分账关系绑定回调
+            Route::any('/lklApplyLedgerMerNotify', 'Lakala/lklApplyLedgerMerNotify');//商户分账业务开通申请回调
+            Route::any('/lklPayNotify', 'Lakala/lklPayNotify');//聚合主扫支付成功回调
+            Route::any('/lklSendcompleteNotify', 'Lakala/lklSendcompleteNotify');//发货确认通知回调
         })->prefix('api.lakala.');
 
         // 分红
