@@ -41,10 +41,10 @@ class UserBillRepository extends BaseRepository
     const TYPE_INFO = [
         'brokerage' => [
             'brokerage/now_money' => '佣金转入余额',
-            'brokerage/order_one' => '获得一级推广佣金',
-            'brokerage/order_two' => '获得二级推广佣金',
-            'brokerage/refund_one' => '退还一级佣金',
-            'brokerage/refund_two' => '退还二级佣金',
+            'brokerage/order_one' => '获得一级推广抵用券',
+            'brokerage/order_two' => '获得二级推广抵用券',
+            'brokerage/refund_one' => '退还一级推广抵用券',
+            'brokerage/refund_two' => '退还二级推广抵用券',
         ],
         'integral' => [
             'integral/cancel' => '退回积分',

@@ -674,6 +674,7 @@ class MerchantRepository extends BaseRepository
             'title' => '商户增加积分',
             'number' => $integral,
             'mark' => '用户成功消费,增加积分' . $integral,
+            //'mark' => '线下消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
 
             'balance' => $merchant->integral+$integral
         ]);
