@@ -225,6 +225,19 @@ class MerchantIntention extends BaseController
     }
 
     /**
+     * 拉卡拉电子合同下载
+     **/
+    public function download(){
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcDownload($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('提交成功', $result);
+    }
+
+    /**
      * 验证
      **/
     protected function validateParams($function)
@@ -311,18 +324,7 @@ class MerchantIntention extends BaseController
         return $params;
     }
 
-    /**
-     * 拉卡拉电子合同下载
-     **/
-    public function download(){
-        $params = $this->validateParams(__FUNCTION__);
-        $api = new \Lakala\LklApi();
-        $result = $api::lklEcDownload($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
-        return app('json')->success('提交成功', $result);
-    }
+
 
 
     public function create()

@@ -772,6 +772,7 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/ec/download', $request);
             if (!empty($response)) {
+                record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求结果: ' . $response, 'lkl');
                 $res = $response->getOriginalText();
                 record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同下载请求结果: ' . $res, 'lkl');
                 $resdata = json_decode($res, true);
