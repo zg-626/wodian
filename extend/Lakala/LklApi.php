@@ -434,6 +434,188 @@ class LklApi
     }
 
     /**
+     * @desc 拉卡拉分账接收方创建申请（开放平台）
+     * @author ZhouTing
+     * @param receiver_name 分账接收方名称
+     * @param receiver_mobile 分账接收方联系手机号
+     * @param acct_no 收款账户卡号
+     * @param acct_name 收款账户名称
+     * @param acct_type_code 收款账户账户类型 57 对公、58 对私
+     * @param acct_id_card 收款账户证件号
+     * @param lkl_acct_open_bank_code 收款账户开户行号(对公必传)
+     * @param lkl_acct_open_bank_name 收款账户开户名称(对公必传)
+     * @param lkl_acct_clear_bank_code 收款账户清算行行号(对公必传)
+     * @param mer_blis 营业执照号(对公必传)
+     * @param mer_blis_name 营业执照名称(对公必传)
+     * @param lar_name 法人姓名(对公必传)
+     * @param lar_id_card 法人证件号码(对公必传)
+     * @param z_legal_img 法人身份证正面(对公必传)
+     * @param f_legal_img 法人身份证反面(对公必传)
+     * @param license_pic_img 营业执照照片(对公必传)
+     * @param z_idcard_image 个人身份证正面(对私必传)
+     * @param f_idcard_image 个人身份证反面(对私必传)
+     * @doc：https://o.lakala.com/#/home/document/detail?id=382
+     * @date 2025-04-21 19:55
+     */
+    public static function lklApplyLedgerReceiver($param)
+    {
+        if ($param['acctTypeCode'] == '57') {
+            $bankCode = $param['lkl_acct_open_bank_code'];
+            $acctOpenBankName = $param['lkl_acct_open_bank_name'];
+            $acctClearBankCode  = $param['lkl_acct_clear_bank_code'];
+        } else {
+            //卡BIN信息查询
+            $carData = self::lklCardBin($param['acctNo']);
+            if (!$carData) {
+                return self::setErrorInfo(self::getErrorInfo());
+            }
+            $bankCode = $carData['bankCode'];
+            $acctOpenBankName  = $carData['bankName'];
+            $acctClearBankCode = $carData['clearingBankCode'];
+        }
+
+        $sepParam = [
+            'version' => '1.0',
+            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orgCode' => self::$config['org_code'],
+            'receiverName' => $param['receiver_name'],
+            'contactMobile' => $param['receiver_mobile'],
+            'acctNo' => $param['acct_no'],
+            'acctName' => $param['acct_name'],
+            'acctTypeCode' => $param['acct_type_code'],
+            'acctCertificateType' => '17', //收款账户证件类型 17 身份证
+            'acctCertificateNo' => $param['acct_id_card'],
+            'acctOpenBankCode' => $bankCode,
+            'acctOpenBankName' => $acctOpenBankName,
+            'acctClearBankCode' => $acctClearBankCode,
+            'settleType' => '03', //提款类型 01：主动提款 03：交易自动结算（客户规定）
+        ];
+        //对公
+        if ($param['acctTypeCode'] == '57') {
+            $sepParam['licenseNo'] = $param['mer_blis'];
+            $sepParam['licenseName'] = $param['mer_blis_name'];
+            $sepParam['legalPersonName'] = $param['lar_name'];
+            $sepParam['legalPersonCertificateType'] = 17; //法人证件类型 17 身份证
+            $sepParam['legalPersonCertificateNo'] = $param['lar_id_card'];
+            //对公：法人身份证正面，银行卡，营业执照正面
+            $fZImg = self::lklUploadFile('FR_ID_CARD_FRONT', imageUrl($param['z_legal_img']));
+            if (!$fZImg) return self::setErrorInfo(self::getErrorInfo());
+            $fFImg = self::lklUploadFile('FR_ID_CARD_BEHIND', imageUrl($param['f_legal_img']));
+            if (!$fFImg) return self::setErrorInfo(self::getErrorInfo());
+            $licenseZImg = self::lklUploadFile('BUSINESS_LICENCE', imageUrl($param['license_pic_img']));
+            if (!$licenseZImg) return self::setErrorInfo(self::getErrorInfo());
+            $sepParam['attachList'] = [
+                [
+                    'attachName' => '法人身份证正面',
+                    'attachStorePath' => $fZImg,
+                    'attachType' => 'FR_ID_CARD_FRONT'
+                ],
+                [
+                    'attachName' => '法人身份证反面',
+                    'attachStorePath' => $fFImg,
+                    'attachType' => 'FR_ID_CARD_BEHIND'
+                ],
+                [
+                    'attachName' => '营业执照',
+                    'attachStorePath' => $licenseZImg,
+                    'attachType' => 'BUSINESS_LICENCE'
+                ]
+            ];
+        } else {
+            //对私
+            $zImg = self::lklUploadFile('ID_CARD_FRONT', imageUrl($param['z_idcard_image']));
+            if (!$zImg) return self::setErrorInfo(self::getErrorInfo());
+            $fImg = self::lklUploadFile('ID_CARD_BEHIND', imageUrl($param['f_idcard_image']));
+            if (!$fImg) return self::setErrorInfo(self::getErrorInfo());
+            $sepParam['attachList'] = [
+                [
+                    'attachName' => '身份证正面',
+                    'attachStorePath' => $zImg,
+                    'attachType' => 'ID_CARD_FRONT'
+                ],
+                [
+                    'attachName' => '身份证反面',
+                    'attachStorePath' => $fImg,
+                    'attachType' => 'ID_CARD_BEHIND'
+                ]
+            ];
+        }
+
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建申请参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v2/mms/openApi/ledger/applyLedgerReceiver', $request);
+            $res = $response->getOriginalText();
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建请求结果: ' . $res, 'lkl');
+
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return $resdata['respData']['receiverNo'];
+            } elseif ($resdata['retCode'] == '-10010') {
+                return self::setErrorInfo('分账接收方身份信息错误'); //拉卡拉返回的是：入参校验失败
+            } else {
+                return self::setErrorInfo('分账接收方创建申请失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账接收方创建异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉分账关系绑定申请(开放平台) 商户与平台
+     * @author ZhouTing
+     * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
+     * @param lkl_receiver_no 分账接收方编号
+     * @param entrust_file_path 合作协议
+     * @date 2025-04-22 10:20
+     */
+    public static function lklApplyBind($param)
+    {
+        //拉卡拉分账关系绑定申请，合作协议附件
+        $entrust_image = self::lklUploadFile('XY', imageUrl($param['entrust_file_path']));
+        if (!$entrust_image) {
+            return self::setErrorInfo(self::getErrorInfo());
+        }
+
+        $sepParam = [
+            'version' => '1.0',
+            'orderNo' => date('YmdHis', time()) . Random::numeric(8),
+            'orgCode' => self::$config['org_code'],
+            'merCupNo' => $param['lkl_mer_cup_no'],
+            'receiverNo' => $param['lkl_receiver_no'],
+            'entrustFileName' => '合作协议',
+            'entrustFilePath' => $entrust_image,
+            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklApplyBindNotify'
+        ];
+
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v2/mms/openApi/ledger/applyBind', $request);
+            $res = $response->getOriginalText();
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请请求结果: ' . $res, 'lkl');
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return $resdata['respData'];
+            } else {
+                return self::setErrorInfo('分账关系绑定申请失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
      * @desc 拉卡拉电子合同下载
      * @author ZhouTing
      * @param lkl_ec_apply_id 电子合同申请受理号

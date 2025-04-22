@@ -42,42 +42,45 @@ class MerchantIntention extends BaseController
     /**
      * 入驻状态
      **/
-    public function status(){
+    public function status()
+    {
         // 0=未申请,1=申请中,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
         $info_1 = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
-        if(!$info_1){
+        if (!$info_1) {
             $status_1 = 0;
             $status_2 = 0;
-        } else{
-            if($info_1['lkl_ec_status'] == 'APPLY'){
+        } else {
+            if ($info_1['lkl_ec_status'] == 'APPLY') {
                 $status_1 = 1;
             }
-            if($info_1['lkl_ec_status'] == 'COMPLETED'){
+            if ($info_1['lkl_ec_status'] == 'COMPLETED') {
                 $status_1 = 2;
             }
-            if($info_1['lkl_ec_status'] == 'UNDONE'){
+            if ($info_1['lkl_ec_status'] == 'UNDONE') {
                 $status_1 = 3;
             }
 
-            if($info_1['merchant_status'] == 'APPLY'){
+            $status_2 = 0;
+            if ($info_1['merchant_status'] == 'APPLY') {
                 $status_2 = 1;
             }
-            if($info_1['merchant_status'] == 'WAIT_AUDI'){
+            if ($info_1['merchant_status'] == 'WAIT_AUDI') {
                 $status_2 = 1;
             }
         }
 
         $status_3 = 0;
         $status_4 = 0;
-        $data = compact('status_1','status_2','status_3','status_4');
+        $data = compact('status_1', 'status_2', 'status_3', 'status_4');
         return app('json')->success('入驻状态', $data);
     }
 
     /**
      * 入驻详情
      **/
-    public function info(){
+    public function info()
+    {
         $params = $this->request->params([
             'step',
         ]);
@@ -106,7 +109,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status')->find();
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
         if ($info) {
             if ($info['lkl_ec_status'] == 'APPLY') {
                 return app('json')->fail('您已提交申请，请耐心等待后台审核...');
@@ -120,30 +123,85 @@ class MerchantIntention extends BaseController
         $data['uid'] = $uid;
         $data['lkl_ec_apply_time'] = time();
         try {
-            if($info){
+            if ($info) {
                 $info->save($data);
-            } else{
+            } else {
                 $info = MerchantEcLkl::create($data);
             }
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
 
-//        $api = new \Lakala\LklApi();
-//        $result = $api::lklEcApply($params);
-//        if (!$result) {
-//            return app('json')->fail($api->getErrorInfo());
-//        }
-        $save_data['lkl_ec_apply_id'] = '12344';
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcApply($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
         $save_data['lkl_ec_status'] = 'APPLY';
+        MerchantEcLkl::where('id', $info->id)->update($save_data);
+        return app('json')->success('提交成功', $result);
+    }
+
+    /**
+     * 商户进件-1.获取access_token
+     **/
+    public function access_token()
+    {
+        $api = new \Lakala\LklApi();
+        $result = $api::lklAccessToken();
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('获取access_token', $result);
+    }
+
+    /**
+     * 商户进件-2.提交
+     **/
+    public function create_second()
+    {
+        $params = $this->validateParams(__FUNCTION__);
+
+        $uid = $this->userInfo->uid;
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        if (!$info) {
+            return app('json')->fail('请返回上一页，先完成第一步');
+        }
+        if ($info['lkl_ec_status'] != 'COMPLETED') {
+            return app('json')->fail('电子合同未签约成功');
+        }
+        if ($info['merchant_status'] == '成功') {
+            return app('json')->fail('商户进件已审核成功');
+        }
+
+        $data = $params;
+        $data['merchant_status'] = 'APPLY';
+        $data['merchant_time'] = time();
+        try {
+            $info->save($data);
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
+
+        $api = new \Lakala\LklApi();
+        $result = $api::lklMerchantApply($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        $save_data['merchant_no'] = $result['merchantNo'];
+        $save_data['merchant_status'] = $result['status'];
         MerchantEcLkl::where('id', $info->id)->update($save_data);
         return app('json')->success('提交成功', []);
     }
 
+    /**
+     * 验证
+     **/
     protected function validateParams($function)
     {
 
-        switch ($function){
+        switch ($function) {
             case 'create_first':
                 $params = $this->request->params([
                     'merchant_type',
@@ -213,6 +271,8 @@ class MerchantIntention extends BaseController
                 ]);
                 break;
         }
+        echo json_encode($params,JSON_UNESCAPED_UNICODE);
+        exit;
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
         } catch (Exception $e) {
@@ -220,55 +280,6 @@ class MerchantIntention extends BaseController
         }
         return $params;
     }
-
-    /**
-     * 商户进件-1.获取access_token
-     **/
-    public function access_token(){
-        $api = new \Lakala\LklApi();
-        $result = $api::lklAccessToken();
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
-        return app('json')->success('获取access_token', $result);
-    }
-
-    /**
-     * 商户进件-2.提交
-     **/
-    public function create_second(){
-        $params = $this->validateParams(__FUNCTION__);
-
-        $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
-        if(!$info){
-            return app('json')->fail('请返回上一页，先完成第一步');
-        }
-        if ($info['lkl_ec_status'] != 'COMPLETED') {
-            return app('json')->fail('电子合同未签约成功');
-        }
-        if($info['merchant_status'] != '成功'){
-            return app('json')->fail('商户进件未审核成功');
-        }
-
-        $data = $params;
-        $data['uid'] = $uid;
-        $data['merchant_status'] = 'APPLY';
-        $data['merchant_time'] = time();
-        try {
-            if($info){
-                $info->save($data);
-            } else{
-                $info = MerchantEcLkl::create($data);
-            }
-        } catch (Exception $e) {
-            return app('json')->fail($e->getError());
-        }
-    }
-
-
-
-
 
 
 
