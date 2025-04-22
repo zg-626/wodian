@@ -596,6 +596,7 @@ Route::group('api/', function () {
             Route::any('/notify', 'Lakala/notify');
             Route::any('/lklEcApplyNotify', 'Lakala/lklEcApplyNotify');
             Route::any('/lklMerchantApplyNotify', 'Lakala/lklMerchantApplyNotify');
+            Route::any('/lklApplyBindNotify', 'Lakala/lklApplyBindNotify');
         })->prefix('api.lakala.');
 
         // 分红
