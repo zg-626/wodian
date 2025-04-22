@@ -117,6 +117,8 @@ class MerchantIntentionValidate extends Validate
         'z_settle_img|结算人身份证人像面' => 'require',
         'f_settle_img|结算人身份证反面照' => 'require',
         'legal_auth_img|法人授权函' => 'requireIf:is_legal_person,0',
+
+        'lkl_ec_apply_id|电子签约申请受理编号' => 'require',
     ];
 
     protected $message = [
@@ -199,6 +201,8 @@ class MerchantIntentionValidate extends Validate
         'z_settle_img.require' => '请上传结算人身份证人像面',
         'f_settle_img.require' => '请上传结算人身份证反面照',
         'legal_auth_img.requireIf' => '请上传法人授权函',
+
+        'lkl_ec_apply_id.require'=> '电子签约申请受理编号不能为空',
     ];
 
     protected $scene = [
@@ -266,6 +270,7 @@ class MerchantIntentionValidate extends Validate
             'f_settle_img',
             'legal_auth_img',
         ],
+        'download' => ['lkl_ec_apply_id'],
     ];
 
 }
