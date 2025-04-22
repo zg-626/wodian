@@ -182,7 +182,6 @@ class LklApi
         try {
             $response = $api->tradeApi('/api/v2/mms/openApi/ec/apply', $request);
             $res = $response->getOriginalText();
-            log::write('lkl', $res);
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同申请请求结果: ' . $res, 'lkl');
             $resdata = json_decode($res, true);
             if ($resdata['retCode'] == '000000') {

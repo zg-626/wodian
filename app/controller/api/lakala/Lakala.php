@@ -67,6 +67,22 @@ class Lakala extends BaseController
      */
     public function lklApplyBindNotify()
     {
-        return app('json')->success('请求成功');
+        $config = new V2Configuration();
+        $api = new V2LakalaNotifyApi($config);
+        try {
+            $request = $api->notiApi();
+            $originalText = $request->getOriginalText();
+            Db::name('third_notify')->insert(['title' => '分账关系绑定申请回调', 'content' => $originalText, 'createtime' => time()]);
+
+            $obj = json_decode($originalText, true);
+
+            //更新分账关系绑定申请审核状态
+
+            // 通知拉卡拉，业务处理成功
+            $api->success();
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请回调异常: ' . $e->getMessage(), 'lkl');
+            $api->fail($e->getMessage());
+        }
     }
 }
