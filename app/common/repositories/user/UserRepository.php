@@ -1433,6 +1433,55 @@ class UserRepository extends BaseRepository
         });
     }
 
+    public function changeProxy($uid, $proxy, $admin = 0)
+    {
+        $superiorLogRepository = app()->make(UserSuperiorLogRepository::class);
+        $user = $this->dao->get($uid);
+
+        Db::transaction(function () use ($user, $superiorLogRepository, $proxy, $admin) {
+            $old = $user->proxy ?: 0;
+            $superiorLogRepository->add($user->uid, $proxy, $old, $admin);
+            $user->proxy_time = $proxy ? date('Y-m-d H:i:s') : null;
+
+            $user->proxy = $proxy;
+
+            $user->save();
+        });
+    }
+
+    public function changeProxyForm($id)
+    {
+        $user = $this->dao->get($id);
+        $form = Elm::createForm(Route::buildUrl('systemUserProxy', compact('id'))->build());
+        $form->setRule(
+            [
+                [
+                    'type' => 'span',
+                    'title' => '用户昵称：',
+                    'native' => false,
+                    'children' => [$user->nickname]
+                ],
+                /*
+                [
+                    'type' => 'span',
+                    'title' => '上级 Id：',
+                    'native' => false,
+                    'children' => [$user->superior ? (string)$user->superior->uid : '无']
+                ],
+                [
+                    'type' => 'span',
+                    'title' => '上级昵称：',
+                    'native' => false,
+                    'children' => [$user->superior ? (string)$user->superior->nickname : '无']
+                ],*/
+                Elm::frameInputs('spid', '代理：', '/' . config('admin.admin_prefix') . '/setting/referrerList?field=spid')->prop('srcKey', 'src')->value($user->superior ? [
+                    'src' => $user->superior->avatar,
+                    'id' => $user->superior->uid,
+                ] : [])->icon('el-icon-camera')->modal(['modal' => false])->width('1000px')->height('600px')
+            ]);
+        return $form->setTitle('修改上级');
+    }
+
     public function syncSpreadStatus()
     {
         if (systemConfig('extension_limit')) {

@@ -612,6 +612,32 @@ class User extends BaseController
         return app('json')->success('修改成功');
     }
 
+    public function proxy($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        $proxyid = $this->request->param('spid');
+        $proxyid = (int)($proxyid['id'] ?? $proxyid);
+        if ($proxyid == $id)
+            return app('json')->fail('不能选自己');
+        /*if ($proxyid && !$this->repository->exists($proxyid))
+            return app('json')->fail('上级不存在');*/
+        $this->repository->changeSuperior($id, $proxyid, $this->request->adminId());
+        return app('json')->success('修改成功');
+    }
+
+    /**
+     * @param $id
+     * @return mixed
+     * @desc 修改上级
+     **/
+    public function proxyForm($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        return app('json')->success(formToData($this->repository->changeProxyForm($id)));
+    }
+
     public function searchLog()
     {
         $where = $this->request->params(['date', 'keyword', 'nickname', 'user_type']);

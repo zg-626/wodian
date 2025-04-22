@@ -163,6 +163,16 @@ Route::group(function () {
             '_alias' => '修改上级',
         ]);
 
+        Route::post('binding_proxy/:id', '/proxy')->name('systemUserProxy')->option([
+            '_alias' => '讲师绑定代理',
+        ]);
+
+        Route::get('binding_proxy_form/:id', '/proxyForm')->name('systemUserProxyForm')->option([
+            '_alias' => '讲师绑定表单',
+            '_auth' => false,
+            '_form' => 'systemUserProxy',
+        ]);
+
         Route::get('/member/:id/form', '/memberForm')->name('systemUserMemberForm')->option([
             '_alias' => '用户修改会员等级表单',
             '_auth' => false,
