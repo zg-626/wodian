@@ -136,6 +136,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同签约 create_first: ' . json_encode($params), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklEcApply($params);
         if (!$result) {
@@ -184,6 +185,7 @@ class MerchantIntention extends BaseController
         }
 
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件 create_second: ' . json_encode($params), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklMerchantApply($params);
         if (!$result) {
