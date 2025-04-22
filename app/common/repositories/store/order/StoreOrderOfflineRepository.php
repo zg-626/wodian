@@ -219,14 +219,18 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($money){
             try {
                 //$service = new PayService($type,$body, 'offline_order');
-                $service = new OfflinePayService($type, $body);
+
+                /*$service = new OfflinePayService($type, $body);
                 $config = $service->pay($user);
-                return app('json')->status($type, $config + ['order_id' => $info->order_id]);
+                return app('json')->status($type, $config + ['order_id' => $info->order_id]);*/
+                // TODO 测试身份佣金，直接支付成功
+                $this->paySuccess($data);
+                return app('json')->status($type, ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
                 return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
             }
         } else {
-            $res = $this->paySuccess($data);
+            $this->paySuccess($data);
             return app('json')->status('success', ['order_id' => $info->order_id]);
         }
     }
