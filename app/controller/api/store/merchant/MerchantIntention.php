@@ -144,20 +144,7 @@ class MerchantIntention extends BaseController
     }
 
     /**
-     * 商户进件-1.获取access_token
-     **/
-    public function access_token()
-    {
-        $api = new \Lakala\LklApi();
-        $result = $api::lklAccessToken();
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
-        return app('json')->success('获取access_token', $result);
-    }
-
-    /**
-     * 商户进件-2.提交
+     * 商户进件
      **/
     public function create_second()
     {

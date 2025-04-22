@@ -101,7 +101,8 @@ class LklApi
             'acctNo' => $param['acct_no'],
             'acctName' => $param['acct_name'],
             'agentTag' => $param['agent_tag'],
-            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklEcApplyNotify'
+//            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklEcApplyNotify',
+            'retUrl' => request()->domain() . '/api/lakala/lklEcApplyNotify'
         ];
         //个体工商户/企业(有营业执照)
         if (!empty($param['merchant_type'])) {
@@ -591,7 +592,7 @@ class LklApi
             'receiverNo' => $param['lkl_receiver_no'],
             'entrustFileName' => '合作协议',
             'entrustFilePath' => $entrust_image,
-            'retUrl' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/lakala/lklApplyBindNotify'
+            'retUrl' => request()->domain() . '/api/lakala/lklApplyBindNotify'
         ];
 
         record_log('Time: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam), 'lkl');
