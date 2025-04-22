@@ -164,12 +164,15 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_no,lkl_ec_status,merchant_status')->find();
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约成功');
+        }
+        if ($info['merchant_status'] == 'WAIT_AUDI') {
+            return app('json')->fail('商户进件已提交申请，请耐心等待后台审核...');
         }
         if ($info['merchant_status'] == '成功') {
             return app('json')->fail('商户进件已审核成功');
@@ -184,6 +187,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
+        $params['lkl_ec_no'] = $info['lkl_ec_no'];
         $api = new \Lakala\LklApi();
         $result = $api::lklMerchantApply($params);
         if (!$result) {
@@ -271,8 +275,6 @@ class MerchantIntention extends BaseController
                 ]);
                 break;
         }
-        echo json_encode($params,JSON_UNESCAPED_UNICODE);
-        exit;
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
         } catch (Exception $e) {
