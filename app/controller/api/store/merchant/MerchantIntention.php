@@ -48,7 +48,7 @@ class MerchantIntention extends BaseController
     {
         // 0=未申请,1=申请中,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
-        $info_1 = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        $info_1 = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
         $status_1 = 0;
         $status_2 = 0;
         if ($info_1) {
@@ -69,7 +69,7 @@ class MerchantIntention extends BaseController
             if ($info_1['merchant_status'] == 'WAIT_AUDI') {
                 $status_2 = 1;
             }
-            if ($info_1['merchant_status'] == 'SUCCESS') {
+            if ($info_1['merchant_status'] == 'SUCCESS' && $info_1['mer_id'] > 0) {
                 $status_2 = 2;
             }
         }
@@ -113,7 +113,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
         if ($info) {
             if ($info['lkl_ec_status'] == 'APPLY') {
                 return app('json')->fail('您已提交申请，请耐心等待后台审核...');
@@ -136,7 +136,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同签约 create_first: ' . json_encode($params), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同签约 create_first: ' . json_encode($params,JSON_UNESCAPED_UNICODE), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklEcApply($params);
         if (!$result) {
@@ -161,7 +161,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
+        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
@@ -185,7 +185,7 @@ class MerchantIntention extends BaseController
         }
 
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件 create_second: ' . json_encode($params), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件 create_second: ' . json_encode($params,JSON_UNESCAPED_UNICODE), 'lkl');
         $api = new \Lakala\LklApi();
         $result = $api::lklMerchantApply($params);
         if (!$result) {
@@ -299,6 +299,9 @@ class MerchantIntention extends BaseController
                     'legal_auth_img',
                 ]);
                 break;
+            case 'download':
+                $params = $this->request->params(['lkl_ec_apply_id']);
+            break;
         }
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
@@ -306,6 +309,19 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
         return $params;
+    }
+
+    /**
+     * 拉卡拉电子合同下载
+     **/
+    public function download(){
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcDownload($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('提交成功', $result);
     }
 
 
