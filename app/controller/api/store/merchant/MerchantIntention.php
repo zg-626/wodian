@@ -162,6 +162,8 @@ class MerchantIntention extends BaseController
     public function create_second()
     {
         $params = $this->validateParams(__FUNCTION__);
+        echo json_encode($params,JSON_UNESCAPED_UNICODE);
+        exit;
 
         $uid = $this->userInfo->uid;
         $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
