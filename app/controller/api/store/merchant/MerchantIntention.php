@@ -61,6 +61,7 @@ class MerchantIntention extends BaseController
                 $status_1 = 3;
             }
 
+            $status_2 = 0;
             if ($info_1['merchant_status'] == 'APPLY') {
                 $status_2 = 1;
             }
@@ -283,7 +284,7 @@ class MerchantIntention extends BaseController
 
 
 
-    
+
 
     public function create()
     {
