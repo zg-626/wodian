@@ -221,7 +221,42 @@ class MerchantIntention extends BaseController
     }
 
     /**
-     * 拉卡拉电子合同下载
+     * 商户分账业务开通申请
+     **/
+    public function create_three(){
+        $params = $this->validateParams(__FUNCTION__);
+
+        $uid = $this->userInfo->uid;
+        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status,lkl_ec_no,merchant_no')->find();
+        if (!$info) {
+            return app('json')->fail('请返回上一页，先完成第一步');
+        }
+        if ($info['lkl_ec_status'] != 'COMPLETED') {
+            return app('json')->fail('电子合同未签约成功');
+        }
+        if ($info['merchant_status'] == 'WAIT_AUDI') {
+            return app('json')->fail('正在审核中，请耐心等待后台审核...');
+        }
+
+        $params['lkl_mer_cup_no'] = $info['merchant_no'];
+        $params['lkl_ec_no'] = $info['lkl_ec_no'];
+        $api = new \Lakala\LklApi();
+        $result = $api::lklApplyLedgerMer($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+
+        $data['ledger_status'] = 1;
+        try {
+            $info->save($data);
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
+        return app('json')->success('开通成功', []);
+    }
+
+    /**
+     * 电子合同下载
      **/
     public function download(){
         $params = $this->validateParams(__FUNCTION__);
@@ -308,6 +343,12 @@ class MerchantIntention extends BaseController
                     'legal_auth_img',
                 ]);
                 break;
+            case 'create_three':
+                $params = $this->request->params([
+                    'mobile',
+                    'split_entrust_file_path',
+                ]);
+                break;
             case 'download':
                 $params = $this->request->params(['lkl_ec_apply_id']);
             break;
@@ -319,6 +360,15 @@ class MerchantIntention extends BaseController
         }
         return $params;
     }
+
+    /**
+     * 银行列表查询
+     **/
+    public function bank_info(){
+        
+    }
+
+
 
 
 

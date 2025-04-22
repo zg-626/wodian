@@ -260,6 +260,8 @@ Route::group('api/', function () {
         Route::post('intention/info', 'api.store.merchant.MerchantIntention/info'); // 入驻详情
         Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first'); // 电子合同签约
         Route::post('intention/create_second', 'api.store.merchant.MerchantIntention/create_second'); // 商户进件
+        Route::post('intention/create_three', 'api.store.merchant.MerchantIntention/create_three'); // 商户分账业务开通申请
+
 
 
         //客服商品管理
