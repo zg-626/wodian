@@ -533,6 +533,27 @@ class StoreOrderRepository extends BaseRepository
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, '大区经理推广佣金');
                 break;
             }
+
+            // 如果是代理商绑定了讲师，给讲师发放佣金
+            if ($superior['group_id'] == self::USER_GROUP['AGENT_1'] || 
+                $superior['group_id'] == self::USER_GROUP['AGENT_2'] || 
+                $superior['group_id'] == self::USER_GROUP['AGENT_3']) {
+                
+                // 如果代理商绑定了讲师，给讲师发放佣金
+                if (!empty($superior['lecturer'])) {
+                    // 获取讲师信息
+                    $lecturer = $userRepository->get($superior['lecturer']);
+                    if ($lecturer) {
+                        // 获取讲师分组信息及比例
+                        $lecturerGroup = $userGroupRepository->get($lecturer['group_id']);
+                        // 给讲师发放佣金
+                        $lecturer_bonus = bcmul($lecturerGroup->extension/100, $money, 2);
+                        $this->giveBrokerage($order['order_id'],$userBillRepository, $lecturer, $lecturer_bonus, '讲师推广奖励');
+                        // 记录讲师ID，避免重复发放
+                        $processedUids[] = $lecturer['uid'];
+                    }
+                }
+            }
             
             // 计算并发放上级佣金
             $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
