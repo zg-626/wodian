@@ -59,4 +59,14 @@ class Lakala extends BaseController
         Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
         return app('json')->success('请求成功');
     }
+
+    /**
+     * @desc 分账关系绑定 回调
+     * @author ZhouTing
+     * @date 2025-04-22 10:50
+     */
+    public function lklApplyBindNotify()
+    {
+        return app('json')->success('请求成功');
+    }
 }
