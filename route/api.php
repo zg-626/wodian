@@ -249,9 +249,14 @@ Route::group('api/', function () {
         Route::get('intention/lst', 'api.store.merchant.MerchantIntention/lst');
         Route::get('intention/detail/:id', 'api.store.merchant.MerchantIntention/detail');
         Route::post('intention/update/:id', 'api.store.merchant.MerchantIntention/update');
-        Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first'); // 签约电子合同
-
         Route::post('store/product/group/cancel', 'api.store.product.StoreProductGroup/cancel');
+
+        // 商户入驻 拉卡拉
+        Route::post('intention/status', 'api.store.merchant.MerchantIntention/status'); // 入驻状态
+        Route::post('intention/info', 'api.store.merchant.MerchantIntention/info'); // 入驻详情
+        Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first'); // 签约电子合同
+        Route::post('intention/access_token', 'api.store.merchant.MerchantIntention/access_token'); // 商户进件-1.获取access_token
+        Route::post('intention/create_second', 'api.store.merchant.MerchantIntention/create_second'); // 商户进件-2.提交
 
         //客服商品管理
         Route::group('server/:merId', function () {
