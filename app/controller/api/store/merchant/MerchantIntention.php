@@ -21,9 +21,11 @@ use crmeb\services\SmsService;
 use crmeb\services\SwooleTaskService;
 use crmeb\services\YunxinSmsService;
 use think\App;
+use think\facade\Db;
 use crmeb\basic\BaseController;
 use app\common\repositories\system\merchant\MerchantIntentionRepository as repository;
-use app\common\model\system\merchant\MerchantEcLkl;
+use app\common\model\system\merchant\MerchantEcLkl as LklModel;
+use app\common\model\system\merchant\MerchantIntention as IntentionModel;
 use think\Exception;
 use think\exception\ValidateException;
 
@@ -46,7 +48,7 @@ class MerchantIntention extends BaseController
     {
         // 0=未申请,1=申请中,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
-        $info_1 = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        $info_1 = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
         if (!$info_1) {
             $status_1 = 0;
             $status_2 = 0;
@@ -67,6 +69,9 @@ class MerchantIntention extends BaseController
             }
             if ($info_1['merchant_status'] == 'WAIT_AUDI') {
                 $status_2 = 1;
+            }
+            if ($info_1['merchant_status'] == 'SUCCESS') {
+                $status_2 = 2;
             }
         }
 
@@ -89,7 +94,7 @@ class MerchantIntention extends BaseController
         switch ($params['step']) {
             case 1:
             case 2:
-                $info = MerchantEcLkl::where('uid', $uid)->find();
+                $info = LklModel::where('uid', $uid)->find();
                 break;
             case 3:
                 $info = 3;
@@ -102,14 +107,14 @@ class MerchantIntention extends BaseController
     }
 
     /**
-     * 签约电子合同
+     * 电子合同签约
      **/
     public function create_first()
     {
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
+        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_status,merchant_status')->find();
         if ($info) {
             if ($info['lkl_ec_status'] == 'APPLY') {
                 return app('json')->fail('您已提交申请，请耐心等待后台审核...');
@@ -126,7 +131,7 @@ class MerchantIntention extends BaseController
             if ($info) {
                 $info->save($data);
             } else {
-                $info = MerchantEcLkl::create($data);
+                $info = LklModel::create($data);
             }
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
@@ -137,9 +142,14 @@ class MerchantIntention extends BaseController
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
+
         $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
         $save_data['lkl_ec_status'] = 'APPLY';
-        MerchantEcLkl::where('id', $info->id)->update($save_data);
+        try {
+            LklModel::where('id', $info->id)->update($save_data);
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
         return app('json')->success('提交成功', $result);
     }
 
@@ -151,7 +161,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = MerchantEcLkl::where('uid', $uid)->field('id,lkl_ec_no,lkl_ec_status,merchant_status')->find();
+        $info = LklModel::where('uid', $uid)->field('id,lkl_ec_no,lkl_ec_status,merchant_status,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
@@ -161,7 +171,7 @@ class MerchantIntention extends BaseController
         if ($info['merchant_status'] == 'WAIT_AUDI') {
             return app('json')->fail('商户进件已提交申请，请耐心等待后台审核...');
         }
-        if ($info['merchant_status'] == '成功') {
+        if ($info['merchant_status'] == 'SUCCESS') {
             return app('json')->fail('商户进件已审核成功');
         }
 
@@ -180,9 +190,35 @@ class MerchantIntention extends BaseController
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
+
         $save_data['merchant_no'] = $result['merchantNo'];
         $save_data['merchant_status'] = $result['status'];
-        MerchantEcLkl::where('id', $info->id)->update($save_data);
+        $intention_data['mer_lkl_id'] = $info->id;
+        $intention_data['uid'] = $uid;
+        $intention_data['phone'] = $info['ec_mobile']; // 手机号
+        $intention_data['mer_name'] = $params['mer_name']; // 商户名称
+        $intention_data['mer_banner'] = $params['shop_outside_img']; // 商户banner图片
+        $intention_data['name'] = $info['cert_name']; // 客户姓名
+        $intention_data['id_card'] = $info['cert_no']; // 身份证
+        $intention_data['inside'] = $params['shop_inside_img']; // 区域内部照片
+        $intention_data['email'] = $params['email']; // 邮箱
+        $intention_data['bank_card'] = $info['acct_no']; // 银行卡号
+        $intention_data['bank_open_name'] = $info['B19']; // 开户行名称
+        $intention_data['address'] = $params['mer_addr']; // 商户地址
+        Db::startTrans();
+        try {
+            LklModel::where('id', $info->id)->update($save_data);
+            $intention = IntentionModel::where('mer_lkl_id', $info->id)->field('id')->find();
+            if ($intention) {
+                $intention->save($intention_data);
+            } else {
+                IntentionModel::create($intention_data);
+            }
+            Db::commit();
+        } catch (Exception $e) {
+            Db::rollback();
+            return app('json')->fail($e->getError());
+        }
         return app('json')->success('提交成功', []);
     }
 
@@ -269,12 +305,6 @@ class MerchantIntention extends BaseController
         }
         return $params;
     }
-
-
-
-
-
-
 
 
     public function create()

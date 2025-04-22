@@ -254,7 +254,7 @@ Route::group('api/', function () {
         // 商户入驻 拉卡拉
         Route::post('intention/status', 'api.store.merchant.MerchantIntention/status'); // 入驻状态
         Route::post('intention/info', 'api.store.merchant.MerchantIntention/info'); // 入驻详情
-        Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first'); // 签约电子合同
+        Route::post('intention/create_first', 'api.store.merchant.MerchantIntention/create_first'); // 电子合同签约
         Route::post('intention/create_second', 'api.store.merchant.MerchantIntention/create_second'); // 商户进件
 
 
