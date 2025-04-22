@@ -267,4 +267,5 @@ class MerchantIntentionValidate extends Validate
             'legal_auth_img',
         ],
     ];
+
 }

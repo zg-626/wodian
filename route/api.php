@@ -258,6 +258,7 @@ Route::group('api/', function () {
         Route::post('intention/access_token', 'api.store.merchant.MerchantIntention/access_token'); // 商户进件-1.获取access_token
         Route::post('intention/create_second', 'api.store.merchant.MerchantIntention/create_second'); // 商户进件-2.提交
 
+
         //客服商品管理
         Route::group('server/:merId', function () {
             //商品

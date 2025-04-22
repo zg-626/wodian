@@ -194,6 +194,9 @@ class MerchantIntention extends BaseController
         return app('json')->success('提交成功', []);
     }
 
+    /**
+     * 验证
+     **/
     protected function validateParams($function)
     {
 
@@ -275,6 +278,12 @@ class MerchantIntention extends BaseController
         return $params;
     }
 
+
+
+
+
+
+    
 
     public function create()
     {
