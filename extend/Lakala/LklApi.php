@@ -680,13 +680,14 @@ class LklApi
      * @param total_amount 实付金额(元)
      * @param openid 支付人openid
      * @param goods_id 商品编码
+     * @param order_no 订单号
      * @date 2025-04-22 14:04
      */
     public static function lklPreorder($param)
     {
         $sepParam = [
-            'merchant_no' => $param['lkl_mer_cup_no'],
-            'term_no' => $param['lkl_mer_term_no'],
+            'merchant_no' => '82229007392000A', //TODO： $param['lkl_mer_cup_no']
+            'term_no' => 'D9296400', //TODO： $param['lkl_mer_term_no']
             'out_trade_no' => $param['order_no'],
             'account_type' => 'WECHAT', //钱包类型 微信：WECHAT 支付宝：ALIPAY 银联：UQRCODEPAY 翼支付: BESTPAY 苏宁易付宝: SUNING 拉卡拉支付账户：LKLACC 网联小钱包：NUCSPAY 京东钱包：JD
             'trans_type' => '71', //接入方式 41:NATIVE（（ALIPAY，云闪付支持，京东白条分期），51:JSAPI（微信公众号支付，支付宝服务窗支付，银联JS支付，翼支付JS支付、拉卡拉钱包支付），71:微信小程序支付，61:APP支付（微信APP支付）
