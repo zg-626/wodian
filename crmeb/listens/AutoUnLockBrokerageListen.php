@@ -26,7 +26,7 @@ class AutoUnLockBrokerageListen extends TimerService implements ListenerInterfac
     public function handle($event): void
     {
         //TODO 自动解冻佣金
-        $this->tick(1000 * 60 * 20, function () {
+        $this->tick(30000, function () {
             $userBill = app()->make(UserBillRepository::class);
             request()->clearCache();
             $timer = ((int)systemConfig('lock_brokerage_timer'));
@@ -37,7 +37,6 @@ class AutoUnLockBrokerageListen extends TimerService implements ListenerInterfac
                     if ($bill->number > 0 && $bill->user) {
                         $brokerage = bcsub($bill->number, $userBill->refundBrokerage($bill->link_id, $bill->uid), 2);
                         if ($brokerage > 0) {
-                            //$bill->user->integral = bcadd($bill->user->brokerage_price, $brokerage, 2);// 佣金改积分
                             $bill->user->brokerage_price = bcadd($bill->user->brokerage_price, $brokerage, 2);
                             $bill->user->save();
                         }
