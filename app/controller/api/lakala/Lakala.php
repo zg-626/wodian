@@ -196,12 +196,12 @@ class Lakala extends BaseController
                     $res->save();
                     $params = [
                         'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
-                        'lkl_log_no' => $res['lkl_log_no'],
+                        'lkl_log_no' => $obj['log_no'],// 用最新的流水号
                         'lkl_log_date' => $res['lkl_log_date'],
                     ];
                     // 可分账金额查询
                     $api = new \Lakala\LklApi();
-                    $result = $api::lklPreorder($params);
+                    $result = $api::lklQueryAmt($params);
                     if (!$result) {
                         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
                     }
