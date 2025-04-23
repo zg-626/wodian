@@ -750,7 +750,7 @@ class LklApi
                         [
                             'goods_id' => $param['goods_id'],
                             'quantity' => 1, //购买数量
-                            'price' => bcmul($param['total_amount'], 100, 0),
+                            'price' => floatval(bcmul($param['total_amount'], 100, 2))
                         ]
                     ]
                 ]
