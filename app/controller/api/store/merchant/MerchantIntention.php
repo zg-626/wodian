@@ -344,7 +344,6 @@ class MerchantIntention extends BaseController
      **/
     public function lklBankOrganization(){
         $params = $this->validateParams(__FUNCTION__);
-        return app('json')->success('获取银行地区查询', $params);
         $api = new \Lakala\LklApi();
         $result = $api::lklBankOrganization($params);
         if (!$result) {
