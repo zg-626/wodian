@@ -3,6 +3,7 @@
 namespace app\controller\api\lakala;
 
 use app\common\model\system\merchant\MerchantEcLkl as LklModel;
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use crmeb\basic\BaseController;
 use think\facade\Log;
 use think\response\Json;
@@ -186,8 +187,15 @@ class Lakala extends BaseController
             $obj = json_decode($originalText, true);
 
             if ($obj['trade_state'] == 'SUCCESS') {
+                // 替换更新发货后的流水号
                 $out_trade_no = $obj['origin_out_trade_no'];
-                //$obj['log_no']
+                /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+                $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
+                if(!empty($res)){
+                    $res->lkl_log_no = $obj['log_no']??'';
+                    $res->save();
+                }
+
             }
 
             //通知拉卡拉，业务处理成功
