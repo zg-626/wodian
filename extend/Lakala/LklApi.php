@@ -204,6 +204,45 @@ class LklApi
     }
 
     /**
+     * @desc 电子合同查询
+     * @author ZhouTing
+     * @param lkl_ec_apply_id 电子合同申请受理号
+     * @doc：https://o.lakala.com/#/home/document/detail?id=293
+     * @date 2025-04-23 10:46
+     */
+    public static function lklEcQStatus($param)
+    {
+        $sepParam = [
+            'version' => '1.0',
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
+            'orgId' => self::$config['org_code'],
+            'ecApplyId' => $param['lkl_ec_apply_id']
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同查询参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v2/mms/openApi/ec/qStatus', $request);
+            $res = $response->getOriginalText();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同查询请求结果: ' . $res, 'lkl');
+
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return $resdata['respData'];
+            } else {
+                return self::setErrorInfo('电子合同查询失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 电子合同查询异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
      * @desc 拉卡拉 商户进件第一步 获取access_token
      * @author ZhouTing
      * @date 2025-04-18 09:11
@@ -683,6 +722,7 @@ class LklApi
      * @param openid 支付人openid
      * @param goods_id 商品编码
      * @param order_no 订单号
+     * @doc：https://o.lakala.com/#/home/document/detail?id=110
      * @date 2025-04-22 14:04
      */
     public static function lklPreorder($param)
