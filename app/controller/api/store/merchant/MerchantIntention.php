@@ -344,6 +344,7 @@ class MerchantIntention extends BaseController
      **/
     public function lklBankOrganization(){
         $params = $this->validateParams(__FUNCTION__);
+        var_dump($params);
         $api = new \Lakala\LklApi();
         $result = $api::lklBankOrganization($params);
         if (!$result) {
