@@ -104,13 +104,13 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*** @var MerchantDao $merchant */
         $merchant = app()->make(MerchantDao::class);
 
-        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,lkl_mer_cup_no')->find();
+        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no')->find();
 
         // 判断有没有申请子商户
         /*if ($merchant['sub_mchid'] == 0) {
             throw new ValidateException('该商家未申请子商户，无法下单');
         }*/
-        /*if ($merchant['lkl_mer_cup_no'] == 0) {
+        /*if ($merchant['merchant_no'] == 0) {
             throw new ValidateException('该商家未申请拉卡拉子商户，无法下单');
         }*/
 
@@ -186,7 +186,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'title'     => '线下门店支付',
             'link_id'   => 0,
             'order_sn'  => $order_sn,
-            'lkl_mer_cup_no' => $merchant['lkl_mer_cup_no'],
+            'lkl_mer_cup_no' => $merchant['merchant_no'],
             'pay_price' => $money,
             'order_info' => 0,
             'uid'        => $user->uid,
