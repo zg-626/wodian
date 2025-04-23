@@ -194,6 +194,25 @@ class Lakala extends BaseController
                 if(!empty($res)){
                     $res->lkl_log_no = $obj['log_no']??'';
                     $res->save();
+                    $params = [
+                        'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
+                        'lkl_log_no' => $res['lkl_log_no'],
+                        'lkl_log_date' => $res['lkl_log_date'],
+                    ];
+                    // 可分账金额查询
+                    $api = new \Lakala\LklApi();
+                    $result = $api::lklPreorder($params);
+                    if (!$result) {
+                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'sacs');
+                    }
+                    $total_separate_amt=$result['total_separate_amt'];
+                    if($total_separate_amt>0){
+                        $api = new \Lakala\LklApi();
+                        $result = $api::lklSeparate($params);
+                        if (!$result) {
+                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'sacs');
+                        }
+                    }
                 }
 
             }
@@ -206,6 +225,13 @@ class Lakala extends BaseController
         }
     }
 
+    // 拉卡拉分账参数拼接
+    public function lklSeparate($param)
+    {
+        $sepParam = [
+            'merchant_no' => $param['lkl_mer_cup_no'],
+        ];
+    }
     /**
      * @desc 拉卡拉 - 订单分账 回调
      * @author ZhouTing

@@ -844,7 +844,7 @@ class LklApi
             'merchant_no' => $param['lkl_mer_cup_no'],
             'log_no' => $param['lkl_log_no'], //拉卡拉对账单流水号
             'log_date' => $param['lkl_log_date'],
-            'out_separate_no' => date('YmdHis', time()) . Random::numeric(8), //商户分账指令流水号
+            'out_separate_no' => date('YmdHis', time()) . Random::generate(8), //商户分账指令流水号
             'total_amt' => (string)($param['can_separate_amt']), //单位：分
             'lkl_org_no' => self::$config['org_code'],
             'cal_type' => '0', //分账计算类型 0- 按照指定金额，1- 按照指定比例。默认 0
