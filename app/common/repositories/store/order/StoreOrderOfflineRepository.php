@@ -336,7 +336,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $this->computed($res,$user);
 
                 // 记录本次分红池,手续费的40%
-                $total_amount = bcmul($order->handling_fee, 0.4, 2);
+                $total_amount = bcmul($order->handling_fee, "0.4", 2);
                 Db::name('dividend_pool')->insert([
                     'total_amount' => $total_amount,
                     'create_time'   => date('Y-m-d H:i:s'),
