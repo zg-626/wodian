@@ -13,6 +13,7 @@
 namespace app\controller\api\dividend;
 
 use app\common\repositories\article\ArticleRepository as repository;
+use app\common\repositories\user\BonusOfflineService;
 use app\common\repositories\user\BonusService;
 use app\common\repositories\user\DividendPoolService;
 use app\common\repositories\user\UserBillRepository;
@@ -44,8 +45,13 @@ class Dividend extends BaseController
         /*$dividendPoolService = app()->make(DividendPoolService::class);
         $dividendPoolService->calculateAndDistributeDividend();*/
         /** @var BonusService $bonusService **/
-        $bonusService = app()->make(BonusService::class);
+        /*$bonusService = app()->make(BonusService::class);
         $info = $bonusService->calculateBonus();
+        echo "<pre>";
+        print_r($info);*/
+        /** @var BonusOfflineService $bonusOfflineService **/
+        $bonusOfflineService = app()->make(BonusOfflineService::class);
+        $info = $bonusOfflineService->calculateBonus();
         echo "<pre>";
         print_r($info);
     }
