@@ -1220,3 +1220,15 @@ if (!function_exists('imageUrl')) {
         }
     }
 }
+
+/**
+ * 用于测试打印数组数据
+ * @param mixed $arr
+ **/
+function p($arr)
+{
+    header('content-type:text/html;charset=utf-8');
+    echo '<pre>';
+    print_r($arr);
+    echo '</pre>';
+}
