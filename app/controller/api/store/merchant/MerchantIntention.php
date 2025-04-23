@@ -48,7 +48,7 @@ class MerchantIntention extends BaseController
     {
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
-        $info = LklModel::getIntentionInfo(['uid' => $uid], '');
+        $info = LklModel::getInfo(['uid' => $uid], '');
         $status_1 = 0;
         $status_2 = 0;
         $status_3 = 0;
@@ -114,7 +114,7 @@ class MerchantIntention extends BaseController
             case 2:
             case 3:
             case 4:
-                $info = LklModel::getIntentionInfo(['uid' => $uid], '*');
+                $info = LklModel::getInfo(['uid' => $uid], '*');
                 break;
         }
         return app('json')->success('入驻详情', $info);
@@ -128,7 +128,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::getIntentionInfo(['uid' => $uid], '');
+        $info = LklModel::getInfo(['uid' => $uid], '');
         if ($info) {
             if ($info['lkl_ec_status'] == 'COMPLETED') {
                 return app('json')->fail('电子合同已签约成功');
@@ -172,7 +172,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::getIntentionInfo(['uid' => $uid], 'lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19');
+        $info = LklModel::getInfo(['uid' => $uid], 'lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19');
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
@@ -241,7 +241,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::getIntentionInfo(['uid' => $uid], 'lkl_ec_no,lkl_mer_cup_no');
+        $info = LklModel::getInfo(['uid' => $uid], 'lkl_ec_no,lkl_mer_cup_no');
         if (!$info) {
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
@@ -284,7 +284,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::getIntentionInfo(['uid' => $uid], 'lkl_mer_cup_no');
+        $info = LklModel::getInfo(['uid' => $uid], 'lkl_mer_cup_no');
         if (!$info) {
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
