@@ -925,10 +925,10 @@ class LklApi
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
-        p($param);
-        p('111111111111111111111');
+        pp($param);
+        pp('111111111111111111111');
         $param['parent_code'] = (isset($param['parent_code']) && !empty(empty($param['parent_code']))) ? $param['parent_code'] : 1;
-        p($param);
+        pp($param);
         exit;
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 银行地区参数: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');

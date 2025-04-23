@@ -1221,12 +1221,12 @@ if (!function_exists('imageUrl')) {
     }
 }
 
-if (!function_exists('p')) {
+if (!function_exists('pp')) {
     /**
      * 用于测试打印数组数据
      * @param mixed $arr
      **/
-    function p($arr)
+    function pp($arr)
     {
         header('content-type:text/html;charset=utf-8');
         echo '<pre>';
