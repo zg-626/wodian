@@ -77,7 +77,15 @@ class MerchantIntention extends BaseController
                 $status_2 = 2;
             }
 
-            $status_3 = $info['ledger_status'];
+            if ($info['lkl_mer_ledger_status'] == 3) {
+                $status_3 = 1;
+            }
+            if ($info['lkl_mer_ledger_status'] == 1) {
+                $status_3 = 2;
+            }
+            if ($info['lkl_mer_ledger_status'] == 2) {
+                $status_3 = 3;
+            }
         }
         $data = compact('status_1', 'status_2', 'status_3', 'status_4');
         return app('json')->success('入驻状态', $data);
@@ -252,13 +260,13 @@ class MerchantIntention extends BaseController
         }
 
         $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
-        $data['ledger_status'] = 1;
+        $data['lkl_mer_ledger_status'] = 1;
         try {
             $info->save($data);
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
-        return app('json')->success('开通成功', []);
+        return app('json')->success('提交成功', []);
     }
 
     /**
@@ -267,6 +275,44 @@ class MerchantIntention extends BaseController
     public function create_four()
     {
         $params = $this->validateParams(__FUNCTION__);
+
+        $uid = $this->userInfo->uid;
+        $info = $this->getIntentionInfo(['uid' => $uid], '');
+        if (!$info) {
+            return app('json')->fail('请返回上一页，完成电子合同签约');
+        }
+        if ($info['lkl_ec_status'] != 'COMPLETED') {
+            return app('json')->fail('电子合同未签约成功');
+        }
+        if ($info['lkl_mer_cup_status'] == '') {
+            return app('json')->fail('请返回上一页，完成商户进件');
+        }
+        if ($info['lkl_mer_cup_status'] != 'SUCCESS') {
+            return app('json')->fail('商户进件未审核成功');
+        }
+        if($info['lkl_mer_ledger_status'] == 0){
+            return app('json')->fail('请返回上一页，完成商户分账业务开通申请');
+        }
+        if($info['lkl_mer_ledger_status'] == 3){
+            return app('json')->fail('正在审核中，请耐心等待后台审核...');
+        }
+
+        $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+        $params['lkl_receiver_no'] = '';
+        $api = new \Lakala\LklApi();
+        $result = $api::lklApplyBind($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+
+        $data['entrust_file_path'] = $params['entrust_file_path'];
+        $data['lkl_mer_bind_status'] = 3;
+        try {
+            $info->save($data);
+        } catch (Exception $e) {
+            return app('json')->fail($e->getError());
+        }
+        return app('json')->success('开通成功', []);
     }
 
     /**
@@ -384,7 +430,7 @@ class MerchantIntention extends BaseController
     public function getIntentionInfo($where, $field)
     {
         if ($field == '') {
-            $field = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,ledger_status';
+            $field = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status';
         }
         $info = LklModel::where($where)->field($field)->find();
         return $info;
