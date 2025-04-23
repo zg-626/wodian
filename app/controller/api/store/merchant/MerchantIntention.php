@@ -343,7 +343,7 @@ class MerchantIntention extends BaseController
      * 获取银行地区查询
      **/
     public function lklBankOrganization(){
-        $params = $this->validateParams(__FUNCTION__);
+        $params = $this->validateParams('lklOrganization');
         $api = new \Lakala\LklApi();
         $result = $api::lklBankOrganization($params);
         if (!$result) {
@@ -486,20 +486,6 @@ class MerchantIntention extends BaseController
                 $params = $this->request->params([
                     'parent_code'
                 ]);
-                return $params;
-                break;
-            case 'lklBankOrganization':
-                $params = $this->request->params([
-                    'parent_code'
-                ]);
-//                $rule = [
-//                    'parent_code|编码'=>'require',
-//                ];
-//                try {
-//                    validate($rule)->check($params);
-//                } catch (Exception $e) {
-//                    return app('json')->fail($e->getError());
-//                }
                 return $params;
                 break;
             case 'lklBankInfo':
