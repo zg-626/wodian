@@ -63,10 +63,10 @@ class Lakala extends BaseController
         $data = file_get_contents("php://input");
         Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
 
-//        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
-//        if (!empty($info)) {
-//            $info->save(['lkl_mer_cup_status' => '']);
-//        }
+        //        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
+        //        if (!empty($info)) {
+        //            $info->save(['lkl_mer_cup_status' => '']);
+        //        }
 
         return app('json')->success('请求成功');
     }
@@ -194,6 +194,33 @@ class Lakala extends BaseController
             $api->success();
         } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉发货确认回调异常: ' . $e->getMessage(), 'lkl');
+            $api->fail($e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 拉卡拉 - 订单分账 回调
+     * @author ZhouTing
+     * @date 2025-04-23 16:11
+     */
+    public function lklSeparateNotify()
+    {
+        $config = new Configuration();
+        $api = new LakalaNotifyApi($config);
+        try {
+            $request = $api->notiApi();
+            // $headers = $request->getHeaders();
+            $originalText = $request->getOriginalText();
+            Db::name('third_notify')->insert(['title' => '拉卡拉订单分账回调', 'content' => $originalText, 'createtime' => time()]);
+
+            // $originalText = '{"separate_no":"20250409770188013954770800","out_separate_no":"2025040919375840689521","cmd_type":"SEPARATE","log_no":"66231317811820","log_date":"20250409","cal_type":"0","separate_type":"1","separate_date":"20250409","finish_date":"20250409","total_amt":"997","status":"SUCCESS","final_status":"SUCCESS","actual_separate_amt":"997","total_fee_amt":"0","detail_datas":[{"recv_merchant_no":"","recv_no":"SR2024000069562","amt":"49"},{"recv_merchant_no":"82210008699006U","recv_no":"82210008699006U","amt":"948"}]}';
+            $obj = json_decode($originalText, true);
+
+
+            //通知拉卡拉，业务处理成功
+            $api->success();
+        } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉订单分账回调异常: ' . $e->getMessage(), 'lkl');
             $api->fail($e->getMessage());
         }
     }
