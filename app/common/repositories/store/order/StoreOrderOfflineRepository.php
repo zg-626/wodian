@@ -250,7 +250,10 @@ class StoreOrderOfflineRepository extends BaseRepository
             if (!$result) {
                 return app('json')->fail($api->getErrorInfo());
             }
-            return app('json')->status('success', $result + ['order_id' => $info->order_id]);
+            $config=[
+                'config' => $result
+            ];
+            return app('json')->status('success', $config + ['order_id' => $info->order_id]);
         } else {
             $this->paySuccess($data);
             return app('json')->status('success', ['order_id' => $info->order_id]);
