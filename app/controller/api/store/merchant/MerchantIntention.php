@@ -339,6 +339,17 @@ class MerchantIntention extends BaseController
         return app('json')->success('提交成功', $result);
     }
 
+    public function aa(){
+        $params['lkl_ec_apply_id'] = '967363813417377792';
+
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcQStatus($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('提交成功', $result);
+    }
+
     /**
      * 验证
      **/
