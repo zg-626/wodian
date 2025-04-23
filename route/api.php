@@ -622,6 +622,8 @@ Route::group('api/', function () {
         Route::get('intention/type', 'api.store.merchant.MerchantIntention/typeLst');
 
         Route::post('intention/lklOrganization', 'api.store.merchant.MerchantIntention/lklOrganization'); // 获取地区查询
+        Route::post('intention/lklBankOrganization', 'api.store.merchant.MerchantIntention/lklBankOrganization'); // 获取银行地区查询
+        Route::post('intention/lklBankInfo', 'api.store.merchant.MerchantIntention/lklBankInfo'); // 银行列表查询
         Route::post('intention/download', 'api.store.merchant.MerchantIntention/download');// 拉卡拉电子合同下载
         Route::post('intention/download_status', 'api.store.merchant.MerchantIntention/download_status'); // 拉卡拉电子合同查询
 

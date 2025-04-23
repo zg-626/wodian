@@ -336,7 +336,33 @@ class MerchantIntention extends BaseController
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
-        return app('json')->success('提交成功', $result);
+        return app('json')->success('获取地区查询', $result);
+    }
+
+    /**
+     * 获取银行地区查询
+     **/
+    public function lklBankOrganization(){
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklBankOrganization($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('获取银行地区查询', $result);
+    }
+
+    /**
+     * 银行列表查询
+     **/
+    public function lklBankInfo(){
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklBankInfo($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('银行列表查询', $result);
     }
 
     /**
@@ -350,7 +376,7 @@ class MerchantIntention extends BaseController
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
-        return app('json')->success('提交成功', $result);
+        return app('json')->success('电子合同下载', $result);
     }
 
     /**
@@ -363,7 +389,7 @@ class MerchantIntention extends BaseController
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
-        return app('json')->success('提交成功', $result);
+        return app('json')->success('电子合同查询', $result);
     }
 
     /**
@@ -460,8 +486,33 @@ class MerchantIntention extends BaseController
                 $params = $this->request->params([
                     'parent_code'
                 ]);
+                return $params;
+                break;
+            case 'lklBankOrganization':
+                $params = $this->request->params([
+                    'parent_code'
+                ]);
+                $rule = [
+                    'parent_code|编码'=>'require',
+                ];
                 try {
-                    validate([])->check($params);
+                    validate($rule)->check($params);
+                } catch (Exception $e) {
+                    return app('json')->fail($e->getError());
+                }
+                return $params;
+                break;
+            case 'lklBankInfo':
+                $params = $this->request->params([
+                    'area_code',
+                    'bank_name'
+                ]);
+                $rule = [
+                    'area_code|地区编码'=>'require',
+                    'bank_name|银行名称'=>'require',
+                ];
+                try {
+                    validate($rule)->check($params);
                 } catch (Exception $e) {
                     return app('json')->fail($e->getError());
                 }
