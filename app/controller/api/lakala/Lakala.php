@@ -2,6 +2,7 @@
 
 namespace app\controller\api\lakala;
 
+use app\common\model\system\merchant\MerchantEcLkl as LklModel;
 use crmeb\basic\BaseController;
 use think\response\Json;
 use Lakala\OpenAPISDK\V2\V2Configuration;
@@ -35,9 +36,9 @@ class Lakala extends BaseController
 
             $obj = json_decode($originalText, true);
             //1、更新电子合同签约状态
-            $ecInfo = Db::name('merchant_ec_lkl')->where(['lkl_ec_apply_id' => $obj['ecApplyId']])->find();
+            $ecInfo = LklModel::where(['lkl_ec_apply_id' => $obj['ecApplyId']])->field('id')->find();
             if (!empty($ecInfo)) {
-                Db::name('merchant_ec_lkl')->where('id', $ecInfo['id'])->update(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
+                $ecInfo->save(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
             }
 
             $api->success();

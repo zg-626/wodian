@@ -419,15 +419,16 @@ class MerchantIntention extends BaseController
                     'split_entrust_file_path',
                 ]);
                 break;
+            case 'create_four':
+                $params = $this->request->params([
+                    'entrust_file_path',
+                ]);
+                break;
             case 'download':
                 $params = $this->request->params([
                     'lkl_ec_apply_id'
                 ]);
                 break;
-            case 'create_four':
-                $params = $this->request->params([
-                    'entrust_file_path',
-                ]);
         }
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
@@ -445,6 +446,8 @@ class MerchantIntention extends BaseController
         $field_1 = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status,lkl_mer_bind_status';
         if($field != '*'){
             $field = $field_1.','.$field;
+        } else{
+            $field = $field_1;
         }
         $info = LklModel::where($where)->field($field)->find();
         return $info;
