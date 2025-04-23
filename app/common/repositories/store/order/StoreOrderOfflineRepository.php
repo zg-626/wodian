@@ -338,18 +338,34 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
                 // 记录本次分红池,手续费的40%
-                Db::name('dividend_pool')->where('id', 1)->inc('total_amount', $total_amount)->update([
-                    'update_time' => date('Y-m-d H:i:s')
-                ]);
+                $poolInfo = Db::name('dividend_pool')->order('id', 'desc')->find();
+                if (!$poolInfo) {
+                    // 第一次创建分红池记录
+                    Db::name('dividend_pool')->insert([
+                        'total_amount' => $total_amount,
+                        'available_amount' => $total_amount,
+                        'distributed_amount' => 0,
+                        'create_time' => date('Y-m-d H:i:s'),
+                        'update_time' => date('Y-m-d H:i:s')
+                    ]);
+                } else {
+                    // 更新现有分红池
+                    Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
+                        'total_amount' => Db::raw('total_amount + ' . $total_amount),
+                        'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                        'update_time' => date('Y-m-d H:i:s')
+                    ]);
+                }
 
                 // 分红池流水表
                 Db::name('dividend_pool_log')->insert([
                     'order_id' => $order->order_id,
                     'amount' => $total_amount,
-                    'create_time'   => date('Y-m-d H:i:s'),
                     'handling_fee' => $handling_fee,
                     'mer_id' => $order->mer_id,
-                    'uid' => $order->uid
+                    'uid' => $order->uid,
+                    'create_time' => date('Y-m-d H:i:s'),
+                    'remark' => '订单分红入池'
                 ]);
 
                 return $this->payAfter($res);
