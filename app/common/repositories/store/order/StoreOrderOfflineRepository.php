@@ -32,6 +32,8 @@ use app\common\repositories\user\UserRepository;
 use app\common\repositories\wechat\WechatUserRepository;
 use crmeb\jobs\OrderProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
+use crmeb\services\MiniProgramService;
+use crmeb\services\OfflineMiniProgramService;
 use crmeb\services\OfflinePayService;
 use crmeb\services\PayService;
 use crmeb\services\SwooleTaskService;
@@ -394,10 +396,97 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'create_time' => date('Y-m-d H:i:s'),
                     'remark' => '订单分红入池'
                 ]);
+                // 虚拟发货
+                //$this->virtualDelivery($res);
 
                 return $this->payAfter($res);
             });
         }
+    }
+
+    // 虚拟发货
+    public function virtualDelivery($order)
+    {
+        //查找支付者openid
+        $payer_openid = $this->getPayerOpenid($order['uid']);
+        $order_id = $order['order_sn'];
+        $order_key = [
+            'out_trade_no' => $order_id
+        ];
+        // 不是拆单
+        $delivery_mode = 1;
+        $is_all_delivered = true;
+        $path = '/pages/users/user_bill/index';
+        $delivery_id='';
+        $delivery_name='mini_order_shipping';
+        // 整理商品信息
+        $logistics_type = $this->getLogisticsType(3);
+        $item_desc = '用户充值' . $order['pay_price'];
+        $shipping_list = $this->getShippingList($logistics_type, $item_desc,'', $delivery_id, $delivery_name);
+        $queue_param = compact('order_key', 'logistics_type', 'shipping_list', 'payer_openid', 'path', 'delivery_mode', 'is_all_delivered');
+        OfflineMiniProgramService::create()->uploadShippingInfo($order_key, $logistics_type, $shipping_list, $payer_openid, $path, $delivery_mode, $is_all_delivered);
+    }
+
+    /**
+     * 获取支付者openid
+     * @param int $uid
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     *
+     * @date 2023/10/18
+     * @author yyw
+     */
+    public function getPayerOpenid(int $uid)
+    {
+        $user = app()->make(UserRepository::class)->get($uid);
+        if (empty($user)) {
+            throw new ValidateException('用户异常');
+        }
+        $wechatUser = app()->make(WechatUserRepository::class)->get($user['wechat_user_id']);
+        if (empty($wechatUser)) {
+            throw new ValidateException('微信用户异常');
+        }
+        if (empty($wechatUser['routine_openid'])) {
+            throw new ValidateException('订单支付者不是小程序');
+        }
+
+        return $wechatUser['routine_openid'];
+    }
+
+    /**
+     * 转换发货类型
+     * @param string $delivery_type
+     * @return int
+     *
+     * @date 2023/10/18
+     * @author yyw
+     */
+    public function getLogisticsType(string $delivery_type)
+    {
+
+        switch ($delivery_type) {
+            case '1':   // 发货
+            case '4':   //电子面单
+                $logistics_type = 1;
+                break;
+            case '5':  // 同城
+            case '2':    // 送货
+                $logistics_type = 2;
+                break;
+            case '3':    // 虚拟
+            case '6':    // 卡密
+                $logistics_type = 3;
+                break;
+            case '7':    // 自提
+                $logistics_type = 4;
+                break;
+            default:
+                throw new ValidateException('发货类型异常');
+        }
+
+        return $logistics_type;
     }
 
     /**

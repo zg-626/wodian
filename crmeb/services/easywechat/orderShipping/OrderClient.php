@@ -62,7 +62,8 @@ class OrderClient extends BaseOrder
         $params = [
             'order_key' => [
                 'order_number_type' => 1,
-                'mchid' => $this->config['config']['payment']['merchant_id'],
+                //'mchid' => $this->config['config']['payment']['merchant_id'],
+                'mchid' => '',
                 'out_trade_no' => $order_key['out_trade_no'] ?? '',
                 'transaction_id' => $order_key['transaction_id'] ?? '',
             ],
