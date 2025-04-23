@@ -307,7 +307,9 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($type == self::TYPE_SVIP) {
             return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
-                $res->transaction_id = $data['data']['transaction_id']??'';
+                $res->transaction_id = $data['data']['acc_trade_no']??'';
+                $res->lkl_log_no = $data['data']['log_no']??'';
+                $res->lkl_trade_no = $data['data']['trade_no']??'';
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
