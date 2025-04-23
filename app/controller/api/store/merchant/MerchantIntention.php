@@ -48,36 +48,37 @@ class MerchantIntention extends BaseController
     {
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
+        // 0=未开通,1=已开通
         $uid = $this->userInfo->uid;
-        $info_1 = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
+        $info = $this->getIntentionInfo(['uid' => $uid], '');
         $status_1 = 0;
         $status_2 = 0;
-        if ($info_1) {
+        $status_3 = 0;
+        $status_4 = 0;
+        if ($info) {
             $status_1 = 1;
-            if ($info_1['lkl_ec_status'] == 'APPLY') {
+            if ($info['lkl_ec_status'] == 'APPLY') {
                 $status_1 = 1;
             }
-            if ($info_1['lkl_ec_status'] == 'COMPLETED') {
+            if ($info['lkl_ec_status'] == 'COMPLETED') {
                 $status_1 = 2;
             }
-            if ($info_1['lkl_ec_status'] == 'UNDONE') {
+            if ($info['lkl_ec_status'] == 'UNDONE') {
                 $status_1 = 3;
             }
 
-            $status_2 = 0;
-            if ($info_1['merchant_status'] == 'WAIT_AUDI') {
+            if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
                 $status_2 = 1;
             }
-            if($info_1['merchant_status'] == 'SUCCESS'){
+            if ($info['lkl_mer_cup_status'] == 'SUCCESS') {
                 $status_2 = 1;
             }
-            if ($info_1['merchant_status'] == 'SUCCESS' && $info_1['mer_id'] > 0) {
+            if ($info['lkl_mer_cup_status'] == 'SUCCESS' && $info['mer_id'] > 0) {
                 $status_2 = 2;
             }
-        }
 
-        $status_3 = 0;
-        $status_4 = 0;
+            $status_3 = $info['ledger_status'];
+        }
         $data = compact('status_1', 'status_2', 'status_3', 'status_4');
         return app('json')->success('入驻状态', $data);
     }
@@ -95,7 +96,7 @@ class MerchantIntention extends BaseController
         switch ($params['step']) {
             case 1:
             case 2:
-                $info = LklModel::where('uid', $uid)->find();
+                $info = $this->getIntentionInfo(['uid' => $uid], '*');
                 break;
             case 3:
                 $info = 3;
@@ -115,7 +116,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status')->find();
+        $info = $this->getIntentionInfo(['uid' => $uid], '');
         if ($info) {
             if ($info['lkl_ec_status'] == 'COMPLETED') {
                 return app('json')->fail('电子合同已签约成功');
@@ -159,22 +160,22 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19')->find();
+        $info = $this->getIntentionInfo(['uid' => $uid], 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19');
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约成功');
         }
-        if ($info['merchant_status'] == 'WAIT_AUDI') {
+        if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
-        if ($info['merchant_status'] == 'SUCCESS') {
+        if ($info['lkl_mer_cup_status'] == 'SUCCESS') {
             return app('json')->fail('商户进件已审核成功');
         }
 
         $data = $params;
-        $data['merchant_time'] = time();
+        $data['lkl_mer_cup_time'] = time();
         try {
             $info->save($data);
         } catch (Exception $e) {
@@ -188,8 +189,8 @@ class MerchantIntention extends BaseController
             return app('json')->fail($api->getErrorInfo());
         }
 
-        $save_data['merchant_no'] = $result['merchantNo'];
-        $save_data['merchant_status'] = $result['status'];
+        $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
+        $save_data['lkl_mer_cup_status'] = $result['status'];
         $intention_data['mer_lkl_id'] = $info->id;
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
@@ -223,25 +224,26 @@ class MerchantIntention extends BaseController
     /**
      * 商户分账业务开通申请
      **/
-    public function create_three(){
+    public function create_three()
+    {
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status,lkl_ec_no,merchant_no')->find();
+        $info = $this->getIntentionInfo(['uid' => $uid], 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_ec_no,lkl_mer_cup_no');
         if (!$info) {
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约成功');
         }
-        if ($info['merchant_status'] == '') {
+        if ($info['lkl_mer_cup_status'] == '') {
             return app('json')->fail('请返回上一页，完成商户进件');
         }
-        if ($info['merchant_status'] == 'WAIT_AUDI') {
+        if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
 
-        $params['lkl_mer_cup_no'] = $info['merchant_no'];
+        $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
         $api = new \Lakala\LklApi();
         $result = $api::lklApplyLedgerMer($params);
@@ -249,6 +251,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail($api->getErrorInfo());
         }
 
+        $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
         $data['ledger_status'] = 1;
         try {
             $info->save($data);
@@ -259,9 +262,18 @@ class MerchantIntention extends BaseController
     }
 
     /**
+     * 分账关系绑定
+     **/
+    public function create_four()
+    {
+        $params = $this->validateParams(__FUNCTION__);
+    }
+
+    /**
      * 电子合同下载
      **/
-    public function download(){
+    public function download()
+    {
         $params = $this->validateParams(__FUNCTION__);
         $api = new \Lakala\LklApi();
         $result = $api::lklEcDownload($params);
@@ -274,7 +286,7 @@ class MerchantIntention extends BaseController
     /**
      * 验证
      **/
-    protected function validateParams($function)
+    public function validateParams($function)
     {
         switch ($function) {
             case 'create_first':
@@ -352,8 +364,14 @@ class MerchantIntention extends BaseController
                 ]);
                 break;
             case 'download':
-                $params = $this->request->params(['lkl_ec_apply_id']);
-            break;
+                $params = $this->request->params([
+                    'lkl_ec_apply_id'
+                ]);
+                break;
+            case 'create_four':
+                $params = $this->request->params([
+                    'entrust_file_path',
+                ]);
         }
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
@@ -362,17 +380,23 @@ class MerchantIntention extends BaseController
         }
         return $params;
     }
-    
+
+    public function getIntentionInfo($where, $field)
+    {
+        if ($field == '') {
+            $field = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,ledger_status';
+        }
+        $info = LklModel::where($where)->field($field)->find();
+        return $info;
+    }
+
     /**
      * 银行列表查询
      **/
-    public function bank_info(){
-        
+    public function bank_info()
+    {
+
     }
-
-
-
-
 
 
     public function create()

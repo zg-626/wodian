@@ -95,7 +95,7 @@ class MerchantIntention extends BaseModel
 
     public function lkl()
     {
-        return $this->hasOne(MerchantEcLkl::class, 'id', 'mer_lkl_id')->field('id,lkl_ec_status,merchant_status');
+        return $this->hasOne(MerchantEcLkl::class, 'id', 'mer_lkl_id')->field('id,lkl_ec_status,lkl_mer_cup_status');
     }
 
 }

@@ -121,6 +121,8 @@ class MerchantIntentionValidate extends Validate
         'mobile|联系人手机号' => 'require',
         'split_entrust_file_path|分账结算委托书文件' => 'require',
 
+        'entrust_file_path|合作协议' => 'require',
+
         'lkl_ec_apply_id|电子签约申请受理编号' => 'require',
     ];
 
@@ -208,6 +210,8 @@ class MerchantIntentionValidate extends Validate
         'mobile.require' => '请输入联系人手机号',
         'split_entrust_file_path.require' => '请上传分账结算委托书文件',
 
+        'entrust_file_path.require' => '请上传合作协议',
+
         'lkl_ec_apply_id.require' => '电子签约申请受理编号不能为空',
     ];
 
@@ -279,6 +283,9 @@ class MerchantIntentionValidate extends Validate
         'create_three' => [
             'mobile',
             'split_entrust_file_path',
+        ],
+        'create_four' => [
+            'entrust_file_path',
         ],
         'download' => ['lkl_ec_apply_id'],
     ];
