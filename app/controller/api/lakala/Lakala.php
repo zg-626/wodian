@@ -4,6 +4,7 @@ namespace app\controller\api\lakala;
 
 use app\common\model\system\merchant\MerchantEcLkl as LklModel;
 use crmeb\basic\BaseController;
+use think\facade\Log;
 use think\response\Json;
 use Lakala\OpenAPISDK\V2\V2Configuration;
 use Lakala\OpenAPISDK\V2\Api\V2LakalaNotifyApi;
@@ -151,6 +152,13 @@ class Lakala extends BaseController
                 // $type = isset($remark['pay_type']) ? $remark['pay_type'] : 3;
 
                 $out_trade_no = $obj['out_trade_no'];
+                Log::info('拉卡拉支付成功回调' . var_export($obj, 1));
+                try {
+                    event('pay_success_' . $obj['remark'], ['order_sn' => $out_trade_no, 'data' => $obj]);
+                } catch (\Exception $e) {
+                    Log::info('拉卡拉支付成功回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
+                    return false;
+                }
             }
 
             // 通知拉卡拉，业务处理成功
