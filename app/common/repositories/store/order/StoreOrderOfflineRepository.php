@@ -248,7 +248,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $api = new \Lakala\LklApi();
             $result = $api::lklPreorder($params);
             if (!$result) {
-                return app('json')->fail('error',$api->getErrorInfo());
+                return app('json')->fail($api->getErrorInfo());
             }
             $config=[
                 'config' => $result
