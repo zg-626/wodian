@@ -432,11 +432,11 @@ class Community extends BaseController
     {
         if (!$id)  return app('json')->fail('缺少参数');
         $data = $this->repository->getActingInfo($id);
-        if($data['group_id'] === 2){
+        if($data['group_id'] !==1 && $data['group_id'] !==7){
             return app('json')->success($data);
 
         }
-        return app('json')->fail('只有商务才能查看');
+        return app('json')->fail('普通会员和讲师暂无邀请权限');
     }
 
     public function getSpuByOrder($id)
