@@ -181,23 +181,23 @@ class User extends BaseController
     }
 
     // 抵用卷记录
-    public function coupon_list()
+    public function coupon_list(UserBillRepository $billRepository)
     {
         [$page, $limit] = $this->getPage();
         [$start,$stop]= $this->request->params(['start','stop'],true);
         $where['date'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
         $where['category'] = 'brokerage_price';
-        return app('json')->success($this->repository->userList($this->request->uid(), $page, $limit));
+        return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
     }
 
     // 商家积分记录
-    public function merchant_integral()
+    public function merchant_integral(UserBillRepository $billRepository)
     {
         [$page, $limit] = $this->getPage();
         [$start,$stop]= $this->request->params(['start','stop'],true);
         $where['date'] = $start&&$stop? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
         $where['category'] = 'mer_integral';
-        return app('json')->success($this->repository->userList($this->request->uid(), $page, $limit));
+        return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
     }
 
     /**
