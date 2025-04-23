@@ -36,7 +36,7 @@ class Lakala extends BaseController
 
             $obj = json_decode($originalText, true);
             //1、更新电子合同签约状态
-            $ecInfo = LklModel::where(['lkl_ec_apply_id' => $obj['ecApplyId']])->field('id')->find();
+            $ecInfo = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']],'');
             if (!empty($ecInfo)) {
                 $ecInfo->save(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
             }

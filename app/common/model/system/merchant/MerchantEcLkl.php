@@ -36,4 +36,18 @@ class MerchantEcLkl extends BaseModel
         return 'merchant_ec_lkl';
     }
 
+    /**
+     * 获取信息
+     **/
+    public static function getInfo($where, $field){
+        $field_1 = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status,lkl_mer_bind_status';
+        if($field != '*'){
+            $field = $field_1.','.$field;
+        } else{
+            $field = $field_1;
+        }
+        $info = self::where($where)->field($field)->find();
+        return $info;
+    }
+
 }
