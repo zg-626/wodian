@@ -334,12 +334,22 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $user = app()->make(UserRepository::class)->get($res['uid']);
                 // 发放推广抵用券
                 $this->computed($res,$user);
+                $handling_fee = floatval($order->handling_fee);
+                $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
                 // 记录本次分红池,手续费的40%
-                $total_amount = bcmul($order->handling_fee, "0.4", 2);
-                Db::name('dividend_pool')->insert([
-                    'total_amount' => $total_amount,
+                Db::name('dividend_pool')->where('id', 1)->inc('total_amount', $total_amount)->update([
+                    'update_time' => date('Y-m-d H:i:s')
+                ]);
+
+                // 分红池流水表
+                Db::name('dividend_pool_log')->insert([
+                    'order_id' => $order->order_id,
+                    'amount' => $total_amount,
                     'create_time'   => date('Y-m-d H:i:s'),
+                    'handling_fee' => $handling_fee,
+                    'mer_id' => $order->mer_id,
+                    'uid' => $order->uid
                 ]);
 
                 return $this->payAfter($res);
