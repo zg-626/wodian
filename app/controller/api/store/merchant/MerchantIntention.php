@@ -112,13 +112,9 @@ class MerchantIntention extends BaseController
         switch ($params['step']) {
             case 1:
             case 2:
-                $info = $this->getIntentionInfo(['uid' => $uid], '*');
-                break;
             case 3:
-                $info = 3;
-                break;
             case 4:
-                $info = 4;
+                $info = $this->getIntentionInfo(['uid' => $uid], '*');
                 break;
         }
         return app('json')->success('入驻详情', $info);
@@ -288,7 +284,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = $this->getIntentionInfo(['uid' => $uid], '');
+        $info = $this->getIntentionInfo(['uid' => $uid], 'lkl_mer_cup_no');
         if (!$info) {
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
@@ -441,6 +437,9 @@ class MerchantIntention extends BaseController
         return $params;
     }
 
+    /**
+     * 获取信息
+     **/
     public function getIntentionInfo($where, $field)
     {
         $field_1 = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status,lkl_mer_bind_status';
