@@ -203,15 +203,11 @@ class Lakala extends BaseController
                     $api = new \Lakala\LklApi();
                     $result = $api::lklPreorder($params);
                     if (!$result) {
-                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'sacs');
+                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
                     }
-                    $total_separate_amt=$result['total_separate_amt'];
-                    if($total_separate_amt>0){
-                        $api = new \Lakala\LklApi();
-                        $result = $api::lklSeparate($params);
-                        if (!$result) {
-                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'sacs');
-                        }
+                    $can_separate_amt=$result['total_separate_amt'];
+                    if($can_separate_amt>0){
+                        $this->lklSeparate($params, $can_separate_amt,$res);
                     }
                 }
 
@@ -226,11 +222,26 @@ class Lakala extends BaseController
     }
 
     // 拉卡拉分账参数拼接
-    public function lklSeparate($param)
+    public function lklSeparate($param, $can_separate_amt,$res): void
     {
-        $sepParam = [
-            'merchant_no' => $param['lkl_mer_cup_no'],
+        // 平台抽取的费用
+        $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
+        $param['can_separate_amt'] = $can_separate_amt;
+        $param['recv_datas'] = [
+            [
+                'recv_merchant_no' => '123456',// TODO 拉卡拉分账接收方 后期需要修改
+                'separate_value' => $handling_fee
+            ],
+            [
+                'recv_no' => $param['lkl_mer_cup_no'],
+                'separate_value' => $can_separate_amt-$handling_fee
+            ]
         ];
+        $api = new \Lakala\LklApi();
+        $result = $api::lklSeparate($param);
+        if (!$result) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
+        }
     }
     /**
      * @desc 拉卡拉 - 订单分账 回调
