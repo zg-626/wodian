@@ -27,7 +27,7 @@ class LklApi
     const DEBUG = true; //测试环境
 
     private static $config = [
-        'org_code' => '1', //机构号
+        'org_code' => '982406', //机构号
         'client_id' => 'testsit', //第三方client_id
         'client_secret' => 'EguwEckByf2I6u6z', //第三方client_secret
         'access_token_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkauth/oauth/token' : 'https://tkapi.lakala.com/auth/oauth/token', //请求获取token
