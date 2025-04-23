@@ -846,7 +846,7 @@ class LklApi
             'log_date' => $param['lkl_log_date'],
             'out_separate_no' => date('YmdHis', time()) . Random::numeric(8), //商户分账指令流水号
             'total_amt' => (string)($param['can_separate_amt']), //单位：分
-            'lkl_org_no' => config('lkl.org_code'),
+            'lkl_org_no' => self::$config['org_code'],
             'cal_type' => '0', //分账计算类型 0- 按照指定金额，1- 按照指定比例。默认 0
             'notify_url' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/notify/lklSeparateNotify',
         ];
