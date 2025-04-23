@@ -492,14 +492,14 @@ class MerchantIntention extends BaseController
                 $params = $this->request->params([
                     'parent_code'
                 ]);
-                $rule = [
-                    'parent_code|编码'=>'require',
-                ];
-                try {
-                    validate($rule)->check($params);
-                } catch (Exception $e) {
-                    return app('json')->fail($e->getError());
-                }
+//                $rule = [
+//                    'parent_code|编码'=>'require',
+//                ];
+//                try {
+//                    validate($rule)->check($params);
+//                } catch (Exception $e) {
+//                    return app('json')->fail($e->getError());
+//                }
                 return $params;
                 break;
             case 'lklBankInfo':
