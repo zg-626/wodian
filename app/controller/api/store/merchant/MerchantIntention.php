@@ -47,8 +47,6 @@ class MerchantIntention extends BaseController
     public function status()
     {
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
-        // 0=未提交,1=已提交,2=审核通过,3=审核驳回
-        // 0=未开通,1=已开通
         $uid = $this->userInfo->uid;
         $info = $this->getIntentionInfo(['uid' => $uid], '');
         $status_1 = 0;
@@ -57,7 +55,7 @@ class MerchantIntention extends BaseController
         $status_4 = 0;
         if ($info) {
             $status_1 = 1;
-            if ($info['lkl_ec_status'] == 'APPLY') {
+            if ($info['lkl_ec_status'] == 'WAIT_AUDI') {
                 $status_1 = 1;
             }
             if ($info['lkl_ec_status'] == 'COMPLETED') {
@@ -84,6 +82,16 @@ class MerchantIntention extends BaseController
                 $status_3 = 2;
             }
             if ($info['lkl_mer_ledger_status'] == 2) {
+                $status_3 = 3;
+            }
+
+            if ($info['lkl_mer_bind_status'] == 3) {
+                $status_3 = 1;
+            }
+            if ($info['lkl_mer_bind_status'] == 1) {
+                $status_3 = 2;
+            }
+            if ($info['lkl_mer_bind_status'] == 2) {
                 $status_3 = 3;
             }
         }
@@ -151,7 +159,7 @@ class MerchantIntention extends BaseController
         }
 
         $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
-        $save_data['lkl_ec_status'] = 'APPLY';
+        $save_data['lkl_ec_status'] = 'WAIT_AUDI';
         try {
             LklModel::where('id', $info->id)->update($save_data);
         } catch (Exception $e) {
@@ -168,7 +176,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = $this->getIntentionInfo(['uid' => $uid], 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19');
+        $info = $this->getIntentionInfo(['uid' => $uid], 'lkl_ec_no,ec_mobile,cert_name,cert_no,acct_no,B19');
         if (!$info) {
             return app('json')->fail('请返回上一页，先完成第一步');
         }
@@ -205,7 +213,7 @@ class MerchantIntention extends BaseController
         $intention_data['mer_name'] = $params['mer_name']; // 商户名称
         $intention_data['mer_banner'] = $params['shop_outside_img']; // 商户banner图片
         $intention_data['name'] = $info['cert_name']; // 客户姓名
-        $intention_data['images'] = $info['license_pic_img']; // 资质照片
+        $intention_data['images'] = $params['license_pic_img']; // 资质照片
         $intention_data['id_card'] = $info['cert_no']; // 身份证
         $intention_data['inside'] = $params['shop_inside_img']; // 区域内部照片
         $intention_data['email'] = $params['email']; // 邮箱
@@ -237,7 +245,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = $this->getIntentionInfo(['uid' => $uid], 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_ec_no,lkl_mer_cup_no');
+        $info = $this->getIntentionInfo(['uid' => $uid], 'lkl_ec_no,lkl_mer_cup_no');
         if (!$info) {
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
@@ -250,6 +258,9 @@ class MerchantIntention extends BaseController
         if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
+        if($info['lkl_mer_ledger_status'] == 1){
+            return app('json')->fail('商户分账业务开通申请已审核成功');
+        }
 
         $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
@@ -260,7 +271,7 @@ class MerchantIntention extends BaseController
         }
 
         $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
-        $data['lkl_mer_ledger_status'] = 1;
+        $data['lkl_mer_ledger_status'] = 3;
         try {
             $info->save($data);
         } catch (Exception $e) {
@@ -270,7 +281,7 @@ class MerchantIntention extends BaseController
     }
 
     /**
-     * 分账关系绑定
+     * 商户分账关系绑定
      **/
     public function create_four()
     {
@@ -293,7 +304,10 @@ class MerchantIntention extends BaseController
         if($info['lkl_mer_ledger_status'] == 0){
             return app('json')->fail('请返回上一页，完成商户分账业务开通申请');
         }
-        if($info['lkl_mer_ledger_status'] == 3){
+        if($info['lkl_mer_ledger_status'] != 1){
+            return app('json')->fail('商户分账业务开通申请未审核成功');
+        }
+        if($info['lkl_mer_bind_status'] == 3){
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
 
@@ -312,7 +326,7 @@ class MerchantIntention extends BaseController
         } catch (Exception $e) {
             return app('json')->fail($e->getError());
         }
-        return app('json')->success('开通成功', []);
+        return app('json')->success('提交成功', []);
     }
 
     /**
@@ -429,8 +443,9 @@ class MerchantIntention extends BaseController
 
     public function getIntentionInfo($where, $field)
     {
-        if ($field == '') {
-            $field = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status';
+        $field_1 = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status,lkl_mer_bind_status';
+        if($field != '*'){
+            $field = $field_1.','.$field;
         }
         $info = LklModel::where($where)->field($field)->find();
         return $info;
