@@ -48,7 +48,7 @@ class MerchantIntention extends BaseController
     {
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
         $uid = $this->userInfo->uid;
-        $info = LklModel::getInfo(['uid' => $uid], '');
+        $info = LklModel::getInfo(['uid' => $uid]);
         $status_1 = 0;
         $status_2 = 0;
         $status_3 = 0;
@@ -128,7 +128,7 @@ class MerchantIntention extends BaseController
         $params = $this->validateParams(__FUNCTION__);
 
         $uid = $this->userInfo->uid;
-        $info = LklModel::getInfo(['uid' => $uid], '');
+        $info = LklModel::getInfo(['uid' => $uid]);
         if ($info) {
             if ($info['lkl_ec_status'] == 'COMPLETED') {
                 return app('json')->fail('电子合同已签约成功');

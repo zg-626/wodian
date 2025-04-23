@@ -35,12 +35,13 @@ class Lakala extends BaseController
             Db::name('third_notify')->insert(['title' => '电子合同签约回调', 'content' => $originalText, 'createtime' => time()]);
 
             $obj = json_decode($originalText, true);
-            //1、更新电子合同签约状态
-            $ecInfo = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']],'');
-            if (!empty($ecInfo)) {
-                $ecInfo->save(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
-            }
 
+            // {"ecApplyId": 635798487769907200,"ecName": "特约商户支付服务合作协议V3.1","ecNo": "QT20221021000157861","ecStatus": "COMPLETED","orderNo": "177212022102111161183863984","orgId": 1,"version": "1.0"}
+            $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
+            if (!empty($info)) {
+                $info->save(['lkl_ec_no' => $obj['ecNo'], 'lkl_ec_status' => $obj['ecStatus']]);
+            }
+            // 通知拉卡拉，业务处理成功
             $api->success();
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉电子合同签约回调异常: ' . $e->getMessage(), 'lkl');
@@ -60,6 +61,12 @@ class Lakala extends BaseController
 
         $data = file_get_contents("php://input");
         Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
+
+//        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
+//        if (!empty($info)) {
+//            $info->save(['lkl_mer_cup_status' => '']);
+//        }
+
         return app('json')->success('请求成功');
     }
 
@@ -79,6 +86,11 @@ class Lakala extends BaseController
 
             $obj = json_decode($originalText, true);
 
+            // {"optType":"ADD","applyId":956958237062774784,"merCupNo":"82210008699006U","retUrl":"https://sqfamily.lnkj6.com/api/notify/lklApplyBindNotify","entrustFileName":"合作协议","auditStatus":"1","merInnerNo":"5002025032128588892","receiverNo":"SR2024000069899","remark":"仅测试","auditStatusText":"审核通过","uploadAttachType":"SPLIT_ENTRUST_FILE","entrustFilePath":"MMS/20250325/165022-fafd706c212d4bcab580c36406f61699.pdf"}
+            $info = LklModel::getInfo(['lkl_mer_cup_no' => $obj['merCupNo']]);
+            if (!empty($info)) {
+                $info->save(['lkl_mer_bind_status' => $obj['auditStatus']]);
+            }
             // 通知拉卡拉，业务处理成功
             $api->success();
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
@@ -103,7 +115,11 @@ class Lakala extends BaseController
 
             $obj = json_decode($originalText, true);
 
-
+            // {"applyId":959056782070833152,"merCupNo":"822100058122KVN","retUrl":"https://sqfamily.lnkj6.com/api/notify/lklApplyLedgerMerNotify","entrustFileName":"结算授权委托书","auditStatus":"1","merInnerNo":"4002025032958845205","remark":"审核通过","auditStatusText":"审核通过","uploadAttachType":"SPLIT_ENTRUST_FILE","entrustFilePath":"MMS/20250329/105027-4704fe3fb9004b4ba6873fadcfc559b1.pdf"}
+            $info = LklModel::getInfo(['lkl_mer_cup_no' => $obj['merCupNo']]);
+            if (!empty($info)) {
+                $info->save(['lkl_mer_ledger_status' => $obj['auditStatus']]);
+            }
             // 通知拉卡拉，业务处理成功
             $api->success();
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {

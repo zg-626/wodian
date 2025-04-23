@@ -39,7 +39,7 @@ class MerchantEcLkl extends BaseModel
     /**
      * 获取信息
      **/
-    public static function getInfo($where, $field){
+    public static function getInfo($where, $field = ''){
         $field_1 = 'id,mer_id,lkl_ec_status,lkl_mer_cup_status,lkl_mer_ledger_status,lkl_mer_bind_status';
         if($field == ''){
             $field = $field_1;
