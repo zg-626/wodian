@@ -326,6 +326,20 @@ class MerchantIntention extends BaseController
     }
 
     /**
+     * 获取地区查询
+     **/
+    public function lklOrganization()
+    {
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklOrganization($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('提交成功', $result);
+    }
+
+    /**
      * 电子合同下载
      **/
     public function download()
@@ -339,9 +353,11 @@ class MerchantIntention extends BaseController
         return app('json')->success('提交成功', $result);
     }
 
-    public function aa(){
-        $params['lkl_ec_apply_id'] = '967363813417377792';
-
+    /**
+     * 电子合同查询
+     **/
+    public function download_status(){
+        $params = $this->validateParams('download');
         $api = new \Lakala\LklApi();
         $result = $api::lklEcQStatus($params);
         if (!$result) {
@@ -440,6 +456,17 @@ class MerchantIntention extends BaseController
                     'lkl_ec_apply_id'
                 ]);
                 break;
+            case 'lklOrganization':
+                $params = $this->request->params([
+                    'parent_code'
+                ]);
+                try {
+                    validate([])->check($params);
+                } catch (Exception $e) {
+                    return app('json')->fail($e->getError());
+                }
+                return $params;
+                break;
         }
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
@@ -447,14 +474,6 @@ class MerchantIntention extends BaseController
             return app('json')->fail($e->getError());
         }
         return $params;
-    }
-
-    /**
-     * 银行列表查询
-     **/
-    public function bank_info()
-    {
-
     }
 
 

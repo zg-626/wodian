@@ -620,9 +620,11 @@ Route::group('api/', function () {
         Route::post('intention/create', 'api.store.merchant.MerchantIntention/create');
         Route::get('intention/cate', 'api.store.merchant.MerchantIntention/cateLst');
         Route::get('intention/type', 'api.store.merchant.MerchantIntention/typeLst');
+
+        Route::post('intention/lklOrganization', 'api.store.merchant.MerchantIntention/lklOrganization'); // 获取地区查询
         Route::post('intention/download', 'api.store.merchant.MerchantIntention/download');// 拉卡拉电子合同下载
-        Route::post('intention/aa', 'api.store.merchant.MerchantIntention/aa');
-        
+        Route::post('intention/download_status', 'api.store.merchant.MerchantIntention/download_status'); // 拉卡拉电子合同查询
+
         //浏览
         Route::post('common/visit', 'api.Common/visit');
         Route::get('store/product/assist/count', 'api.store.product.StoreProductAssist/userCount');
