@@ -29,6 +29,7 @@ use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
+use app\common\repositories\wechat\WechatUserRepository;
 use crmeb\jobs\OrderProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\OfflinePayService;
@@ -90,6 +91,10 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function add($money,$mer_id, $user, $params)
     {
+        $wechatUserRepository = app()->make(WechatUserRepository::class);
+        $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
+        if (!$openId)
+            throw new ValidateException('请关联微信小程序!');
         $total_price=$money;
 
         $handling_fee=0;
@@ -199,7 +204,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         ];
 
         // 微信服务商支付
-        $body = [
+        /*$body = [
             'out_trade_no' => $order_sn,
             'pay_price' => $money,
             'attach' => 'offline_order',
@@ -208,13 +213,22 @@ class StoreOrderOfflineRepository extends BaseRepository
             'body' =>'线下门店支付'
         ];
 
+
+        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];*/
         $type = $params['pay_type'];
         if (in_array($type, ['weixin', 'alipay'], true) && $params['is_app']) {
             $type .= 'App';
         }
-        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
-
         $info = $this->dao->create($data);
+        // 拉卡拉支付参数
+        $params = [
+            'order_no' => $order_sn,
+            'total_amount' => $money,
+            'remark' => 'offline_order',
+            'merchant_no' => $merchant['merchant_no'],
+            'openid' => $openId,
+            'goods_id' => 1,
+        ];
 
         if ($money){
             try {
@@ -224,8 +238,10 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $config = $service->pay($user);
                 return app('json')->status($type, $config + ['order_id' => $info->order_id]);*/
                 // TODO 测试身份佣金，直接支付成功
-                $this->paySuccess($data);
-                return app('json')->status($type, ['order_id' => $info->order_id]);
+                //$this->paySuccess($data);
+                $api = new \Lakala\LklApi();
+                $result = $api::lklPreorder($params);
+                return app('json')->status($type, $result + ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
                 return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
             }
