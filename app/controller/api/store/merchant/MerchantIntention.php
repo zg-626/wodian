@@ -229,10 +229,13 @@ class MerchantIntention extends BaseController
         $uid = $this->userInfo->uid;
         $info = LklModel::where('uid', $uid)->field('id,mer_id,lkl_ec_status,merchant_status,lkl_ec_no,merchant_no')->find();
         if (!$info) {
-            return app('json')->fail('请返回上一页，先完成第一步');
+            return app('json')->fail('请返回上一页，完成电子合同签约');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约成功');
+        }
+        if ($info['merchant_status'] == '') {
+            return app('json')->fail('请返回上一页，完成商户进件');
         }
         if ($info['merchant_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
@@ -273,7 +276,6 @@ class MerchantIntention extends BaseController
      **/
     protected function validateParams($function)
     {
-
         switch ($function) {
             case 'create_first':
                 $params = $this->request->params([
@@ -360,7 +362,7 @@ class MerchantIntention extends BaseController
         }
         return $params;
     }
-
+    
     /**
      * 银行列表查询
      **/
