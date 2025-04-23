@@ -789,6 +789,93 @@ class LklApi
     }
 
     /**
+     * @desc 订单分账 第一步 可分账金额查询(订单可分账金额为：实付金额 - 拉卡拉所收手续费)
+     * @author ZhouTing
+     * @param lkl_mer_cup_no 拉卡拉银联商户号
+     * @param lkl_log_no 对账单流水号
+     * @param lkl_log_date 交易日期 yyyyMMdd
+     * @doc：https://o.lakala.com/#/home/document/detail?id=394
+     * @date 2025-04-23 15:51
+     */
+    public static function lklQueryAmt($param)
+    {
+        $sepParam = [
+            'merchant_no' => $param['lkl_mer_cup_no'],
+            'log_no' => $param['lkl_log_no'],
+            'log_date' => $param['lkl_log_date'],
+        ];
+
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 可分账金额查询请求参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new Configuration();
+        $api = new LakalaApi($config);
+        $request = new ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v3/sacs/queryAmt', $request);
+            $res = $response->getOriginalText();
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 可分账金额查询请求结果: ' . $res, 'lkl');
+            $resdata = json_decode($res, true);
+            if ($resdata['code'] == 'SACS0000') {
+                return $resdata['resp_data'];
+            } else {
+                return self::setErrorInfo($resdata['msg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 可分账金额查询异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 订单分账 第二步 发送指令 订单分账
+     * @author ZhouTing
+     * @param lkl_mer_cup_no 拉卡拉银联商户号
+     * @param lkl_log_no 对账单流水号
+     * @param lkl_log_date 交易日期
+     * @param can_separate_amt 可分账金额（明细之和） 单位：分
+     * @param recv_datas 分账接收数据对象
+     * @doc：https://o.lakala.com/#/home/document/detail?id=389
+     * @date 2025-04-23 15:52
+     */
+    public static function lklSeparate($param)
+    {
+        $sepParam = [
+            'merchant_no' => $param['lkl_mer_cup_no'],
+            'log_no' => $param['lkl_log_no'], //拉卡拉对账单流水号
+            'log_date' => $param['lkl_log_date'],
+            'out_separate_no' => date('YmdHis', time()) . Random::numeric(8), //商户分账指令流水号
+            'total_amt' => (string)($param['can_separate_amt']), //单位：分
+            'lkl_org_no' => config('lkl.org_code'),
+            'cal_type' => '0', //分账计算类型 0- 按照指定金额，1- 按照指定比例。默认 0
+            'notify_url' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . '/api/notify/lklSeparateNotify',
+        ];
+
+        $sepParam['recv_datas'] = $param['recv_datas'];
+
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 订单分账请求参数: ' . json_encode($sepParam), 'lkl');
+
+        $config = new Configuration();
+        $api = new LakalaApi($config);
+        $request = new ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v3/sacs/separate', $request);
+            $res = $response->getOriginalText();
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 订单分账请求结果: ' . $res, 'lkl');
+            $resdata = json_decode($res, true);
+            if ($resdata['code'] == 'SACS0000') {
+                return $resdata['resp_data'];
+            } else {
+                return self::setErrorInfo($resdata['msg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
+            record_log('Time: ' . date('Y-m-d H:i:s') . ', 订单分账异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
      * @desc 拉卡拉电子合同下载
      * @author ZhouTing
      * @param lkl_ec_apply_id 电子合同申请受理号
