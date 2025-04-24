@@ -220,11 +220,11 @@ class MerchantIntention extends BaseController
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
         $intention_data['mer_name'] = $params['mer_name']; // 商户名称
-        $intention_data['mer_banner'] = $params['shop_outside_img']; // 商户banner图片
+        $intention_data['mer_banner'] = [$params['shop_outside_img']]; // 商户banner图片
         $intention_data['name'] = $info['cert_name']; // 客户姓名
-        $intention_data['images'] = $params['license_pic_img']; // 资质照片
-        $intention_data['id_card'] = $info['cert_no']; // 身份证
-        $intention_data['inside'] = $params['shop_inside_img']; // 区域内部照片
+        $intention_data['images'] = [$params['license_pic_img']]; // 资质照片
+        $intention_data['id_card'] = [$info['cert_no']]; // 身份证
+        $intention_data['inside'] = [$params['shop_inside_img']]; // 区域内部照片
         $intention_data['email'] = $params['email']; // 邮箱
         $intention_data['bank_card'] = $info['acct_no']; // 银行卡号
         $intention_data['bank_open_name'] = $info['B19']; // 开户行名称
