@@ -110,10 +110,9 @@ class MerchantIntention extends BaseController
 
             if ($wechat_applyment_state) {
                 if (!in_array($wechat_applyment_state, [LklApi::$APPLYMENT_STATE_PASSED, LklApi::$APPLYMENT_STATE_REJECTED, LklApi::$APPLYMENT_STATE_FREEZED, LklApi::$APPLYMENT_STATE_CANCELED]) || $wechat_authorize_state == LklApi::$AUTHORIZE_STATE_UNAUTHORIZED) {
-                    $api = new \Lakala\LklApi();
                     try {
                         $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-                        $result = $api::lklWechatRealNameQuery($params);
+                        $result = LklApi::lklWechatRealNameQuery($params);
                         if ($result) {
                             $wechat_applyment_state = $result['applymentState'];
                             $wechat_authorize_state = $result['authorizeState'];
