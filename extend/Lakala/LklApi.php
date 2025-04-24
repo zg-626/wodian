@@ -28,16 +28,16 @@ class LklApi
 
     private static $config = [
         'org_code' => '982406', //机构号
-        'client_id' => 'testsit', //第三方client_id
-        'client_secret' => 'EguwEckByf2I6u6z', //第三方client_secret
+        'client_id' => 'lsycs', //第三方client_id
+        'client_secret' => 'XPa1HB5d55Ig0qV8', //第三方client_secret
         'access_token_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkauth/oauth/token' : 'https://tkapi.lakala.com/auth/oauth/token', //请求获取token
         'merchant_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/merchant' : 'https://htkactvi.lakala.com/registration/merchant', //商户进件
         'organization_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration' : 'https://htkactvi.lakala.com/registration', //地区信息
         'bank_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/bank' : 'https://htkactvi.lakala.com/registration/bank', //银行地区信息
         'htk_file_upload_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/file/upload' : 'https://htkactvi.lakala.com/registration/file/upload', //拓客 文件上传
         'customer_cate_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/customer/category' : 'https://htkactvi.lakala.com/registration/customer/category', //商户类别(进件获取mcc使用)
-        'user_no' => '20000101', //商户归属用户信息
-        'activity_id' => '4', //归属活动信息
+        'user_no' => '29153396', //商户归属用户信息
+        'activity_id' => '687', //归属活动信息
         'request_ip' => '39.100.91.239', //请求方IP  地址位置信息，风控要求必送
         'app_id' => 'wxda2922aa5121cc98'
     ];
@@ -455,7 +455,7 @@ class LklApi
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
         $requestData = [
-            'json' => json_encode($sepParam, JSON_UNESCAPED_UNICODE),
+            'json' => $sepParam,
             'headers' => [
                 'Authorization' => 'bearer ' . $token['access_token'],
                 'Content-Type' => 'application/json',
