@@ -416,6 +416,23 @@ class MerchantIntention extends BaseController
     }
 
     /**
+     * 商户大类/商户小类
+     **/
+    public function lklChildCate(){
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        if($params['parent_code']){
+            $result = $api::lklChildCate($params);
+        } else{
+            $result = $api::lklParentCate($params);
+        }
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('商户大类/商户小类', $result);
+    }
+
+    /**
      * 获取地区查询
      **/
     public function lklOrganization()
@@ -455,23 +472,6 @@ class MerchantIntention extends BaseController
             return app('json')->fail($api->getErrorInfo());
         }
         return app('json')->success('银行列表查询', $result);
-    }
-
-    /**
-     * 商户大类/商户小类
-     **/
-    public function lklChildCate(){
-        $params = $this->validateParams(__FUNCTION__);
-        $api = new \Lakala\LklApi();
-        if($params['parent_code']){
-            $result = $api::lklChildCate($params);
-        } else{
-            $result = $api::lklParentCate($params);
-        }
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
-        return app('json')->success('商户大类/商户小类', $result);
     }
 
     /**
