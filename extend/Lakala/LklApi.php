@@ -117,7 +117,7 @@ class LklApi
 
         //是否经办签约
         if ($sepParam['agentTag'] == 1) {
-            $agent_image = self::lklUploadFile('FR_ID_CARD_FRONT', imageUrl($param['agent_file_path']));
+            $agent_image = self::lklUploadFile('FR_ID_CARD_FRONT', $param['agent_file_path']);
             if (!$agent_image) return self::setErrorInfo(self::getErrorInfo());
 
             $sepParam['agentName'] = $param['agent_name'];
@@ -544,11 +544,11 @@ class LklApi
             $sepParam['legalPersonCertificateType'] = 17; //法人证件类型 17 身份证
             $sepParam['legalPersonCertificateNo'] = $param['lar_id_card'];
             //对公：法人身份证正面，银行卡，营业执照正面
-            $fZImg = self::lklUploadFile('FR_ID_CARD_FRONT', imageUrl($param['z_legal_img']));
+            $fZImg = self::lklUploadFile('FR_ID_CARD_FRONT', $param['z_legal_img']);
             if (!$fZImg) return self::setErrorInfo(self::getErrorInfo());
-            $fFImg = self::lklUploadFile('FR_ID_CARD_BEHIND', imageUrl($param['f_legal_img']));
+            $fFImg = self::lklUploadFile('FR_ID_CARD_BEHIND', $param['f_legal_img']);
             if (!$fFImg) return self::setErrorInfo(self::getErrorInfo());
-            $licenseZImg = self::lklUploadFile('BUSINESS_LICENCE', imageUrl($param['license_pic_img']));
+            $licenseZImg = self::lklUploadFile('BUSINESS_LICENCE', $param['license_pic_img']);
             if (!$licenseZImg) return self::setErrorInfo(self::getErrorInfo());
             $sepParam['attachList'] = [
                 [
@@ -569,9 +569,9 @@ class LklApi
             ];
         } else {
             //对私
-            $zImg = self::lklUploadFile('ID_CARD_FRONT', imageUrl($param['z_idcard_image']));
+            $zImg = self::lklUploadFile('ID_CARD_FRONT', $param['z_idcard_image']);
             if (!$zImg) return self::setErrorInfo(self::getErrorInfo());
-            $fImg = self::lklUploadFile('ID_CARD_BEHIND', imageUrl($param['f_idcard_image']));
+            $fImg = self::lklUploadFile('ID_CARD_BEHIND', $param['f_idcard_image']);
             if (!$fImg) return self::setErrorInfo(self::getErrorInfo());
             $sepParam['attachList'] = [
                 [
@@ -623,7 +623,7 @@ class LklApi
     public static function lklApplyBind($param)
     {
         //拉卡拉分账关系绑定申请，合作协议附件
-        $entrust_image = self::lklUploadFile('XY', imageUrl($param['entrust_file_path']));
+        $entrust_image = self::lklUploadFile('XY', $param['entrust_file_path']);
         if (!$entrust_image) {
             return self::setErrorInfo(self::getErrorInfo());
         }
@@ -674,7 +674,7 @@ class LklApi
     public static function lklApplyLedgerMer($param)
     {
         //EC003无需上传分账结算授权委托书,只传合同编号即可，EC005必须上传结算授权委托书,合同编号非必传
-        $split_image = self::lklUploadFile('OTHERS', imageUrl($param['split_entrust_file_path']));
+        $split_image = self::lklUploadFile('OTHERS', $param['split_entrust_file_path']);
         if (!$split_image) return self::setErrorInfo(self::getErrorInfo());
 
         $sepParam = [
@@ -1147,7 +1147,7 @@ class LklApi
             'verify' => false // 禁用 SSL 验证
         ]);
 
-        $fileContent = $client->get(imageUrl($param['file']))->getBody()->getContents();
+        $fileContent = $client->get($param['file'])->getBody()->getContents();
 
         $sepParam = [
             'headers' => [
@@ -1169,7 +1169,7 @@ class LklApi
                 [
                     'name' => 'file',
                     'contents' => $fileContent,
-                    'filename' => basename(imageUrl($param['file']))
+                    'filename' => basename($param['file'])
                 ]
             ]
         ];

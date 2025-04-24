@@ -1204,24 +1204,6 @@ if (!function_exists('record_log')) {
     }
 }
 
-if (!function_exists('imageUrl')) {
-    /*
-    * 拼接 图片地址
-    */
-    function imageUrl($img)
-    {
-        if (!$img) {
-            return '';
-        }
-        if (strpos($img, 'http') !== false) {
-            return $img;
-        } else {
-//            return 'https://' . $_SERVER['SERVER_NAME'] . $img;
-            return request()->domain()  . $img;
-        }
-    }
-}
-
 if (!function_exists('pp')) {
     /**
      * 用于测试打印数组数据
