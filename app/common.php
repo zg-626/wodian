@@ -1216,7 +1216,6 @@ if (!function_exists('imageUrl')) {
         if (strpos($img, 'http') !== false) {
             return $img;
         } else {
-//            return 'https://' . $_SERVER['SERVER_NAME'] . $img;
             return request()->domain() . $img;
         }
     }
