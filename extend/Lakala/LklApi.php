@@ -434,7 +434,7 @@ class LklApi
             if (!$oPImg) return self::setErrorInfo(self::getErrorInfo());
             $attchments = array_merge($attchments, [['id' => $oPImg['url'], 'type' => 'OPENING_PERMIT']]);
         }
-        $sepParam['attachments'] = $attchments;
+        $sepParam['attchments'] = $attchments;
 
         // $multipartData = [];
         // foreach ($sepParam as $key => $value) {
