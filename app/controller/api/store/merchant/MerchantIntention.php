@@ -118,7 +118,11 @@ class MerchantIntention extends BaseController
                             $wechat_applyment_state = $result['applymentState'];
                             $wechat_authorize_state = $result['authorizeState'];
                             $wechat_reject_reason = $result['authorizeState'];
-                            $info->save(compact('wechat_applyment_state', 'wechat_authorize_state', 'wechat_reject_reason'));
+                            $data = compact('wechat_applyment_state', 'wechat_authorize_state', 'wechat_reject_reason');
+                            if($wechat_applyment_state == LklApi::$APPLYMENT_STATE_PASSED){
+                                $data['wechat_qrcode_data'] = $result['qrcodeData'];
+                            }
+                            $info->save($data);
                         }
                     } catch (Exception $e) {
 //                return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
