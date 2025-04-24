@@ -199,14 +199,14 @@ class MerchantIntention extends BaseController
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-        try{
+        try {
             $params['lkl_ec_no'] = $info['lkl_ec_no'];
             $api = new \Lakala\LklApi();
             $result = $api::lklMerchantApply($params);
             if (!$result) {
                 return app('json')->fail($api->getErrorInfo());
             }
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
@@ -263,16 +263,20 @@ class MerchantIntention extends BaseController
         if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
-        if($info['lkl_mer_ledger_status'] == 1){
+        if ($info['lkl_mer_ledger_status'] == 1) {
             return app('json')->fail('商户分账业务开通申请已审核成功');
         }
 
-        $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-        $params['lkl_ec_no'] = $info['lkl_ec_no'];
-        $api = new \Lakala\LklApi();
-        $result = $api::lklApplyLedgerMer($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
+        try {
+            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+            $params['lkl_ec_no'] = $info['lkl_ec_no'];
+            $api = new \Lakala\LklApi();
+            $result = $api::lklApplyLedgerMer($params);
+            if (!$result) {
+                return app('json')->fail($api->getErrorInfo());
+            }
+        } catch (Exception $e) {
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
         $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
@@ -306,22 +310,26 @@ class MerchantIntention extends BaseController
         if ($info['lkl_mer_cup_status'] != 'SUCCESS') {
             return app('json')->fail('商户进件未审核成功');
         }
-        if($info['lkl_mer_ledger_status'] == 0){
+        if ($info['lkl_mer_ledger_status'] == 0) {
             return app('json')->fail('请返回上一页，完成商户分账业务开通申请');
         }
-        if($info['lkl_mer_ledger_status'] != 1){
+        if ($info['lkl_mer_ledger_status'] != 1) {
             return app('json')->fail('商户分账业务开通申请未审核成功');
         }
-        if($info['lkl_mer_bind_status'] == 3){
+        if ($info['lkl_mer_bind_status'] == 3) {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
 
-        $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-        $params['lkl_receiver_no'] = '';
-        $api = new \Lakala\LklApi();
-        $result = $api::lklApplyBind($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
+        try {
+            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+            $params['lkl_receiver_no'] = '';
+            $api = new \Lakala\LklApi();
+            $result = $api::lklApplyBind($params);
+            if (!$result) {
+                return app('json')->fail($api->getErrorInfo());
+            }
+        } catch (Exception $e) {
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
         $data['entrust_file_path'] = $params['entrust_file_path'];
@@ -351,7 +359,8 @@ class MerchantIntention extends BaseController
     /**
      * 获取银行地区查询
      **/
-    public function lklBankOrganization(){
+    public function lklBankOrganization()
+    {
         $params = $this->validateParams('lklOrganization');
         $api = new \Lakala\LklApi();
         $result = $api::lklBankOrganization($params);
@@ -364,7 +373,8 @@ class MerchantIntention extends BaseController
     /**
      * 银行列表查询
      **/
-    public function lklBankInfo(){
+    public function lklBankInfo()
+    {
         $params = $this->validateParams(__FUNCTION__);
         $api = new \Lakala\LklApi();
         $result = $api::lklBankInfo($params);
@@ -391,7 +401,8 @@ class MerchantIntention extends BaseController
     /**
      * 电子合同查询
      **/
-    public function download_status(){
+    public function download_status()
+    {
         $params = $this->validateParams('download');
         $api = new \Lakala\LklApi();
         $result = $api::lklEcQStatus($params);
@@ -503,8 +514,8 @@ class MerchantIntention extends BaseController
                     'bank_name'
                 ]);
                 $rule = [
-                    'area_code|地区编码'=>'require',
-                    'bank_name|银行名称'=>'require',
+                    'area_code|地区编码' => 'require',
+                    'bank_name|银行名称' => 'require',
                 ];
                 try {
                     validate($rule)->check($params);
