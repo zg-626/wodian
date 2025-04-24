@@ -131,7 +131,7 @@ class MerchantIntention extends BaseController
         $info = LklModel::getInfo(['uid' => $uid]);
         if ($info) {
             if ($info['lkl_ec_status'] == 'COMPLETED') {
-                return app('json')->fail('电子合同已签约成功');
+                return app('json')->fail('电子合同已签约完成');
             }
         }
 
@@ -183,7 +183,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail('请返回上一页，先完成第一步');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
-            return app('json')->fail('电子合同未签约成功');
+            return app('json')->fail('电子合同未签约完成');
         }
         if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
@@ -259,7 +259,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
-            return app('json')->fail('电子合同未签约成功');
+            return app('json')->fail('电子合同未签约完成');
         }
         if ($info['lkl_mer_cup_status'] == '') {
             return app('json')->fail('请返回上一页，完成商户进件');
@@ -309,7 +309,7 @@ class MerchantIntention extends BaseController
             return app('json')->fail('请返回上一页，完成电子合同签约');
         }
         if ($info['lkl_ec_status'] != 'COMPLETED') {
-            return app('json')->fail('电子合同未签约成功');
+            return app('json')->fail('电子合同未签约完成');
         }
         if ($info['lkl_mer_cup_status'] == '') {
             return app('json')->fail('请返回上一页，完成商户进件');
