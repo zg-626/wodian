@@ -517,6 +517,8 @@ class MerchantIntention extends BaseController
                     'acct_name',
                     'acct_type_code',
                     'acct_id_card',
+                    'acct_id_dt_start',
+                    'acct_id_dt_end',
                     'z_idcard_img',
                     'f_idcard_img',
                     'license_pic_img',
