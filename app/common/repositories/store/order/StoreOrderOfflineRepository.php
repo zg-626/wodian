@@ -245,7 +245,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 //return app('json')->status($type, $config + ['order_id' => $info->order_id]);
                 // TODO 测试身份佣金，直接支付成功
                 $this->paySuccess($data);
-
+                return app('json')->status($type, ['order_id' => $info->order_id]);
             } catch (\Exception $e) {
                 return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
             }
