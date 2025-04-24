@@ -164,6 +164,7 @@ class MerchantIntention extends BaseController
             LklModel::where('id', $info->id)->update($save_data);
         } catch (Exception $e) {
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage().' '. $e->getData().' '. $e->getCode().' '. $e->getPrevious().' '. $e->getTrace().' '. $e->getTraceAsString());
+            
         }
         return app('json')->success('提交成功', $result);
     }
