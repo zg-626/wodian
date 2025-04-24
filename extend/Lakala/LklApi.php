@@ -44,7 +44,6 @@ class LklApi
 
     /**
      * @desc 电子合同申请(EC005)
-     * @author ZhouTing
      * @param merchant_type 商户类型：0 小微商户，1 企业
      * @param cert_name 法人/经营者姓名
      * @param cert_no 法人/经营者证件号码
@@ -77,6 +76,7 @@ class LklApi
      * @param B33 终端布放地址 => 拉卡拉让填 联系人地址
      * @文档：https://o.lakala.com/#/home/document/detail?id=499
      * @date 2025-04-17 14:39
+     * @author ZhouTing
      */
     public static function lklEcApply($param)
     {
@@ -204,10 +204,10 @@ class LklApi
 
     /**
      * @desc 电子合同查询
-     * @author ZhouTing
      * @param lkl_ec_apply_id 电子合同申请受理号
      * @doc：https://o.lakala.com/#/home/document/detail?id=293
      * @date 2025-04-23 10:46
+     * @author ZhouTing
      */
     public static function lklEcQStatus($param)
     {
@@ -260,7 +260,7 @@ class LklApi
                 ]
             ]);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             //{"access_token":"98e63557-e428-4419-84ef-e4408a0d72f6","token_type":"bearer","expires_in":1131297,"scope":"all"}
             return json_decode($rawBody, true);
         } catch (Exception $e) {
@@ -270,7 +270,6 @@ class LklApi
 
     /**
      * @desc 拉卡拉 商户进件第二步 商户进件
-     * @author ZhouTing
      * @param email 商户邮箱
      * @param mer_reg_name 商户注册名称 - 与营业执照一致 20字内
      * @param merchant_type 商户类型：0 小微商户，1 企业
@@ -317,6 +316,7 @@ class LklApi
      * @param legal_auth_img  法人授权函(非法人进件时，必传)
      * @param lkl_ec_no 电子合同编号
      * @date 2025-04-18 10:08
+     * @author ZhouTing
      */
     public static function lklMerchantApply($param)
     {
@@ -446,7 +446,7 @@ class LklApi
             } else {
                 $multipartData[] = [
                     'name' => $key,
-                    'contents' => (string) $value
+                    'contents' => (string)$value
                 ];
             }
         }
@@ -469,7 +469,7 @@ class LklApi
         try {
             $response = $client->post(self::$config['merchant_url'], $requestData);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
 
             return json_decode($rawBody, true);
@@ -481,7 +481,6 @@ class LklApi
 
     /**
      * @desc 拉卡拉分账接收方创建申请（开放平台）
-     * @author ZhouTing
      * @param receiver_name 分账接收方名称
      * @param receiver_mobile 分账接收方联系手机号
      * @param acct_no 收款账户卡号
@@ -502,13 +501,14 @@ class LklApi
      * @param f_idcard_image 个人身份证反面(对私必传)
      * @doc：https://o.lakala.com/#/home/document/detail?id=382
      * @date 2025-04-21 19:55
+     * @author ZhouTing
      */
     public static function lklApplyLedgerReceiver($param)
     {
         if ($param['acctTypeCode'] == '57') {
             $bankCode = $param['lkl_acct_open_bank_code'];
             $acctOpenBankName = $param['lkl_acct_open_bank_name'];
-            $acctClearBankCode  = $param['lkl_acct_clear_bank_code'];
+            $acctClearBankCode = $param['lkl_acct_clear_bank_code'];
         } else {
             //卡BIN信息查询
             $carData = self::lklCardBin($param['acctNo']);
@@ -516,7 +516,7 @@ class LklApi
                 return self::setErrorInfo(self::getErrorInfo());
             }
             $bankCode = $carData['bankCode'];
-            $acctOpenBankName  = $carData['bankName'];
+            $acctOpenBankName = $carData['bankName'];
             $acctClearBankCode = $carData['clearingBankCode'];
         }
 
@@ -614,11 +614,11 @@ class LklApi
 
     /**
      * @desc 拉卡拉分账关系绑定申请(开放平台) 商户与平台
-     * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
      * @param lkl_receiver_no 分账接收方编号
      * @param entrust_file_path 合作协议
      * @date 2025-04-22 10:20
+     * @author ZhouTing
      */
     public static function lklApplyBind($param)
     {
@@ -663,13 +663,13 @@ class LklApi
 
     /**
      * @desc 拉卡拉 商户分账业务开通申请
-     * @author ZhouTing
      * @param lkl_mer_cup_no 银联商户号 = 拉卡拉商户编号
      * @param mobile 联系手机号
      * @param split_entrust_file_path 分账结算委托书文件
      * @param lkl_ec_no 电子合同编号
      * @doc：https://o.lakala.com/#/home/document/detail?id=379
      * @date 2025-04-22 11:39
+     * @author ZhouTing
      */
     public static function lklApplyLedgerMer($param)
     {
@@ -714,7 +714,6 @@ class LklApi
 
     /**
      * @desc 拉卡拉聚合主扫 支付
-     * @author ZhouTing
      * @param lkl_mer_cup_no 银联商户号 = 拉卡拉商户编号
      * @param lkl_mer_term_no 商户终端号
      * @param total_amount 实付金额(元)
@@ -723,6 +722,7 @@ class LklApi
      * @param order_no 订单号
      * @doc：https://o.lakala.com/#/home/document/detail?id=110
      * @date 2025-04-22 14:04
+     * @author ZhouTing
      */
     public static function lklPreorder($param)
     {
@@ -737,7 +737,7 @@ class LklApi
                 'request_ip' => self::$config['request_ip'], //请求方的IP地址
             ], //地址位置信息
             'subject' => '支付', //标题
-            'notify_url' => request()->domain() .  '/api/lakala/lklPayNotify',
+            'notify_url' => request()->domain() . '/api/lakala/lklPayNotify',
             'settle_type' => '1', //结算类型，0或者空常规结算方式，如需接拉卡拉分账需传1
             'remark' => $param['remark'], //商户定义，原样回传
             'acc_busi_fields' => [
@@ -789,12 +789,12 @@ class LklApi
 
     /**
      * @desc 订单分账 第一步 可分账金额查询(订单可分账金额为：实付金额 - 拉卡拉所收手续费)
-     * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉银联商户号
      * @param lkl_log_no 对账单流水号
      * @param lkl_log_date 交易日期 yyyyMMdd
      * @doc：https://o.lakala.com/#/home/document/detail?id=394
      * @date 2025-04-23 15:51
+     * @author ZhouTing
      */
     public static function lklQueryAmt($param)
     {
@@ -828,7 +828,6 @@ class LklApi
 
     /**
      * @desc 订单分账 第二步 发送指令 订单分账
-     * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉银联商户号
      * @param lkl_log_no 对账单流水号
      * @param lkl_log_date 交易日期
@@ -836,6 +835,7 @@ class LklApi
      * @param recv_datas 分账接收数据对象
      * @doc：https://o.lakala.com/#/home/document/detail?id=389
      * @date 2025-04-23 15:52
+     * @author ZhouTing
      */
     public static function lklSeparate($param)
     {
@@ -876,10 +876,10 @@ class LklApi
 
     /**
      * @desc 拉卡拉微信实名认证结果查询
-     * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
      * @doc：https://o.lakala.com/#/home/document/detail?id=181
      * @date 2025-04-24 11:50
+     * @author ZhouTing
      */
     public static function lklWechatRealNameQuery($param)
     {
@@ -913,11 +913,11 @@ class LklApi
 
     /**
      * @desc 支付宝实名认证信息查询
-     * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
      * @param sub_mch_id 子商户号
      * @doc：https://o.lakala.com/#/home/document/detail?id=345
      * @date 2025-04-24 13:29
+     * @author ZhouTing
      */
     public static function lklAlipayRealNameQuery($param)
     {
@@ -953,9 +953,9 @@ class LklApi
 
     /**
      * @desc 拉卡拉电子合同下载
-     * @author ZhouTing
      * @param lkl_ec_apply_id 电子合同申请受理号
      * @date 2025-04-17 15:08
+     * @author ZhouTing
      */
     public static function lklEcDownload($param)
     {
@@ -1013,7 +1013,7 @@ class LklApi
                 ]
             ]);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             return json_decode($rawBody, true);
         } catch (Exception $e) {
             return self::setErrorInfo('拉卡拉获取商户类别失败，' . $e->getMessage());
@@ -1022,9 +1022,9 @@ class LklApi
 
     /**
      * @desc 商户小类（拓客商户进件 获取mcc第二步）
-     * @author ZhouTing
      * @param parent_code 商户大类编码
      * @date 2025-04-21 17:47
+     * @author ZhouTing
      */
     public static function lklChildCate($param)
     {
@@ -1041,7 +1041,7 @@ class LklApi
                 ]
             ]);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             return json_decode($rawBody, true);
         } catch (Exception $e) {
             return self::setErrorInfo('拉卡拉获取商户小类别失败，' . $e->getMessage());
@@ -1050,9 +1050,9 @@ class LklApi
 
     /**
      * @desc 拉卡拉 地区信息(拓客平台)
-     * @author ZhouTing
      * @param parent_code 编码
      * @date 2025-04-18 13:53
+     * @author ZhouTing
      */
     public static function lklOrganization($param)
     {
@@ -1070,7 +1070,7 @@ class LklApi
                 ]
             ]);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             return json_decode($rawBody, true);
         } catch (Exception $e) {
             return self::setErrorInfo('拉卡拉获取地区失败，' . $e->getMessage());
@@ -1079,9 +1079,9 @@ class LklApi
 
     /**
      * @desc 拉卡拉 银行地区信息
-     * @author ZhouTing
      * @param parent_code 编码
      * @date 2025-04-19 10:20
+     * @author ZhouTing
      */
     public static function lklBankOrganization($param)
     {
@@ -1102,7 +1102,7 @@ class LklApi
                 ]
             ]);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             return json_decode($rawBody, true);
         } catch (Exception $e) {
             return self::setErrorInfo('拉卡拉获取银行地区失败，' . $e->getMessage());
@@ -1111,10 +1111,10 @@ class LklApi
 
     /**
      * @desc 拉卡拉 银行列表查询
-     * @author ZhouTing
      * @param area_code 地区编码
      * @param bank_name 银行名称
      * @date 2025-04-18 16:59
+     * @author ZhouTing
      */
     public static function lklBankInfo($param)
     {
@@ -1150,10 +1150,10 @@ class LklApi
 
     /**
      * @desc 卡BIN信息查询(开放平台)
-     * @author ZhouTing
      * @param cardNo 银行卡号
      * @doc：https://o.lakala.com/#/home/document/detail?id=179
      * @date 2025-04-17 18:26
+     * @author ZhouTing
      */
     public static function lklCardBin($cardNo)
     {
@@ -1210,10 +1210,10 @@ class LklApi
 
     /**
      * @desc 文件上传(拓客平台)
-     * @author ZhouTing
      * @param file 远程文件
      * @param type 图片类型
      * @date 2025-04-21 09:04
+     * @author ZhouTing
      */
     public static function lklHtkFileUpload($param)
     {
@@ -1255,7 +1255,7 @@ class LklApi
         try {
             $response = $client->post(self::$config['htk_file_upload_url'], $sepParam);
 
-            $rawBody = (string) $response->getBody();
+            $rawBody = (string)$response->getBody();
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客文件上传结果: ' . $rawBody, 'lkl');
 
             return json_decode($rawBody, true);
@@ -1267,11 +1267,11 @@ class LklApi
 
     /**
      * @desc 上传附件(开放平台)
-     * @author ZhouTing
      * @param attType 附件类型
      * @param url 附件
      * @doc：https://o.lakala.com/#/home/document/detail?id=90
      * @date 2025-03-04 10:38
+     * @author ZhouTing
      */
     public static function lklUploadFile($attType, $url)
     {
@@ -1327,5 +1327,32 @@ class LklApi
     public static function getErrorInfo($defaultMsg = self::DEFAULT_ERROR_MSG)
     {
         return !empty(self::$errorMsg) ? self::$errorMsg : $defaultMsg;
+    }
+
+    public static function realNameState($type, $applyment_state, $authorize_state)
+    {
+        if ($type == 'wechat') {
+            $applyment_state_list = [
+                'APPLYMENT_STATE_FAIL' => '提交失败',
+                'APPLYMENT_STATE_COMMIT' => '已提交',
+                'APPLYMENT_STATE_WAITTING_FOR_AUDIT' => '审核中',
+                'APPLYMENT_STATE_EDITTING' => '编辑中',
+                'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_CONTACT' => '待确认联系信息',
+                'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_LEGALPERSON' => '待账户验证',
+                'APPLYMENT_STATE_PASSED' => '审核通过',
+                'APPLYMENT_STATE_REJECTED' => '审核驳回',
+                'APPLYMENT_STATE_FREEZED' => '已冻结',
+                'APPLYMENT_STATE_CANCELED' => '已作废'
+            ];
+
+            $authorize_state_list = [
+                'AUTHORIZE_STATE_UNAUTHORIZED' => '未授权',
+                'AUTHORIZE_STATE_AUTHORIZED ' => '已授权',
+            ];
+
+            $applyment_state_text = $applyment_state_list[$applyment_state] ?? '';
+            $authorize_state_text = $authorize_state_list[$authorize_state] ?? '';
+            return compact('applyment_state_text', 'authorize_state_text');
+        }
     }
 }

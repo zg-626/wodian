@@ -47,12 +47,15 @@ class MerchantIntention extends BaseController
     public function status()
     {
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
+        // 0=未认证,1=已认证
         $uid = $this->userInfo->uid;
-        $info = LklModel::getInfo(['uid' => $uid]);
+        $info = LklModel::getInfo(['uid' => $uid],'wechat_applyment_state,wechat_authorize_state,wechat_reject_reason');
         $status_1 = 0;
         $status_2 = 0;
         $status_3 = 0;
         $status_4 = 0;
+        $status_5 = 0;
+        $wechat_reject_reason = '';
         if ($info) {
             $status_1 = 1;
             if ($info['lkl_ec_status'] == 'WAIT_AUDI') {
@@ -86,16 +89,24 @@ class MerchantIntention extends BaseController
             }
 
             if ($info['lkl_mer_bind_status'] == 3) {
-                $status_3 = 1;
+                $status_4 = 1;
             }
             if ($info['lkl_mer_bind_status'] == 1) {
-                $status_3 = 2;
+                $status_4 = 2;
             }
             if ($info['lkl_mer_bind_status'] == 2) {
-                $status_3 = 3;
+                $status_4 = 3;
             }
+
+            if ($info['wechat_applyment_state'] === 'APPLYMENT_STATE_PASSED' && $info['wechat_authorize_state'] === 'AUTHORIZE_STATE_AUTHORIZED') {
+                $status_5 = 1;
+            }
+            $api = new \Lakala\LklApi();
+            $result = $api::realNameState('wechat', $info['wechat_applyment_state'], $info['wechat_authorize_state']);
+            [$applyment_state_text, $authorize_state_text] = array_values($result);
+            $wechat_reject_reason = $info['wechat_reject_reason'];
         }
-        $data = compact('status_1', 'status_2', 'status_3', 'status_4');
+        $data = compact('status_1', 'status_2', 'status_3', 'status_4', 'status_5', 'applyment_state_text', 'authorize_state_text', 'wechat_reject_reason');
         return app('json')->success('入驻状态', $data);
     }
 
