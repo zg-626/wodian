@@ -315,6 +315,7 @@ class LklApi
      * @param f_settle_img 结算人身份证反面照
      * @param legal_auth_img  法人授权函(非法人进件时，必传)
      * @param lkl_ec_no 电子合同编号
+     * @param mcc 商户MCC编号
      * @date 2025-04-18 10:08
      * @author ZhouTing
      */
@@ -352,7 +353,7 @@ class LklApi
             'bizContent' => [
                 'termNum' => '1',
                 'activityId' => self::$config['activity_id'],
-                'mcc' => '',
+                'mcc' => '5311', //TODO 商户MCC编号 $param['mcc']
                 'fees' => [
                     [
                         'feeCode' => 'WECHAT',
