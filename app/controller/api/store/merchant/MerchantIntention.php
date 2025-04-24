@@ -103,10 +103,10 @@ class MerchantIntention extends BaseController
             }
             $api = new \Lakala\LklApi();
             $result = $api::realNameState('wechat', $info['wechat_applyment_state'], $info['wechat_authorize_state']);
-            [$applyment_state_text, $authorize_state_text] = array_values($result);
+            [$wechat_applyment_state_text, $wechat_authorize_state_text] = array_values($result);
             $wechat_reject_reason = $info['wechat_reject_reason'];
         }
-        $data = compact('status_1', 'status_2', 'status_3', 'status_4', 'status_5', 'applyment_state_text', 'authorize_state_text', 'wechat_reject_reason');
+        $data = compact('status_1', 'status_2', 'status_3', 'status_4', 'status_5', 'wechat_applyment_state_text', 'wechat_authorize_state_text', 'wechat_reject_reason');
         return app('json')->success('入驻状态', $data);
     }
 
