@@ -468,7 +468,6 @@ class LklApi
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            // $response = $client->post(self::$config['merchant_url'], $requestData);
             $response = $client->request('POST', self::$config['merchant_url'], $requestData);
 
             $rawBody = (string)$response->getBody();
@@ -477,7 +476,8 @@ class LklApi
             return json_decode($rawBody, true);
         } catch (Exception $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
-            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
+
+            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage() . 'Code：' . $response->getStatusCode() . ',Body：' . $response->getBody()->getContents());
         }
     }
 
