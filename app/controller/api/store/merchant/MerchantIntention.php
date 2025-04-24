@@ -214,9 +214,9 @@ class MerchantIntention extends BaseController
 //        $save_data['lkl_mer_cup_status'] = $result['status'];
 
         $save_data['lkl_mer_cup_no'] = '111111111';
-        $save_data['lkl_mer_cup_status'] = 'WAIT_AUDI';
-        
-        $intention_data['mer_lkl_id'] = $info->id;
+        $save_data['lkl_mer_cup_status'] = 'SUCCESS';
+
+        $intention_data['mer_lkl_id'] = $info['id'];
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
         $intention_data['mer_name'] = $params['mer_name']; // 商户名称
@@ -231,8 +231,8 @@ class MerchantIntention extends BaseController
         $intention_data['address'] = $params['mer_addr']; // 商户地址
         Db::startTrans();
         try {
-            LklModel::where('id', $info->id)->update($save_data);
-            $intention = IntentionModel::where('mer_lkl_id', $info->id)->field('id')->find();
+            LklModel::where('id', $info['id'])->update($save_data);
+            $intention = IntentionModel::where('mer_lkl_id', $info['id'])->field('mer_intention_id')->find();
             if ($intention) {
                 $intention->save($intention_data);
             } else {
@@ -264,7 +264,10 @@ class MerchantIntention extends BaseController
         if ($info['lkl_mer_cup_status'] == '') {
             return app('json')->fail('请返回上一页，完成商户进件');
         }
-        if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
+        if ($info['lkl_mer_cup_status'] != 'SUCCESS') {
+            return app('json')->fail('商户进件未审核成功');
+        }
+        if ($info['lkl_mer_cup_status'] == 3) {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
         if ($info['lkl_mer_ledger_status'] == 1) {
@@ -322,6 +325,9 @@ class MerchantIntention extends BaseController
         }
         if ($info['lkl_mer_bind_status'] == 3) {
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
+        }
+        if ($info['lkl_mer_ledger_status'] == 1) {
+            return app('json')->fail('商户分账关系绑定已审核成功');
         }
 
 //        try {

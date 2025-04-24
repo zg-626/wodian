@@ -116,13 +116,14 @@ class MerchantIntentionRepository extends BaseRepository
         $info = null;
         if ($create == 1) {
             if ($intention['mer_lkl_id'] > 0) {
-                $info = \app\common\model\system\merchant\MerchantEcLkl::where('id', $intention['mer_lkl_id'])->field('id,lkl_mer_cup_status')->find();
+                $info = \app\common\model\system\merchant\MerchantEcLkl::getInfo(['id'=>$intention['mer_lkl_id']],'lkl_mer_cup_no');
                 if (!$info) {
                     throw new ValidateException('拉卡拉商户进件信息不存在');
                 }
                 if ($info['lkl_mer_cup_status'] != 'SUCCESS') {
                     throw new ValidateException('拉卡拉商户进件未审核通过');
                 }
+                $data['merchant_no'] = $info['lkl_mer_cup_no'];
             }
         }
 
