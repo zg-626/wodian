@@ -468,7 +468,8 @@ class LklApi
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->post(self::$config['merchant_url'], $requestData);
+            // $response = $client->post(self::$config['merchant_url'], $requestData);
+            $response = $client->request('POST', self::$config['merchant_url'], $requestData);
 
             $rawBody = (string)$response->getBody();
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
