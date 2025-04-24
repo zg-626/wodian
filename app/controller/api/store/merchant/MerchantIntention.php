@@ -160,7 +160,7 @@ class MerchantIntention extends BaseController
 
         $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
         $save_data['lkl_ec_no'] = '';
-        $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
+        $save_data['lkl_ec_status'] = 'WAIT_AUDI';
         try {
             LklModel::where('id', $info->id)->update($save_data);
         } catch (Exception $e) {
@@ -215,6 +215,7 @@ class MerchantIntention extends BaseController
 
         $save_data['lkl_mer_cup_no'] = '111111111';
         $save_data['lkl_mer_cup_status'] = 'WAIT_AUDI';
+        
         $intention_data['mer_lkl_id'] = $info->id;
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
