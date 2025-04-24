@@ -200,19 +200,21 @@ class MerchantIntention extends BaseController
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-        try {
-            $params['lkl_ec_no'] = $info['lkl_ec_no'];
-            $api = new \Lakala\LklApi();
-            $result = $api::lklMerchantApply($params);
-            if (!$result) {
-                return app('json')->fail($api->getErrorInfo());
-            }
-        } catch (Exception $e) {
-            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-        }
+//        try {
+//            $params['lkl_ec_no'] = $info['lkl_ec_no'];
+//            $api = new \Lakala\LklApi();
+//            $result = $api::lklMerchantApply($params);
+//            if (!$result) {
+//                return app('json')->fail($api->getErrorInfo());
+//            }
+//        } catch (Exception $e) {
+//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+//        }
+//        $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
+//        $save_data['lkl_mer_cup_status'] = $result['status'];
 
-        $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
-        $save_data['lkl_mer_cup_status'] = $result['status'];
+        $save_data['lkl_mer_cup_no'] = '111111111';
+        $save_data['lkl_mer_cup_status'] = 'WAIT_AUDI';
         $intention_data['mer_lkl_id'] = $info->id;
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
@@ -268,17 +270,17 @@ class MerchantIntention extends BaseController
             return app('json')->fail('商户分账业务开通申请已审核成功');
         }
 
-        try {
-            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-            $params['lkl_ec_no'] = $info['lkl_ec_no'];
-            $api = new \Lakala\LklApi();
-            $result = $api::lklApplyLedgerMer($params);
-            if (!$result) {
-                return app('json')->fail($api->getErrorInfo());
-            }
-        } catch (Exception $e) {
-            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-        }
+//        try {
+//            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+//            $params['lkl_ec_no'] = $info['lkl_ec_no'];
+//            $api = new \Lakala\LklApi();
+//            $result = $api::lklApplyLedgerMer($params);
+//            if (!$result) {
+//                return app('json')->fail($api->getErrorInfo());
+//            }
+//        } catch (Exception $e) {
+//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+//        }
 
         $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
         $data['lkl_mer_ledger_status'] = 3;
@@ -321,17 +323,17 @@ class MerchantIntention extends BaseController
             return app('json')->fail('正在审核中，请耐心等待后台审核...');
         }
 
-        try {
-            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-            $params['lkl_receiver_no'] = '';
-            $api = new \Lakala\LklApi();
-            $result = $api::lklApplyBind($params);
-            if (!$result) {
-                return app('json')->fail($api->getErrorInfo());
-            }
-        } catch (Exception $e) {
-            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-        }
+//        try {
+//            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+//            $params['lkl_receiver_no'] = '';
+//            $api = new \Lakala\LklApi();
+//            $result = $api::lklApplyBind($params);
+//            if (!$result) {
+//                return app('json')->fail($api->getErrorInfo());
+//            }
+//        } catch (Exception $e) {
+//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+//        }
 
         $data['entrust_file_path'] = $params['entrust_file_path'];
         $data['lkl_mer_bind_status'] = 3;
