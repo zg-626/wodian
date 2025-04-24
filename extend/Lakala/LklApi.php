@@ -455,7 +455,7 @@ class LklApi
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
         $requestData = [
-            'json' => $sepParam,
+            'json' => json_encode($sepParam, JSON_UNESCAPED_UNICODE),
             'headers' => [
                 'Authorization' => 'bearer ' . $token['access_token'],
                 'Content-Type' => 'application/json',
