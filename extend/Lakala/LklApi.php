@@ -24,7 +24,7 @@ class LklApi
     private static $errorMsg;
 
     const DEFAULT_ERROR_MSG = '操作失败,请稍候再试!';
-    const DEBUG = false; //测试环境
+    const DEBUG = true; //测试环境
 
     private static $config = [
         'org_code' => '982406', //机构号
