@@ -194,11 +194,15 @@ class MerchantIntention extends BaseController
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-        $params['lkl_ec_no'] = $info['lkl_ec_no'];
-        $api = new \Lakala\LklApi();
-        $result = $api::lklMerchantApply($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
+        try{
+            $params['lkl_ec_no'] = $info['lkl_ec_no'];
+            $api = new \Lakala\LklApi();
+            $result = $api::lklMerchantApply($params);
+            if (!$result) {
+                return app('json')->fail($api->getErrorInfo());
+            }
+        }catch (Exception $e) {
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
         $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
