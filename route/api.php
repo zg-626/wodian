@@ -627,6 +627,7 @@ Route::group('api/', function () {
         Route::post('intention/lklOrganization', 'api.store.merchant.MerchantIntention/lklOrganization'); // 获取地区查询
         Route::post('intention/lklBankOrganization', 'api.store.merchant.MerchantIntention/lklBankOrganization'); // 获取银行地区查询
         Route::post('intention/lklBankInfo', 'api.store.merchant.MerchantIntention/lklBankInfo'); // 银行列表查询
+        
 
 
         //浏览
