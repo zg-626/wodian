@@ -505,6 +505,8 @@ class MerchantIntention extends BaseController
                 return $params;
                 break;
         }
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 请求参数: ' . json_encode($params, JSON_UNESCAPED_UNICODE), 'lkl');
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
         } catch (Exception $e) {
