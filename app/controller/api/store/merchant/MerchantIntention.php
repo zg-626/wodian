@@ -155,7 +155,7 @@ class MerchantIntention extends BaseController
                 return app('json')->fail($api->getErrorInfo());
             }
         } catch (Exception $e) {
-            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+            return app('json')->fail($e);
         }
 
         $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
