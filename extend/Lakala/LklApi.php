@@ -436,29 +436,30 @@ class LklApi
         }
         $sepParam['attachments'] = $attchments;
 
-        $multipartData = [];
-        foreach ($sepParam as $key => $value) {
-            if (is_array($value)) {
-                $multipartData[] = [
-                    'name' => $key,
-                    'contents' => json_encode($value, JSON_UNESCAPED_UNICODE)
-                ];
-            } else {
-                $multipartData[] = [
-                    'name' => $key,
-                    'contents' => (string)$value
-                ];
-            }
-        }
+        // $multipartData = [];
+        // foreach ($sepParam as $key => $value) {
+        //     if (is_array($value)) {
+        //         $multipartData[] = [
+        //             'name' => $key,
+        //             'contents' => json_encode($value, JSON_UNESCAPED_UNICODE)
+        //         ];
+        //     } else {
+        //         $multipartData[] = [
+        //             'name' => $key,
+        //             'contents' => (string)$value
+        //         ];
+        //     }
+        // }
 
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
         $requestData = [
             'headers' => [
-                'Authorization' => 'bearer ' . $token['access_token']
+                'Authorization' => 'bearer ' . $token['access_token'],
+                'Content-Type' => 'application/x-www-form-urlencoded',
             ],
-            'multipart' => $multipartData
+            'form_params' => $sepParam,
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
