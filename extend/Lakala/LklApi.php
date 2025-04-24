@@ -1329,25 +1329,39 @@ class LklApi
         return !empty(self::$errorMsg) ? self::$errorMsg : $defaultMsg;
     }
 
+    public static $APPLYMENT_STATE_FAIL = 'APPLYMENT_STATE_FAIL';
+    public static $APPLYMENT_STATE_COMMIT = 'APPLYMENT_STATE_COMMIT';
+    public static $APPLYMENT_STATE_WAITTING_FOR_AUDIT = 'APPLYMENT_STATE_WAITTING_FOR_AUDIT';
+    public static $APPLYMENT_STATE_EDITTING = 'APPLYMENT_STATE_EDITTING';
+    public static $APPLYMENT_STATE_WAITTING_FOR_CONFIRM_CONTACT = 'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_CONTACT';
+    public static $APPLYMENT_STATE_WAITTING_FOR_CONFIRM_LEGALPERSON = 'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_LEGALPERSON';
+    public static $APPLYMENT_STATE_PASSED = 'APPLYMENT_STATE_PASSED';
+    public static $APPLYMENT_STATE_REJECTED = 'APPLYMENT_STATE_REJECTED';
+    public static $APPLYMENT_STATE_FREEZED = 'APPLYMENT_STATE_FREEZED';
+    public static $APPLYMENT_STATE_CANCELED = 'APPLYMENT_STATE_CANCELED';
+
+    public static $AUTHORIZE_STATE_UNAUTHORIZED = 'AUTHORIZE_STATE_UNAUTHORIZED';
+    public static $AUTHORIZE_STATE_AUTHORIZED = 'AUTHORIZE_STATE_AUTHORIZED';
+
     public static function realNameState($type, $applyment_state, $authorize_state)
     {
         if ($type == 'wechat') {
             $applyment_state_list = [
-                'APPLYMENT_STATE_FAIL' => '提交失败',
-                'APPLYMENT_STATE_COMMIT' => '已提交',
-                'APPLYMENT_STATE_WAITTING_FOR_AUDIT' => '审核中',
-                'APPLYMENT_STATE_EDITTING' => '编辑中',
-                'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_CONTACT' => '待确认联系信息',
-                'APPLYMENT_STATE_WAITTING_FOR_CONFIRM_LEGALPERSON' => '待账户验证',
-                'APPLYMENT_STATE_PASSED' => '审核通过',
-                'APPLYMENT_STATE_REJECTED' => '审核驳回',
-                'APPLYMENT_STATE_FREEZED' => '已冻结',
-                'APPLYMENT_STATE_CANCELED' => '已作废'
+                self::$APPLYMENT_STATE_FAIL => '提交失败',
+                self::$APPLYMENT_STATE_COMMIT => '已提交',
+                self::$APPLYMENT_STATE_WAITTING_FOR_AUDIT => '审核中',
+                self::$APPLYMENT_STATE_EDITTING => '编辑中',
+                self::$APPLYMENT_STATE_WAITTING_FOR_CONFIRM_CONTACT => '待确认联系信息',
+                self::$APPLYMENT_STATE_WAITTING_FOR_CONFIRM_LEGALPERSON => '待账户验证',
+                self::$APPLYMENT_STATE_PASSED => '审核通过',
+                self::$APPLYMENT_STATE_REJECTED => '审核驳回',
+                self::$APPLYMENT_STATE_FREEZED => '已冻结',
+                self::$APPLYMENT_STATE_CANCELED => '已作废'
             ];
 
             $authorize_state_list = [
-                'AUTHORIZE_STATE_UNAUTHORIZED' => '未授权',
-                'AUTHORIZE_STATE_AUTHORIZED ' => '已授权',
+                self::$AUTHORIZE_STATE_UNAUTHORIZED => '未授权',
+                self::$AUTHORIZE_STATE_AUTHORIZED => '已授权',
             ];
 
             $applyment_state_text = $applyment_state_list[$applyment_state] ?? '';

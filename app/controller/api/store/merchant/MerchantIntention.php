@@ -20,6 +20,7 @@ use app\validate\api\MerchantIntentionValidate;
 use crmeb\services\SmsService;
 use crmeb\services\SwooleTaskService;
 use crmeb\services\YunxinSmsService;
+use Lakala\LklApi;
 use think\App;
 use think\facade\Db;
 use crmeb\basic\BaseController;
@@ -49,12 +50,14 @@ class MerchantIntention extends BaseController
         // 0=未提交,1=已提交,2=审核通过,3=审核驳回
         // 0=未认证,1=已认证
         $uid = $this->userInfo->uid;
-        $info = LklModel::getInfo(['uid' => $uid],'wechat_applyment_state,wechat_authorize_state,wechat_reject_reason');
+        $info = LklModel::getInfo(['uid' => $uid], 'lkl_mer_cup_no,wechat_applyment_state,wechat_authorize_state,wechat_reject_reason');
         $status_1 = 0;
         $status_2 = 0;
         $status_3 = 0;
         $status_4 = 0;
         $status_5 = 0;
+        $wechat_applyment_state_text = '';
+        $wechat_authorize_state_text = '';
         $wechat_reject_reason = '';
         if ($info) {
             $status_1 = 1;
@@ -98,13 +101,33 @@ class MerchantIntention extends BaseController
                 $status_4 = 3;
             }
 
-            if ($info['wechat_applyment_state'] === 'APPLYMENT_STATE_PASSED' && $info['wechat_authorize_state'] === 'AUTHORIZE_STATE_AUTHORIZED') {
+            $wechat_applyment_state = $info['wechat_applyment_state'];
+            $wechat_authorize_state = $info['wechat_authorize_state'];
+            $wechat_reject_reason = $info['wechat_reject_reason'];
+            if ($wechat_applyment_state === LklApi::$APPLYMENT_STATE_PASSED && $wechat_authorize_state === LklApi::$AUTHORIZE_STATE_AUTHORIZED) {
                 $status_5 = 1;
             }
-            $api = new \Lakala\LklApi();
-            $result = $api::realNameState('wechat', $info['wechat_applyment_state'], $info['wechat_authorize_state']);
+
+            if ($wechat_applyment_state) {
+                if (!in_array($wechat_applyment_state, [LklApi::$APPLYMENT_STATE_PASSED, LklApi::$APPLYMENT_STATE_REJECTED, LklApi::$APPLYMENT_STATE_FREEZED, LklApi::$APPLYMENT_STATE_CANCELED]) || $wechat_authorize_state == LklApi::$AUTHORIZE_STATE_UNAUTHORIZED) {
+                    $api = new \Lakala\LklApi();
+                    try {
+                        $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+                        $result = $api::lklWechatRealNameQuery($params);
+                        if ($result) {
+                            $wechat_applyment_state = $result['applymentState'];
+                            $wechat_authorize_state = $result['authorizeState'];
+                            $wechat_reject_reason = $result['authorizeState'];
+                            $info->save(compact('wechat_applyment_state', 'wechat_authorize_state', 'wechat_reject_reason'));
+                        }
+                    } catch (Exception $e) {
+//                return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+                    }
+                }
+            }
+
+            $result = $api::realNameState('wechat', $wechat_applyment_state, $wechat_authorize_state);
             [$wechat_applyment_state_text, $wechat_authorize_state_text] = array_values($result);
-            $wechat_reject_reason = $info['wechat_reject_reason'];
         }
         $data = compact('status_1', 'status_2', 'status_3', 'status_4', 'status_5', 'wechat_applyment_state_text', 'wechat_authorize_state_text', 'wechat_reject_reason');
         return app('json')->success('入驻状态', $data);
@@ -222,12 +245,9 @@ class MerchantIntention extends BaseController
         } catch (Exception $e) {
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
+
         $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
         $save_data['lkl_mer_cup_status'] = $result['status'];
-
-//        $save_data['lkl_mer_cup_no'] = '111111111';
-//        $save_data['lkl_mer_cup_status'] = 'SUCCESS';
-
         $intention_data['mer_lkl_id'] = $info['id'];
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
