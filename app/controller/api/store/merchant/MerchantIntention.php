@@ -145,7 +145,7 @@ class MerchantIntention extends BaseController
                 $info = LklModel::create($data);
             }
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
         $api = new \Lakala\LklApi();
@@ -159,7 +159,7 @@ class MerchantIntention extends BaseController
         try {
             LklModel::where('id', $info->id)->update($save_data);
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
         return app('json')->success('提交成功', $result);
     }
@@ -191,7 +191,7 @@ class MerchantIntention extends BaseController
         try {
             $info->save($data);
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
         $params['lkl_ec_no'] = $info['lkl_ec_no'];
@@ -228,7 +228,7 @@ class MerchantIntention extends BaseController
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
         return app('json')->success('提交成功', []);
     }
@@ -271,7 +271,7 @@ class MerchantIntention extends BaseController
         try {
             $info->save($data);
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
         return app('json')->success('提交成功', []);
     }
@@ -320,7 +320,7 @@ class MerchantIntention extends BaseController
         try {
             $info->save($data);
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
         return app('json')->success('提交成功', []);
     }
