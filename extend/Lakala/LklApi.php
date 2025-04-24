@@ -477,7 +477,7 @@ class LklApi
         } catch (Exception $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
 
-            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage() . 'Code：' . $response->getStatusCode() . ',Body：' . $response->getBody()->getContents());
+            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
         }
     }
 
