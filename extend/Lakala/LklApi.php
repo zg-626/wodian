@@ -302,6 +302,8 @@ class LklApi
      * @param acct_name 结算人账户名称
      * @param acct_type_code 结算账户类型 57对公，58对私
      * @param acct_id_card 结算人证件号码
+     * @param acct_id_dt_start 结算人证件开始日期 yyyy-MM-dd
+     * @param acct_id_dt_end 结算人证件过期时间
      * @param z_idcard_img 身份证正面
      * @param f_idcard_img 身份证反面
      * @param license_pic_img 营业执照照片 企业必传
