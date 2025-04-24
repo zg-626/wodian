@@ -1204,7 +1204,7 @@ class LklApi
             'orgCode' => self::$config['org_code'],
             'attType' => $attType,
             'attExtName' => 'pdf',
-            'attContext' => base64_encode(file_get_contents($url))
+            'attContext' => base64_encode($url)
         ];
         $log = $sepParam;
         $log['attContext'] = $url;
