@@ -39,7 +39,7 @@ class LklApi
         'user_no' => '20000101', //商户归属用户信息
         'activity_id' => '4', //归属活动信息
         'request_ip' => '39.100.91.239', //请求方IP  地址位置信息，风控要求必送
-        'app_id' => 'wxda2922aa5121cc98'
+        'app_id' => 'OP10000764'
     ];
 
     /**
@@ -1204,7 +1204,7 @@ class LklApi
             'orgCode' => self::$config['org_code'],
             'attType' => $attType,
             'attExtName' => 'pdf',
-            'attContext' => base64_encode(file_get_contents($url))
+            'attContext' => base64_encode($url)
         ];
         $log = $sepParam;
         $log['attContext'] = $url;
