@@ -215,6 +215,7 @@ class MerchantIntention extends BaseController
 
         $save_data['lkl_mer_cup_no'] = '111111111';
         $save_data['lkl_mer_cup_status'] = 'WAIT_AUDI';
+        
         $intention_data['mer_lkl_id'] = $info->id;
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
