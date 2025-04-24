@@ -1216,7 +1216,7 @@ if (!function_exists('imageUrl')) {
         if (strpos($img, 'http') !== false) {
             return $img;
         } else {
-            return request()->domain() . $img;
+            return 'https://offline.lnkj2.com/'. $img;
         }
     }
 }
