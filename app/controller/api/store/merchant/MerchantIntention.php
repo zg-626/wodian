@@ -155,7 +155,7 @@ class MerchantIntention extends BaseController
                 return app('json')->fail($api->getErrorInfo());
             }
         } catch (Exception $e) {
-            return app('json')->fail($e);
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->get);
         }
 
         $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
@@ -163,7 +163,7 @@ class MerchantIntention extends BaseController
         try {
             LklModel::where('id', $info->id)->update($save_data);
         } catch (Exception $e) {
-            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage().' '. $e->getData().' '. $e->getCode().' '. $e->getPrevious().' '. $e->getTrace().' '. $e->getTraceAsString());
         }
         return app('json')->success('提交成功', $result);
     }
@@ -508,7 +508,7 @@ class MerchantIntention extends BaseController
                 try {
                     validate($rule)->check($params);
                 } catch (Exception $e) {
-                    return app('json')->fail($e->getError());
+                    return app('json')->fail($e->getMessage());
                 }
                 return $params;
                 break;
@@ -518,7 +518,7 @@ class MerchantIntention extends BaseController
         try {
             validate(MerchantIntentionValidate::class)->scene($function)->check($params);
         } catch (Exception $e) {
-            return app('json')->fail($e->getError());
+            return app('json')->fail($e->getMessage());
         }
         return $params;
     }
