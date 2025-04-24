@@ -455,11 +455,11 @@ class LklApi
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
         $requestData = [
+            'json' => $sepParam,
             'headers' => [
                 'Authorization' => 'bearer ' . $token['access_token'],
-                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Content-Type' => 'application/json',
             ],
-            'form_params' => $sepParam,
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
