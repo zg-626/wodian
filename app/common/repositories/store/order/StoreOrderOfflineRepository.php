@@ -210,7 +210,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         ];
 
         // 微信服务商支付
-        /*$body = [
+        $body = [
             'out_trade_no' => $order_sn,
             'pay_price' => $money,
             'attach' => 'offline_order',
@@ -219,9 +219,9 @@ class StoreOrderOfflineRepository extends BaseRepository
             'body' =>'线下门店支付'
         ];
 
-
-        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];*/
         $type = $params['pay_type'];
+        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
+
         if (in_array($type, ['weixin', 'alipay','routine'], true) && $params['is_app']) {
             $type .= 'App';
         }
@@ -237,28 +237,26 @@ class StoreOrderOfflineRepository extends BaseRepository
         ];
 
         if ($money){
-//            try {
-//                //$service = new PayService($type,$body, 'offline_order');
-//
-//                /*$service = new OfflinePayService($type, $body);
-//                $config = $service->pay($user);
-//                return app('json')->status($type, $config + ['order_id' => $info->order_id]);*/
-//                // TODO 测试身份佣金，直接支付成功
-//                //$this->paySuccess($data);
-//                $api = new \Lakala\LklApi();
-//                $result = $api::lklPreorder($params);
-//                return app('json')->status('success', $result + ['order_id' => $info->order_id]);
-//            } catch (\Exception $e) {
-//                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
-//            }
-            $api = new \Lakala\LklApi();
+            try {
+                //$service = new PayService($type,$body, 'offline_order');
+
+                $service = new OfflinePayService($type, $body);
+                //$config = $service->pay($user);
+                //return app('json')->status($type, $config + ['order_id' => $info->order_id]);
+                // TODO 测试身份佣金，直接支付成功
+                $this->paySuccess($data);
+
+            } catch (\Exception $e) {
+                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
+            }
+            /*$api = new \Lakala\LklApi();
             $result = $api::lklPreorder($params);
             if (!$result) {
                 return app('json')->fail($api->getErrorInfo());
             }
             $config=[
                 'config' => $result
-            ];
+            ];*/
             return app('json')->status($type, $config + ['order_id' => $info->order_id]);
         } else {
             $this->paySuccess($data);
