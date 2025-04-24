@@ -129,7 +129,7 @@ class MerchantIntention extends BaseController
                 }
             }
 
-            $result = $api::realNameState('wechat', $wechat_applyment_state, $wechat_authorize_state);
+            $result = LklApi::realNameState('wechat', $wechat_applyment_state, $wechat_authorize_state);
             [$wechat_applyment_state_text, $wechat_authorize_state_text] = array_values($result);
         }
         $data = compact('status_1', 'status_2', 'status_3', 'status_4', 'status_5', 'wechat_applyment_state_text', 'wechat_authorize_state_text', 'wechat_reject_reason');
