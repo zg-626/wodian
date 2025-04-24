@@ -350,6 +350,9 @@ class LklApi
             'accountName' => $param['acct_name'],
             'accountType' => $param['acct_type_code'],
             'accountIdCard' => $param['acct_id_card'],
+            'accountIdType' => '01',
+            'accountIdDtStart' => $param['acct_id_dt_start'],
+            'accountIdDtEnd' => $param['acct_id_dt_end'],
             'bizContent' => [
                 'termNum' => '1',
                 'activityId' => self::$config['activity_id'],
