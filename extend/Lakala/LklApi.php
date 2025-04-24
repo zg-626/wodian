@@ -878,6 +878,7 @@ class LklApi
      * @desc 拉卡拉微信实名认证结果查询
      * @author ZhouTing
      * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
+     * @doc：https://o.lakala.com/#/home/document/detail?id=181
      * @date 2025-04-24 11:50
      */
     public static function lklWechatRealNameQuery($param)
@@ -906,6 +907,46 @@ class LklApi
             }
         } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 微信实名认证查询请求异常: ' . $e->getMessage(), 'lkl');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @desc 支付宝实名认证信息查询
+     * @author ZhouTing
+     * @param lkl_mer_cup_no 拉卡拉商户编号 分账商户银联商户号(店铺)
+     * @param sub_mch_id 子商户号
+     * @doc：https://o.lakala.com/#/home/document/detail?id=345
+     * @date 2025-04-24 13:29
+     */
+    public static function lklAlipayRealNameQuery($param)
+    {
+        $sepParam = [
+            'version' => '1.0',
+            'orderNo' => date('YmdHis', time()) . Random::generate(8),
+            'orgCode' => self::$config['org_code'],
+            'merInnerNo' => $param['lkl_mer_cup_no'],
+            'subMchId' => $param['sub_mch_id']
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 支付宝实名认证查询参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v2/mms/openApi/alipayRealNameQuery', $request);
+            $res = $response->getOriginalText();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 支付宝实名认证查询请求结果: ' . $res, 'lkl');
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return $resdata['respData'];
+            } else {
+                return self::setErrorInfo('支付宝实名认证查询失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 支付宝实名认证查询异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo('lkl' . $e->getMessage());
         }
     }
