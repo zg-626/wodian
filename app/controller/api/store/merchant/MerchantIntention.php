@@ -388,6 +388,34 @@ class MerchantIntention extends BaseController
     }
 
     /**
+     * 电子合同下载
+     **/
+    public function download()
+    {
+        $params = $this->validateParams(__FUNCTION__);
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcDownload($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('电子合同下载', $result);
+    }
+
+    /**
+     * 电子合同查询
+     **/
+    public function download_status()
+    {
+        $params = $this->validateParams('download');
+        $api = new \Lakala\LklApi();
+        $result = $api::lklEcQStatus($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+        return app('json')->success('电子合同查询', $result);
+    }
+
+    /**
      * 获取地区查询
      **/
     public function lklOrganization()
@@ -430,31 +458,20 @@ class MerchantIntention extends BaseController
     }
 
     /**
-     * 电子合同下载
+     * 商户大类/商户小类
      **/
-    public function download()
-    {
+    public function lklChildCate(){
         $params = $this->validateParams(__FUNCTION__);
         $api = new \Lakala\LklApi();
-        $result = $api::lklEcDownload($params);
+        if($params['parent_code']){
+            $result = $api::lklChildCate($params);
+        } else{
+            $result = $api::lklParentCate($params);
+        }
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
-        return app('json')->success('电子合同下载', $result);
-    }
-
-    /**
-     * 电子合同查询
-     **/
-    public function download_status()
-    {
-        $params = $this->validateParams('download');
-        $api = new \Lakala\LklApi();
-        $result = $api::lklEcQStatus($params);
-        if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
-        }
-        return app('json')->success('电子合同查询', $result);
+        return app('json')->success('商户大类/商户小类', $result);
     }
 
     /**
@@ -531,6 +548,7 @@ class MerchantIntention extends BaseController
                     'z_settle_img',
                     'f_settle_img',
                     'legal_auth_img',
+                    'mcc',
                 ]);
                 break;
             case 'create_three':
@@ -548,6 +566,13 @@ class MerchantIntention extends BaseController
                 $params = $this->request->params([
                     'lkl_ec_apply_id'
                 ]);
+                break;
+            case 'lklChildCate':
+                //
+                $params = $this->request->params([
+                    'parent_code'
+                ]);
+                return $params;
                 break;
             case 'lklOrganization':
                 $params = $this->request->params([
