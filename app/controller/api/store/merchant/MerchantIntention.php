@@ -424,7 +424,7 @@ class MerchantIntention extends BaseController
         if($params['parent_code']){
             $result = $api::lklChildCate($params);
         } else{
-            $result = $api::lklParentCate($params);
+            $result = $api::lklParentCate();
         }
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
