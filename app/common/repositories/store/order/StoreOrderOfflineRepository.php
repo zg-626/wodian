@@ -210,14 +210,14 @@ class StoreOrderOfflineRepository extends BaseRepository
         ];
 
         // 微信服务商支付
-        $body = [
+        /*$body = [
             'out_trade_no' => $order_sn,
             'pay_price' => $money,
             'attach' => 'offline_order',
             'sub_mchid' => $merchant['sub_mchid'],
             'description' => '线下商品消费',
             'body' =>'线下门店支付'
-        ];
+        ];*/
 
         $type = $params['pay_type'];
         if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
@@ -237,19 +237,19 @@ class StoreOrderOfflineRepository extends BaseRepository
         ];
 
         if ($money){
-            try {
-                //$service = new PayService($type,$body, 'offline_order');
-
-                $service = new OfflinePayService($type, $body);
-                //$config = $service->pay($user);
-                //return app('json')->status($type, $config + ['order_id' => $info->order_id]);
-                // TODO 测试身份佣金，直接支付成功
-                $this->paySuccess($data);
-                return app('json')->status($type, ['order_id' => $info->order_id]);
-            } catch (\Exception $e) {
-                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
-            }
-            /*$api = new \Lakala\LklApi();
+//            try {
+//                //$service = new PayService($type,$body, 'offline_order');
+//
+//                $service = new OfflinePayService($type, $body);
+//                //$config = $service->pay($user);
+//                //return app('json')->status($type, $config + ['order_id' => $info->order_id]);
+//                // TODO 测试身份佣金，直接支付成功
+//                $this->paySuccess($data);
+//                return app('json')->status($type, ['order_id' => $info->order_id]);
+//            } catch (\Exception $e) {
+//                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
+//            }
+            $api = new \Lakala\LklApi();
             $result = $api::lklPreorder($params);
             if (!$result) {
                 return app('json')->fail($api->getErrorInfo());
@@ -257,7 +257,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $config=[
                 'config' => $result
             ];
-            return app('json')->status($type, $config + ['order_id' => $info->order_id]);*/
+            return app('json')->status($type, $config + ['order_id' => $info->order_id]);
         } else {
             $this->paySuccess($data);
             return app('json')->status('success', ['order_id' => $info->order_id]);
