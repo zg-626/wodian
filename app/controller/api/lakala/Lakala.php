@@ -58,23 +58,15 @@ class Lakala extends BaseController
      */
     public function lklMerchantApplyNotify()
     {
-        // $param = input('');
-        // Db::name('third_notify')->insert(['title' => '商户进件回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
-        // record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
-        // $resArr = json_decode(json_encode($param, JSON_UNESCAPED_UNICODE), true);
-        // $resArr = json_decode($param, true);
+        $param = input('');
+        Db::name('third_notify')->insert(['title' => '商户进件回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
 
-        // echo "<pre>";
-        // print_r($resArr);
-
-        // $pubKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtY2D9l3S9gpZWmIUVxLFbCnQ1fxJE1lw90wYGoSgiVRqUk5DBQhqy+7JRyQiFTdp2Xam3BY0+G3YtA27rROaTIDd7hrDWWvdqIstufBAJlhwWfVIusez/HdSb3u2sunhjV6BWenjezUyQSoR4avREqNRzPOBod7QAYOeaLWL8W8edgfTC2/8Pj9W+Dpk5XZ35YG8eOdMXNxApYq2lZu4OuqH80/22DmnIWOZ6GIjcNxPE9Bp7soQjVDCGFW/gjH3t+EYB9HC0/NEd8btajTnrlzueAL6Md7ItDCd4gbBmph3caOTMdqzAjbDuALrGNsGXaNhvrC7CHeazICzG+rSxQIDAQAB';
+        //TODO：测试公钥
         $pubKey = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB';
 
-        $param['data'] = 'rmB6Wop7zPouc\/FN+FUSPCgFBLMQSVgGLxTt7KaaCnmb\/d2NidwjiglqNU\/L6GB7U0A8jTyT593B4\/3JPYgKyJpZ651UZw6rqlTMglHG9O54SrKQ3XfWQW8qKNtipTy1B3vsCcy4Zj5XOoPac53q0MtvgRG7WoFqzy1te8QuEZtsduFivYLHGeTfIK\/SNPVmf1LBXXkos5TtvbVz5upHCO4HHkf71krJlOXIfOVDInz9pqJrzu3Mk0zgPP\/2A1lUXIY8HNLkiU3SpGRw5Zz2vjihgoeGfwuDW4ddtGhWiRAyoyZ2fqJsAU2Vk0rXM07rxMDwWiL7x4ty9Vx44ZJXLaVb89utbd72+rj+aPazNWNeEOFS3yYJFg4k04t\/o+BOoYKoBJxoIhGF1T7HGxk13DpICnJgWPo4ZyFJR8nzv3ALoWWlPvk6ZYCQXArqseilK5T6KhMQvrTMIDYgA1leYoXvYF+uZ6b7Y6SZcxKcyzYN1rM4sTC+1foNNhk03TBGiUVa5F5Kqrcc2l\/phl0HcUiUb52EtAzn4a7ixqYlRTW4HyaJeNoHrTjuolm8uGLETFvd93rPz2CLNiFjnv639deBQf96c3++kLdyhGhJ5Z4FGvHnsLD3u7kmyZa8vUP8KSpDlb9jkKJLrdBd8aSbOpyTBcphEij1CMUb55vYZ3k7sGR4uPQo4LwacNZrinxRZcIIbqj8VxOAeDmT5DY+qkDulNycMlPTrCJCccorSPaB2kp51xl85chutAjD\/tkOjRMV0w7e9\/34vawAh7REYIAgSjXkQ\/b5RFgLom+ejwawwXkwjGW4Q1A2PF9C+BcQ7NVRYjf4geyqAy\/tCcYZEoPwK8T8u0kvcZJBAbs1BpUQhkPw15+1SKECysxuFYboetJr4GdKNdcfrNmrs+pE1HWb8lRgQqr7pov5BGjkTnoRqjsKBTInrX3frxJMLEEoVuKfLGln6Cjz17C1WiV\/ApdO8T5M3pM4aIsAn9VFR4zf9\/WDGU5ZB8Bk\/8owEq8w';
         $res = self::publicKeyDecrypt($param['data'], $pubKey);
-
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件调试: ' . json_encode($res, JSON_UNESCAPED_UNICODE), 'lkl');
-        Db::name('third_notify')->insert(['title' => '商户进件调试', 'content' => json_encode($res, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        $res = json_decode($res, true);
 
         return app('json')->success($res);
     }
