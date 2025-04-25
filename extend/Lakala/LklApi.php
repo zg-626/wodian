@@ -302,6 +302,8 @@ class LklApi
      * @param acct_name 结算人账户名称
      * @param acct_type_code 结算账户类型 57对公，58对私
      * @param acct_id_card 结算人证件号码
+     * @param acct_id_dt_start 结算人证件开始日期 yyyy-MM-dd
+     * @param acct_id_dt_end 结算人证件过期时间
      * @param z_idcard_img 身份证正面
      * @param f_idcard_img 身份证反面
      * @param license_pic_img 营业执照照片 企业必传
@@ -458,31 +460,48 @@ class LklApi
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
-        $requestData = [
-            'json' => $sepParam,
-            'headers' => [
-                'Authorization' => 'bearer ' . $token['access_token'],
-                'Content-Type' => 'application/json',
-            ],
-        ];
+        // $requestData = [
+        //     'json' => $sepParam,
+        //     'headers' => [
+        //         'Authorization' => 'Bearer ' . $token['access_token'],
+        //         'Content-Type' => 'application/json',
+        //     ],
+        // ];
+        // $requestData = [
+        //     'body' => json_encode($sepParam),
+        //     'headers' => [
+        //         'Authorization' => 'Bearer ' . $token['access_token'],
+        //         'Content-Type' => 'application/json',
+        //     ],
+        //     'verify' => false
+        // ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
-        $client = new Client([
-            'verify' => false // 禁用 SSL 验证
-        ]);
-        try {
-            $response = $client->request('POST', self::$config['merchant_url'], $requestData);
+        $res = self::curlPost($token['access_token'], self::$config['merchant_url'], $sepParam);
+        echo "<pre>";
+        print_r($res);
+        die();
+        // $client = new Client([
+        //     'verify' => false, // 禁用 SSL 验证
+        //     // 'hearders' => [
+        //     //     'Content-Type' => 'application/json',
+        //     //     'Authorization' => 'Bearer ' . $token['access_token'],
+        //     // ]
+        // ]);
+        // // $client = new Client();
+        // try {
+        //     $response = $client->post(self::$config['merchant_url'], ['json' => $sepParam]);
 
-            $rawBody = (string)$response->getBody();
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
+        //     $rawBody = (string)$response->getBody();
+        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
 
-            return json_decode($rawBody, true);
-        } catch (Exception $e) {
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
+        //     return json_decode($rawBody, true);
+        // } catch (Exception $e) {
+        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
 
-            return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
-        }
+        //     return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
+        // }
     }
 
     /**
@@ -1312,6 +1331,30 @@ class LklApi
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 上传附件异常: ' . $e->getMessage(), 'lkl');
             return self::setErrorInfo($e->getMessage());
         }
+    }
+
+    protected static function curlPost($access_token, $api_url, $data)
+    {
+        // 请求头部
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $access_token,
+        ];
+        // 初始化 cURL
+        $method  = 'POST';
+        $ch = curl_init($api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        if ($method == 'POST') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+        // 执行请求
+        $response = curl_exec($ch);
+        // 解析响应
+        $response_data = json_decode($response, true);
+        curl_close($ch);
+        return $response_data;
     }
 
     /**
