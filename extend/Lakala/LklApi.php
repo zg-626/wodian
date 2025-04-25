@@ -358,7 +358,7 @@ class LklApi
             'bizContent' => [
                 'termNum' => '1',
                 'activityId' => self::$config['activity_id'],
-                'mcc' => '5311', //TODO 商户MCC编号 $param['mcc']
+                'mcc' => $param['mcc'],
                 'fees' => [
                     [
                         'feeCode' => 'WECHAT',
