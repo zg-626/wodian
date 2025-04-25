@@ -58,16 +58,25 @@ class Lakala extends BaseController
      */
     public function lklMerchantApplyNotify()
     {
+        // {"contractId":"202504252678700933","customerType":"TP_PERSONAL","customerNo":100137827,"customerName":"巴里*玖玖","customerAddress":"南城街道田心***************行街店)","externalCustomerNo":"8223020581208NV","phoneNo":"185****1122","licenseName":"巴****","identityNo":"513701********9777","identityExpireStart":"2015-01-24","identityExpireEnd":"2035-01-19","legalName":"仲*瑾","orgCode":"200028","userNo":20000101,"agentNo":20000101,"agencyNo":30000081,"termNos":"D9349032","activeNo":"689349032464","openTime":"2025-04-25 16:07:57","status":"SUCCESS","customerTag":"ORDINARY","coreTermIds":[]}
         $param = input('');
         Db::name('third_notify')->insert(['title' => '商户进件回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
-
         //TODO：测试公钥
-        $pubKey = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB';
+        $pubKey = \Lakala\LklApi::$config['pubKey'];
 
         $res = self::publicKeyDecrypt($param['data'], $pubKey);
-        $res = json_decode($res, true);
+        $obj = json_decode($res, true);
 
+        $info = LklModel::getInfo(['lkl_mer_cup_no' => $obj['customerNo']]);
+        if (!empty($info)) {
+            if($obj['status'] == 'SUCCESS'){
+                $data['lkl_mer_cus_no'] = $obj['externalCustomerNo'];
+                $data['lkl_mer_term_no'] = $obj['termNos'];
+            }
+            $data['lkl_mer_cup_status'] = $obj['status'];
+            $info->save($data);
+        }
         return app('json')->success($res);
     }
 

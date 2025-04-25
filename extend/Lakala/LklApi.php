@@ -26,7 +26,7 @@ class LklApi
     const DEFAULT_ERROR_MSG = '操作失败,请稍候再试!';
     const DEBUG = true; //测试环境
 
-    private static $config = [
+    public static $config = [
         'org_code' => '982406', //机构号
         'client_id' => 'lsycs', //第三方client_id
         'client_secret' => 'XPa1HB5d55Ig0qV8', //第三方client_secret
@@ -40,6 +40,7 @@ class LklApi
         'activity_id' => '687', //归属活动信息
         'request_ip' => '39.100.91.239', //请求方IP  地址位置信息，风控要求必送
         'app_id' => 'wxda2922aa5121cc98',
+        'pubKey'=>'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB', // 测试公钥
     ];
 
     /**
