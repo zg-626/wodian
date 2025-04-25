@@ -61,7 +61,7 @@ class Lakala extends BaseController
         $param = input('');
         Db::name('third_notify')->insert(['title' => '商户进件回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
-        $resArr = json_decode($param, true);
+        $resArr = json_decode(json_encode($param, JSON_UNESCAPED_UNICODE), true);
         echo "<pre>";
         print_r($resArr);
 
