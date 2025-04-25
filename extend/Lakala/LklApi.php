@@ -463,27 +463,31 @@ class LklApi
         // $requestData = [
         //     'json' => $sepParam,
         //     'headers' => [
-        //         'Authorization' => 'bearer ' . $token['access_token'],
+        //         'Authorization' => 'Bearer ' . $token['access_token'],
         //         'Content-Type' => 'application/json',
         //     ],
         // ];
-        $requestData = [
-            'body' => json_encode($sepParam),
-            'headers' => [
-                'Authorization' => 'bearer ' . $token['access_token'],
-                'Content-Type' => 'application/json',
-            ],
-            'verify' => false
-        ];
+        // $requestData = [
+        //     'body' => json_encode($sepParam),
+        //     'headers' => [
+        //         'Authorization' => 'Bearer ' . $token['access_token'],
+        //         'Content-Type' => 'application/json',
+        //     ],
+        //     'verify' => false
+        // ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
 
-        // $client = new Client([
-        //     'verify' => false // 禁用 SSL 验证
-        // ]);
-        $client = new Client();
+        $client = new Client([
+            'verify' => false, // 禁用 SSL 验证
+            'hearders' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $token['access_token'],
+            ]
+        ]);
+        // $client = new Client();
         try {
-            $response = $client->request('POST', self::$config['merchant_url'], $requestData);
+            $response = $client->post(self::$config['merchant_url'], ['json' => $sepParam]);
 
             $rawBody = (string)$response->getBody();
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
