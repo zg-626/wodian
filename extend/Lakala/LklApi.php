@@ -1333,7 +1333,7 @@ class LklApi
         }
     }
 
-    protected static function curlPost($access_token, $data)
+    protected static function curlPost($access_token, $api_url, $data)
     {
         // 请求头部
         $headers = [
@@ -1342,7 +1342,6 @@ class LklApi
         ];
         // 初始化 cURL
         $method  = 'POST';
-        $api_url = '';
         $ch = curl_init($api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
