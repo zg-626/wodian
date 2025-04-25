@@ -455,6 +455,7 @@ class LklApi
 
             return self::setErrorInfo('拉卡拉商户进件失败，' . $txt);
         } else {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . json_encode($res, JSON_UNESCAPED_UNICODE), 'lkl');
             return $res;
         }
     }
