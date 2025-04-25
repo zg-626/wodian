@@ -442,75 +442,21 @@ class LklApi
         }
         $sepParam['attchments'] = $attchments;
 
-        // $multipartData = [];
-        // foreach ($sepParam as $key => $value) {
-        //     if (is_array($value)) {
-        //         $multipartData[] = [
-        //             'name' => $key,
-        //             'contents' => json_encode($value, JSON_UNESCAPED_UNICODE)
-        //         ];
-        //     } else {
-        //         $multipartData[] = [
-        //             'name' => $key,
-        //             'contents' => (string)$value
-        //         ];
-        //     }
-        // }
-
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
-
-        // $requestData = [
-        //     'json' => $sepParam,
-        //     'headers' => [
-        //         'Authorization' => 'Bearer ' . $token['access_token'],
-        //         'Content-Type' => 'application/json',
-        //     ],
-        // ];
-        // $requestData = [
-        //     'body' => json_encode($sepParam),
-        //     'headers' => [
-        //         'Authorization' => 'Bearer ' . $token['access_token'],
-        //         'Content-Type' => 'application/json',
-        //     ],
-        //     'verify' => false
-        // ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $res = self::curlPost($token['access_token'], self::$config['merchant_url'], $sepParam);
 
-        // return $res;
-        echo "<pre>";
-        print_r($res);
-        die();
-        // if (!is_array($res) || $res['error'] != 0) {
-        //     $txt = !is_array($res) ? '进件异常' : $res['message'];
-        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $txt, 'lkl');
+        if (!is_array($res) || isset($res['error'])) {
+            $txt = !is_array($res) ? '进件异常' : $res['message'];
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $txt, 'lkl');
 
-        //     return self::setErrorInfo('拉卡拉商户进件失败，' . $txt);
-        // } else {
-        // }
-        // $client = new Client([
-        //     'verify' => false, // 禁用 SSL 验证
-        //     // 'hearders' => [
-        //     //     'Content-Type' => 'application/json',
-        //     //     'Authorization' => 'Bearer ' . $token['access_token'],
-        //     // ]
-        // ]);
-        // // $client = new Client();
-        // try {
-        //     $response = $client->post(self::$config['merchant_url'], ['json' => $sepParam]);
-
-        //     $rawBody = (string)$response->getBody();
-        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件结果: ' . $rawBody, 'lkl');
-
-        //     return json_decode($rawBody, true);
-        // } catch (Exception $e) {
-        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $e->getMessage(), 'lkl');
-
-        //     return self::setErrorInfo('拉卡拉商户进件失败，' . $e->getMessage());
-        // }
+            return self::setErrorInfo('拉卡拉商户进件失败，' . $txt);
+        } else {
+            return $res;
+        }
     }
 
     /**
