@@ -250,8 +250,9 @@ class MerchantIntention extends BaseController
         }
 
         $save_data['lkl_mer_cup_no'] = $result['merchantNo'];
+        $save_data['lkl_mer_cus_no'] = '';
+        $save_data['lkl_mer_term_no'] = '';
         $save_data['lkl_mer_cup_status'] = $result['status'];
-        $intention_data['mer_lkl_id'] = $info['id'];
         $intention_data['uid'] = $uid;
         $intention_data['phone'] = $info['ec_mobile']; // 手机号
         $intention_data['mer_name'] = $params['mer_name']; // 商户名称
@@ -264,6 +265,9 @@ class MerchantIntention extends BaseController
         $intention_data['bank_card'] = $info['acct_no']; // 银行卡号
         $intention_data['bank_open_name'] = $info['B19']; // 开户行名称
         $intention_data['address'] = $params['mer_addr']; // 商户地址
+        $intention_data['mer_lkl_id'] = $info['id'];
+        $intention_data['merchant_no'] = '';
+        $intention_data['term_nos'] = '';
         Db::startTrans();
         try {
             LklModel::where('id', $info['id'])->update($save_data);
