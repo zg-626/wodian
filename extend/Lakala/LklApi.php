@@ -362,19 +362,19 @@ class LklApi
                 'fees' => [
                     [
                         'feeCode' => 'WECHAT',
-                        'feeValue' => self::DEBUG ? '0.61' : '0.3'
+                        'feeValue' => self::DEBUG ? 0.61 : 0.3
                     ],
                     [
                         'feeCode' => 'ALIPAY',
-                        'feeValue' => self::DEBUG ? '0.61' : '0.3'
+                        'feeValue' => self::DEBUG ? 0.61 : 0.3
                     ],
                     [
                         'feeCode' => 'CREDIT_CARD',
-                        'feeValue' => 0.6
+                        'feeValue' => self::DEBUG ? 0.6 : 0.5
                     ],
                     [
                         'feeCode' => 'DEBIT_CARD',
-                        'feeValue' => 0.5,
+                        'feeValue' => self::DEBUG ? 0.45 : 0.6,
                         'topFee' => 20
                     ]
                 ]
@@ -479,10 +479,18 @@ class LklApi
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $res = self::curlPost($token['access_token'], self::$config['merchant_url'], $sepParam);
+
         // return $res;
         echo "<pre>";
         print_r($res);
         die();
+        // if (!is_array($res) || $res['error'] != 0) {
+        //     $txt = !is_array($res) ? '进件异常' : $res['message'];
+        //     record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件异常: ' . $txt, 'lkl');
+
+        //     return self::setErrorInfo('拉卡拉商户进件失败，' . $txt);
+        // } else {
+        // }
         // $client = new Client([
         //     'verify' => false, // 禁用 SSL 验证
         //     // 'hearders' => [
