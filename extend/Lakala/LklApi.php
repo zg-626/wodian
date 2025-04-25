@@ -479,10 +479,10 @@ class LklApi
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $res = self::curlPost($token['access_token'], self::$config['merchant_url'], $sepParam);
-        return $res;
-        // echo "<pre>";
-        // print_r($res);
-        // die();
+        // return $res;
+        echo "<pre>";
+        print_r($res);
+        die();
         // $client = new Client([
         //     'verify' => false, // 禁用 SSL 验证
         //     // 'hearders' => [
