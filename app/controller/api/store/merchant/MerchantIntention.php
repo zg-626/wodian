@@ -223,9 +223,9 @@ class MerchantIntention extends BaseController
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约完成');
         }
-        if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
-            return app('json')->fail('正在审核中，请耐心等待后台审核...');
-        }
+        // if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
+        //     return app('json')->fail('正在审核中，请耐心等待后台审核...');
+        // }
         if ($info['lkl_mer_cup_status'] == 'SUCCESS') {
             return app('json')->fail('商户进件已审核成功');
         }
