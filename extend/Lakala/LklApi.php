@@ -460,19 +460,28 @@ class LklApi
         $token = self::lklAccessToken();
         if (!is_array($token)) return self::setErrorInfo(self::setErrorInfo());
 
+        // $requestData = [
+        //     'json' => $sepParam,
+        //     'headers' => [
+        //         'Authorization' => 'bearer ' . $token['access_token'],
+        //         'Content-Type' => 'application/json',
+        //     ],
+        // ];
         $requestData = [
-            'json' => $sepParam,
+            'body' => json_encode($sepParam),
             'headers' => [
                 'Authorization' => 'bearer ' . $token['access_token'],
                 'Content-Type' => 'application/json',
             ],
+            'verify' => false
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
 
-        $client = new Client([
-            'verify' => false // 禁用 SSL 验证
-        ]);
+        // $client = new Client([
+        //     'verify' => false // 禁用 SSL 验证
+        // ]);
+        $client = new Client();
         try {
             $response = $client->request('POST', self::$config['merchant_url'], $requestData);
 
