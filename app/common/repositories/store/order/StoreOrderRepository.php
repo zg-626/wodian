@@ -536,12 +536,6 @@ class StoreOrderRepository extends BaseRepository
             
                 // 获取上级（市级代理商）
                 if ($superior->superior_uid !== 0) {
-                    // 计算区县级代理商佣金 (extension - give_profit)
-                    $county_rate = bcsub($superiorGroup->extension, $superiorGroup->give_profit, 2);
-                    $county_commission = bcmul($county_rate/100, $money, 2);
-                    $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
-                    $processedUids[] = $superior['uid'];
-                    
                     // 查询市级信息
                     $city_agent = $userRepository->get($superior->superior_uid);
                     $city_group = $userGroupRepository->get($city_agent['group_id']);
@@ -552,6 +546,11 @@ class StoreOrderRepository extends BaseRepository
                         $city_commission = bcmul($superiorGroup->give_profit/100, $money, 2);
                         $this->giveBrokerage($order['order_id'], $userBillRepository, $city_agent, $city_commission, '市级代理商让利佣金');
                         $processedUids[] = $city_agent['uid'];
+                        // 计算区县级代理商佣金 (extension - give_profit)
+                        $county_rate = bcsub($superiorGroup->extension, $superiorGroup->give_profit, 2);
+                        $county_commission = bcmul($county_rate/100, $money, 2);
+                        $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
+                        $processedUids[] = $superior['uid'];
                     }
 
                     // 查询省级信息
