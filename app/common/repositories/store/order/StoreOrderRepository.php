@@ -559,9 +559,9 @@ class StoreOrderRepository extends BaseRepository
                     $province_group = $userGroupRepository->get($province_agent['group_id']);
 
                     // 如果上级确实是省级代理商，不发放佣金
-                    if ($province_agent['group_id'] == self::USER_GROUP['AGENT_3']) {
-                        break;
-                    }
+                    // if ($province_agent['group_id'] == self::USER_GROUP['AGENT_3']) {
+                    //     break;
+                    // }
                     
                 }else{
                     // 计算区县级代理商佣金
@@ -605,9 +605,9 @@ class StoreOrderRepository extends BaseRepository
             // 先检查是否已经处理过该用户
             if (!in_array($superior['uid'], $processedUids)) {
                 // 如果是省级代理商，不发放佣金
-                if ($superior['group_id'] == self::USER_GROUP['AGENT_3']) {
-                    break;
-                }
+                // if ($superior['group_id'] == self::USER_GROUP['AGENT_3']) {
+                //     break;
+                // }
                 $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
                 $title = $this->getSuperiorTitle($superior['group_id']);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $title);
