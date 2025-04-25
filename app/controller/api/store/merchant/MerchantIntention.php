@@ -550,6 +550,7 @@ class MerchantIntention extends BaseController
                     'legal_auth_img',
                     'mcc',
                 ]);
+                $params['is_legal_person'] = 1; // 默认法人进件
                 break;
             case 'create_three':
                 $params = $this->request->params([
