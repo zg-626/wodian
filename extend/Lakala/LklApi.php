@@ -476,7 +476,7 @@ class LklApi
         //     'verify' => false
         // ];
 
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($requestData, JSON_UNESCAPED_UNICODE), 'lkl');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $client = new Client([
             'verify' => false, // 禁用 SSL 验证
