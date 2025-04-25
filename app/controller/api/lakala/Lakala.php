@@ -58,7 +58,6 @@ class Lakala extends BaseController
      */
     public function lklMerchantApplyNotify()
     {
-        header('Content-Type: application/json; charset=utf-8');
         $content = $_POST;
         Db::name('third_notify')->insert(['title' => '商户进件回调11111111', 'content' => json_encode($content), 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件回调111111: ' . json_encode($content, JSON_UNESCAPED_UNICODE), 'lkl');
