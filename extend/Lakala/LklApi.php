@@ -362,11 +362,11 @@ class LklApi
                 'fees' => [
                     [
                         'feeCode' => 'WECHAT',
-                        'feeValue' => 0.3
+                        'feeValue' => self::DEBUG ? '0.61' : '0.3'
                     ],
                     [
                         'feeCode' => 'ALIPAY',
-                        'feeValue' => 0.3
+                        'feeValue' => self::DEBUG ? '0.61' : '0.3'
                     ],
                     [
                         'feeCode' => 'CREDIT_CARD',
