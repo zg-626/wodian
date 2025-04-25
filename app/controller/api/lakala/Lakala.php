@@ -73,6 +73,24 @@ class Lakala extends BaseController
     }
 
     /**
+     * 公钥解密
+     * @param $data
+     * @return string
+     */
+    public static function publicKeyDecrypt($data, $pubKey)
+    {
+        $pubKey = "-----BEGIN PUBLIC KEY-----\n" .
+            wordwrap($pubKey, 64, "\n", true)
+            . "\n-----END PUBLIC KEY-----";
+        $crypto = '';
+        foreach (str_split(base64_decode($data), 128) as $chunk) {
+            openssl_public_decrypt($chunk, $decryptData, $pubKey);
+            $crypto .= $decryptData;
+        }
+        return $crypto;
+    }
+
+    /**
      * @desc 分账关系绑定 回调
      * @author ZhouTing
      * @date 2025-04-22 10:50
@@ -191,12 +209,12 @@ class Lakala extends BaseController
                 $out_trade_no = $obj['origin_out_trade_no'];
                 /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
-                if(!empty($res)){
-                    $res->lkl_log_no = $obj['log_no']??'';
+                if (!empty($res)) {
+                    $res->lkl_log_no = $obj['log_no'] ?? '';
                     $res->save();
                     $params = [
                         'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
-                        'lkl_log_no' => $obj['log_no'],// 用最新的流水号
+                        'lkl_log_no' => $obj['log_no'], // 用最新的流水号
                         'lkl_log_date' => $res['lkl_log_date'],
                     ];
                     // 可分账金额查询
@@ -205,12 +223,11 @@ class Lakala extends BaseController
                     if (!$result) {
                         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
                     }
-                    $can_separate_amt=$result['total_separate_amt'];
-                    if($can_separate_amt>0){
-                        $this->lklSeparate($params, $can_separate_amt,$res);
+                    $can_separate_amt = $result['total_separate_amt'];
+                    if ($can_separate_amt > 0) {
+                        $this->lklSeparate($params, $can_separate_amt, $res);
                     }
                 }
-
             }
 
             //通知拉卡拉，业务处理成功
@@ -222,19 +239,19 @@ class Lakala extends BaseController
     }
 
     // 拉卡拉分账参数拼接
-    public function lklSeparate($param, $can_separate_amt,$res): void
+    public function lklSeparate($param, $can_separate_amt, $res): void
     {
         // 平台抽取的费用
         $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
         $param['can_separate_amt'] = $can_separate_amt;
         $param['recv_datas'] = [
             [
-                'recv_merchant_no' => '123456',// TODO 拉卡拉分账接收方 后期需要修改
+                'recv_merchant_no' => '123456', // TODO 拉卡拉分账接收方 后期需要修改
                 'separate_value' => $handling_fee
             ],
             [
                 'recv_no' => $param['lkl_mer_cup_no'],
-                'separate_value' => $can_separate_amt-$handling_fee
+                'separate_value' => $can_separate_amt - $handling_fee
             ]
         ];
         $api = new \Lakala\LklApi();
