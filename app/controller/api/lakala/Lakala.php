@@ -66,13 +66,17 @@ class Lakala extends BaseController
         Db::name('third_notify')->insert(['title' => '商户进件回调222222222', 'content' => $data, 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件回调2222222: ' . $data, 'lkl');
 
+        $param = input('');
+        Db::name('third_notify')->insert(['title' => '商户进件回调3333333', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户进件回调3333333: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
+
         //        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
         //        if (!empty($info)) {
         //            $info->save(['lkl_mer_cup_status' => '']);
         //        }
 
-        return json([], 400);
-        // return app('json')->success('请求成功');
+        // return json([], 400);
+        return app('json')->success('请求成功');
     }
 
     /**
