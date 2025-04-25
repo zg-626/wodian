@@ -98,6 +98,14 @@ class UserGroupRepository extends BaseRepository
                     Elm::input('integral', '赠送积分：'),// 赠送积分
                 ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
         }
+        if($id==4) {
+            return
+                Elm::createForm($action, [
+                    Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
+                    Elm::input('extension', '佣金比例：'),
+                    Elm::input('give_profit', '佣金让利：'),// 让利比例
+                ])->setTitle($isCreate ? '添加用户分组' : '编辑用户分组')->formData($formData);
+        }
         return
             Elm::createForm($action, [
             Elm::input('group_name', '用户分组名称：')->placeholder('请输入用户分组名称')->required(),
