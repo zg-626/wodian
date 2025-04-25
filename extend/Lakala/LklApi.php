@@ -39,7 +39,7 @@ class LklApi
         'user_no' => '29153396', //商户归属用户信息
         'activity_id' => '687', //归属活动信息
         'request_ip' => '39.100.91.239', //请求方IP  地址位置信息，风控要求必送
-        'app_id' => 'wx5cc8c2f48849239e',
+        'app_id' => 'wxda2922aa5121cc98',
         'pubKey' => 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB', //测试公钥
         // 'pubKey' => 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDWHxo8EhiPM6rzV3AYWjuTQVQW6r7WuB4oTvY9gp03XVkAscANa6dkNQvyEOH5m5yCEd5NJkpu4zcM+XdablLUbltSPnwtZE4vbtV4cbIyWM55rZCYgI4UiCAPVFvtYh2H15jcTktR80k756JA3sGtW7Oq0nq5Dy7UJelZ77FsrQIDAQAB', //拓客生产公钥
     ];
