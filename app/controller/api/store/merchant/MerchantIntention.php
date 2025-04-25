@@ -80,6 +80,9 @@ class MerchantIntention extends BaseController
             if ($info['lkl_mer_cup_status'] == 'SUCCESS' && $info['mer_id'] > 0) {
                 $status_2 = 2;
             }
+            if ($info['lkl_mer_cup_status'] && !in_array($info['lkl_mer_cup_status'],['WAIT_AUDI','SUCCESS'])) {
+                $status_2 = 3;
+            }
 
             if ($info['lkl_mer_ledger_status'] == 3) {
                 $status_3 = 1;
