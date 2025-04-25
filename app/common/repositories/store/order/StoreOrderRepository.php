@@ -535,7 +535,7 @@ class StoreOrderRepository extends BaseRepository
             if ($superior['group_id'] == self::USER_GROUP['AGENT_1']) {
             
                 // 获取上级（市级代理商）
-                if ($superior->superior_uid !== 0) {
+                if ($superior->superior_uid !== 0 && $superior->group_id == self::USER_GROUP['AGENT_2']) {
                     // 计算区县级代理商佣金 (extension - give_profit)
                     $county_rate = bcsub($superiorGroup->extension, $superiorGroup->give_profit, 2);
                     $county_commission = bcmul($county_rate/100, $money, 2);
