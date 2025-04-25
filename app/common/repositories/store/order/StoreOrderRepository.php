@@ -563,13 +563,14 @@ class StoreOrderRepository extends BaseRepository
                         break;
                     }
                     
+                }else{
+                    // 计算区县级代理商佣金
+                    $county_rate = $superiorGroup->extension;
+                    $county_commission = bcmul($county_rate/100, $money, 2);
+                    $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
+                    $processedUids[] = $superior['uid'];  
                 }
 
-                // 计算区县级代理商佣金
-                $county_rate = $superiorGroup->extension;
-                $county_commission = bcmul($county_rate/100, $money, 2);
-                $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
-                $processedUids[] = $superior['uid'];
             }
             
             // 如果是大区经理，终止循环
@@ -601,10 +602,14 @@ class StoreOrderRepository extends BaseRepository
             }
             
             // 计算并发放上级佣金
-            $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
-            $title = $this->getSuperiorTitle($superior['group_id']);
-            $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $title);
-            
+            // 先检查是否已经处理过该用户
+            if (!in_array($superior['uid'], $processedUids)) {
+                $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
+                $title = $this->getSuperiorTitle($superior['group_id']);
+                $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $title);
+                // 记录已处理的用户ID
+                $processedUids[] = $superior['uid'];
+            }
             // 记录已处理的用户ID
             $processedUids[] = $superior['uid'];
         }
