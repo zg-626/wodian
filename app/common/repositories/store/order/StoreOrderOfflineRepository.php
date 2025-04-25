@@ -104,7 +104,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*** @var MerchantDao $merchant */
         $merchant = app()->make(MerchantDao::class);
 
-        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no')->find();
+        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no,term_nos')->find();
 
         // 判断有没有申请子商户
         /*if ($merchant['sub_mchid'] == 0) {
@@ -232,6 +232,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'total_amount' => $money,
             'remark' => 'offline_order',
             'merchant_no' => $merchant['merchant_no'],
+            'term_nos' => $merchant['term_nos'],
             'openid' => $openId,
             'goods_id' => '1',
         ];
