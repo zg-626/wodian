@@ -459,9 +459,9 @@ class StoreOrderRepository extends BaseRepository
     public const USER_GROUP = [
         'NORMAL_SALESMAN' => 2,    // 普通商务
         'SENIOR_SALESMAN' => 9,    // 高级商务
-        'AGENT_1' => 4,            // 区县级代理商1
-        'AGENT_2' => 5,            // 市级代理商2
-        'AGENT_3' => 6,            // 省级代理商3
+        'AGENT_1' => 4,            // 区县级代理商
+        'AGENT_2' => 5,            // 市级代理商
+        'AGENT_3' => 6,            // 省级代理商
         'REGIONAL_MANAGER' => 8,    // 区域经理
         'AREA_MANAGER' => 3,       // 大区经理
         'LECTURER' => 7,// 讲师
@@ -484,7 +484,7 @@ class StoreOrderRepository extends BaseRepository
         $userGroupRepository = app()->make(UserGroupRepository::class);
         $userBillRepository = app()->make(UserBillRepository::class);
 
-        // 如果没有商务，则没有佣金
+        // 如果没有上级，则没有佣金
         if ($merchant->salesman_id === 0 || $order['commission_rate'] < 0) return;
 
         // 计算订单佣金基数
@@ -493,15 +493,19 @@ class StoreOrderRepository extends BaseRepository
         // 用于发放的金额基数
         $money = bcmul(0.6, $commission_money, 2);
 
-        // 获取商务信息
+        // 获取商家绑定的上级信息
         $salesman = $userRepository->get($merchant->salesman_id);
-        // 实时获取商务分组信息及比例
+
+        // 如果商家上级是省级代理商，终止发放佣金
+        if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
+
+        // 实时获取上级分组信息及比例
         $salesmanGroup = $userGroupRepository->get($salesman['group_id']);
         
-        // 处理商务佣金
+        // 处理上级佣金
         $extension_one = bcmul($salesmanGroup->extension/100, $money, 2);
         
-        // 发放商务佣金
+        // 发放上级佣金
         $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, '商务推广佣金');
 
         // 处理上级佣金分配
@@ -525,6 +529,47 @@ class StoreOrderRepository extends BaseRepository
                 $extra_bonus = bcmul(0.02, $money, 2);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $extra_bonus, '高级商务推广奖励');
                 break;
+            }
+
+            // 如果上级是区县级代理商
+            if ($superior['group_id'] == self::USER_GROUP['AGENT_1']) {
+            
+                // 获取上级（市级代理商）
+                if ($superior->superior_uid !== 0) {
+                    // 计算区县级代理商佣金 (extension - give_profit)
+                    $county_rate = bcsub($superiorGroup->extension, $superiorGroup->give_profit, 2);
+                    $county_commission = bcmul($county_rate/100, $money, 2);
+                    $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
+                    $processedUids[] = $superior['uid'];
+                    
+                    // 查询市级信息
+                    $city_agent = $userRepository->get($superior->superior_uid);
+                    $city_group = $userGroupRepository->get($city_agent['group_id']);
+                    
+                    // 如果上级确实是市级代理商
+                    if ($city_agent['group_id'] == self::USER_GROUP['AGENT_2']) {
+                        // 发放让利部分给市级代理商
+                        $city_commission = bcmul($superiorGroup->give_profit/100, $money, 2);
+                        $this->giveBrokerage($order['order_id'], $userBillRepository, $city_agent, $city_commission, '市级代理商让利佣金');
+                        $processedUids[] = $city_agent['uid'];
+                    }
+
+                    // 查询省级信息
+                    $province_agent = $userRepository->get($city_agent->superior_uid);
+                    $province_group = $userGroupRepository->get($province_agent['group_id']);
+
+                    // 如果上级确实是省级代理商，不发放佣金
+                    if ($province_agent['group_id'] == self::USER_GROUP['AGENT_3']) {
+                        break;
+                    }
+                    
+                }
+
+                // 计算区县级代理商佣金
+                $county_rate = $superiorGroup->extension;
+                $county_commission = bcmul($county_rate/100, $money, 2);
+                $this->giveBrokerage($order['order_id'], $userBillRepository, $superior, $county_commission, '区县级代理商佣金');
+                $processedUids[] = $superior['uid'];
             }
             
             // 如果是大区经理，终止循环
