@@ -1041,7 +1041,7 @@ class LklApi
             'verify' => false // 禁用 SSL 验证
         ]);
         try {
-            $response = $client->get(self::$config['customer_cate_url'], [
+            $response = $client->get(self::$config['customer_cate_url'] . '/businessScene/2', [
                 'headers' => [
                     'Authorization' => 'bearer ' . $token['access_token']
                 ]
