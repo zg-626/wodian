@@ -64,6 +64,9 @@ class Lakala extends BaseController
         $data = file_get_contents("php://input");
         Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
 
+
+        $json = file_get_contents('php://input');
+        Db::name('third_notify')->insert(['title' => '商户进件回调3', 'content' => $json, 'createtime' => time()]);
         //        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
         //        if (!empty($info)) {
         //            $info->save(['lkl_mer_cup_status' => '']);
