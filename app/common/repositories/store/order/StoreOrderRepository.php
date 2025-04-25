@@ -917,7 +917,7 @@ class StoreOrderRepository extends BaseRepository
                 'balance' => 0
             ]);*/
             // 佣金改为抵用券
-            $userBillRepository->incBill($spreadUid, 'brokerage_price', 'order_one', [
+            $userBillRepository->incBill($spreadUid, 'coupon_amount', 'order_one', [
                 'link_id' => $order['order_id'],
                 'status' => 0,
                 'title' => '获得推广抵用券',
@@ -938,7 +938,7 @@ class StoreOrderRepository extends BaseRepository
         }
         if ($order->extension_two > 0 && $topUid) {
             // 获得推广佣金改为获得推广抵用券
-            $userBillRepository->incBill($topUid, 'brokerage_price', 'order_two', [
+            $userBillRepository->incBill($topUid, 'coupon_amount', 'order_two', [
                 'link_id' => $order['order_id'],
                 'status' => 0,
                 'title' => '获得推广抵用券',
