@@ -70,7 +70,7 @@ class Lakala extends BaseController
         $pubKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtY2D9l3S9gpZWmIUVxLFbCnQ1fxJE1lw90wYGoSgiVRqUk5DBQhqy+7JRyQiFTdp2Xam3BY0+G3YtA27rROaTIDd7hrDWWvdqIstufBAJlhwWfVIusez/HdSb3u2sunhjV6BWenjezUyQSoR4avREqNRzPOBod7QAYOeaLWL8W8edgfTC2/8Pj9W+Dpk5XZ35YG8eOdMXNxApYq2lZu4OuqH80/22DmnIWOZ6GIjcNxPE9Bp7soQjVDCGFW/gjH3t+EYB9HC0/NEd8btajTnrlzueAL6Md7ItDCd4gbBmph3caOTMdqzAjbDuALrGNsGXaNhvrC7CHeazICzG+rSxQIDAQAB';
         $res = self::publicKeyDecrypt($param['data'], $pubKey);
 
-        return app('json')->success('请求成功', $res);
+        return app('json')->success($res);
     }
 
     /**
