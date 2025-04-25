@@ -604,6 +604,10 @@ class StoreOrderRepository extends BaseRepository
             // 计算并发放上级佣金
             // 先检查是否已经处理过该用户
             if (!in_array($superior['uid'], $processedUids)) {
+                // 如果是省级代理商，不发放佣金
+                if ($superior['group_id'] == self::USER_GROUP['AGENT_3']) {
+                    break;
+                }
                 $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
                 $title = $this->getSuperiorTitle($superior['group_id']);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $title);
