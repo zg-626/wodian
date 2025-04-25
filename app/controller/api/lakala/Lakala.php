@@ -69,7 +69,8 @@ class Lakala extends BaseController
         //            $info->save(['lkl_mer_cup_status' => '']);
         //        }
 
-        return app('json')->success('请求成功');
+        return json([], 400);
+        // return app('json')->success('请求成功');
     }
 
     /**
