@@ -59,10 +59,12 @@ class Lakala extends BaseController
     public function lklMerchantApplyNotify()
     {
         $content = $_POST;
-        Db::name('third_notify')->insert(['title' => '商户进件回调1', 'content' => json_encode($content), 'createtime' => time()]);
+        Db::name('third_notify')->insert(['title' => '商户进件回调11111111', 'content' => json_encode($content), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件回调111111: ' . json_encode($content, JSON_UNESCAPED_UNICODE), 'lkl');
 
         $data = file_get_contents("php://input");
-        Db::name('third_notify')->insert(['title' => '商户进件回调2', 'content' => $data, 'createtime' => time()]);
+        Db::name('third_notify')->insert(['title' => '商户进件回调222222222', 'content' => $data, 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拓客商户进件回调2222222: ' . $data, 'lkl');
 
         //        $info = LklModel::getInfo(['lkl_ec_apply_id' => $obj['ecApplyId']]);
         //        if (!empty($info)) {
