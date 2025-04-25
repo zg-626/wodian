@@ -549,6 +549,7 @@ class MerchantIntention extends BaseController
                     'f_settle_img',
                     'legal_auth_img',
                     'mcc',
+                    'mcc_name',
                 ]);
                 $params['is_legal_person'] = 1; // 默认法人进件
                 break;
