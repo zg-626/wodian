@@ -547,7 +547,7 @@ class StoreOrderRepository extends BaseRepository
                     $city_group = $userGroupRepository->get($city_agent['group_id']);
                     
                     // 如果上级确实是市级代理商
-                    if ($city_agent['group_id'] == self::USER_GROUP['AGENT_2']  && $superior->group_id == self::USER_GROUP['AGENT_2']) {
+                    if ($city_agent['group_id'] == self::USER_GROUP['AGENT_2']) {
                         // 发放让利部分给市级代理商
                         $city_commission = bcmul($superiorGroup->give_profit/100, $money, 2);
                         $this->giveBrokerage($order['order_id'], $userBillRepository, $city_agent, $city_commission, '市级代理商让利佣金');
