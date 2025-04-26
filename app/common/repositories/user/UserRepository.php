@@ -1176,7 +1176,7 @@ class UserRepository extends BaseRepository
         if (count($where['superior_uids'])) {
             $query = $this->search($where);
             $count = $query->count();
-            $list = $query->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,superior_count,superior_time')->page($page, $limit)->select();
+            $list = $query->with(['group'])->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,superior_count,superior_time')->page($page, $limit)->select();
             // 手机号脱敏
             foreach ($list as &$item) {
                 if (!$item['phone']) {
