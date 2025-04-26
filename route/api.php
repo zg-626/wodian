@@ -155,9 +155,9 @@ Route::group('api/', function () {
             //推广人列表
             Route::get('/spread_list', 'User/spread_list');
             //下级列表
-            Route::get('/subordinate_list', 'User/subordinate_list');
+            Route::get('/subordinate_list', 'User/subordinate_list')->allowCrossDomain();
             // 邀请龙虎榜
-            Route::get('/invite_ranking', 'User/invite_ranking');
+            Route::get('/invite_ranking', 'User/invite_ranking')->allowCrossDomain();
 
             //提现
             Route::get('/extract/lst', 'UserExtract/lst');
