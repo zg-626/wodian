@@ -154,6 +154,8 @@ Route::group('api/', function () {
             Route::get('/v2/spread_image', 'User/spread_image_v2');
             //推广人列表
             Route::get('/spread_list', 'User/spread_list');
+            //下级列表
+            Route::get('/subordinate_list', 'User/subordinate_list');
 
             //提现
             Route::get('/extract/lst', 'UserExtract/lst');
