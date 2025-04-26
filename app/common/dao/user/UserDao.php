@@ -119,6 +119,10 @@ class UserDao extends BaseDao
             return $query->where('User.spread_uid', intval($where['spread_uid']));
         })->when(isset($where['spread_uids']), function (BaseQuery $query) use ($where) {
             return $query->whereIn('User.spread_uid', $where['spread_uids']);
+        })->when(isset($where['superior_uid']) && $where['superior_uid'] !== '', function (BaseQuery $query) use ($where) {
+            return $query->where('User.superior_uid', intval($where['superior_uid']));
+        })->when(isset($where['superior_uids']), function (BaseQuery $query) use ($where) {
+            return $query->whereIn('User.superior_uid', $where['superior_uids']);
         })->when(isset($where['uids']), function (BaseQuery $query) use ($where) {
             return $query->whereIn('User.uid', $where['uids']);
         })->when(isset($where['pay_count']) && $where['pay_count'] !== '', function ($query) use ($where) {

@@ -14,6 +14,7 @@ namespace app\common\repositories\system\merchant;
 
 use app\common\repositories\BaseRepository;
 use app\common\repositories\system\config\ConfigValueRepository;
+use app\common\repositories\user\UserRepository;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\SmsService;
 use FormBuilder\Factory\Elm;
@@ -192,6 +193,12 @@ class MerchantIntentionRepository extends BaseRepository
                     if ($intention['mer_lkl_id'] > 0) {
                         $info->save(['mer_id' => $merchant->mer_id]);
                     }
+                    // 当前商户的身份变为商务
+                    /** @var UserRepository $userRepository */
+                    $userRepository = app()->make(UserRepository::class);
+                    $user = $userRepository->get($intention['uid']);
+                    $user->group_id = 2;
+                    $user->save();
                 }
             } else {
                 Queue::push(SendSmsJob::class, ['tempId' => 'APPLY_MER_FAIL', 'id' => $smsData]);

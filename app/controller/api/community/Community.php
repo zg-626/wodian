@@ -436,7 +436,7 @@ class Community extends BaseController
             return app('json')->success($data);
 
         }
-        return app('json')->fail('普通会员和讲师暂无邀请权限');
+        return app('json')->fail('普通会员和讲师暂无权限');
     }
 
     public function getSpuByOrder($id)

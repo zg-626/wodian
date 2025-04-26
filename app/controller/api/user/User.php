@@ -268,6 +268,7 @@ class User extends BaseController
         $this->repository->update($this->request->uid(), $data);
         return app('json')->success('绑定成功');
     }
+
     /**
      * @return mixed
      * @throws DataNotFoundException
@@ -287,6 +288,25 @@ class User extends BaseController
         return app('json')->success($level == 2
             ? $this->repository->getTwoLevelList($this->request->uid(),$where, $page, $limit)
             : $this->repository->getOneLevelList($this->request->uid(),$where, $page, $limit));
+    }
+
+    /**
+     * @return mixed
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function subordinate_list()
+    {
+
+        $where = $this->request->params([ 'sort', 'keyword']);
+        [$start,$stop]= $this->request->params(['start','stop'],true);
+        $where['spread_time'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
+        $group = $this->request->param('group');
+        $where['group'] = $group;
+        [$page, $limit] = $this->getPage();
+        return app('json')->success($this->repository->getSubordinateList($this->request->uid(),$where, $page, $limit))
+            ;
     }
 
     /**

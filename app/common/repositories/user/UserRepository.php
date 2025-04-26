@@ -1156,6 +1156,41 @@ class UserRepository extends BaseRepository
         return compact('list', 'count');
     }
 
+
+    /**
+     * @param $uid
+     * @param $nickname
+     * @param $sort
+     * @param $page
+     * @param $limit
+     * @return array
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function getSubordinateList($uid, $where, $page, $limit)
+    {
+        $where['superior_uids'] = $this->dao->getSupIds($uid);
+        if (count($where['superior_uids'])) {
+            $query = $this->search($where);
+            $count = $query->count();
+            $list = $query->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,superior_count,superior_time')->page($page, $limit)->select();
+            // 手机号脱敏
+            foreach ($list as &$item) {
+                if (!$item['phone']) {
+                    continue;
+                }
+                $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+            }
+        } else {
+            $list = [];
+            $count = 0;
+        }
+        return compact('list', 'count');
+    }
+
     public function getLevelList($uid, array $where, $page, $limit)
     {
         if (!$where['level']) {
