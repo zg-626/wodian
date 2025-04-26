@@ -301,7 +301,7 @@ class User extends BaseController
 
         $where = $this->request->params([ 'sort', 'keyword']);
         [$start,$stop]= $this->request->params(['start','stop'],true);
-        $where['spread_time'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
+        $where['superior_time'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
         $group = $this->request->param('group');
         $where['group'] = $group;
         [$page, $limit] = $this->getPage();
