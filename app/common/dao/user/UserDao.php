@@ -138,7 +138,7 @@ class UserDao extends BaseDao
             if ($where['user_time_type'] == 'add_time') {
                 getModelTime($query, $where['user_time'], 'User.create_time');
             }
-        })->when(isset($where['sort']) && in_array($where['sort'], ['pay_count ASC', 'pay_count DESC', 'pay_price DESC', 'pay_price ASC', 'spread_count ASC', 'spread_count DESC']), function (BaseQuery $query) use ($where) {
+        })->when(isset($where['sort']) && in_array($where['sort'], ['pay_count ASC', 'pay_count DESC', 'pay_price DESC', 'pay_price ASC', 'spread_count ASC', 'spread_count DESC', 'superior_count ASC', 'superior_count DESC', 'merchant_count ASC', 'merchant_count DESC']), function (BaseQuery $query) use ($where) {
             $query->order('User.' . $where['sort']);
         }, function ($query) {
             $query->order('User.uid DESC');

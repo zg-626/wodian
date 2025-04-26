@@ -1173,24 +1173,55 @@ class UserRepository extends BaseRepository
     public function getSubordinateList($uid, $where, $page, $limit)
     {
         $where['superior_uids'] = $this->dao->getSupIds($uid);
-        if (count($where['superior_uids'])) {
-            $query = $this->dao->search($where);
-            $query->with(['group' => function ($query) {
-                $query->field('group_id,group_name');
-            }]);
-            $count = $query->count();
-            $list = $query->setOption('field', [])->field('uid,group_id,avatar,phone,nickname,pay_count,pay_price,merchant_count,superior_count,superior_time')->page($page, $limit)->select();
-            // 手机号脱敏
-            foreach ($list as &$item) {
-                if (!$item['phone']) {
-                    continue;
-                }
-                $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+
+        $query = $this->dao->search($where);
+        $query->with(['group' => function ($query) {
+            $query->field('group_id,group_name');
+        }]);
+        $count = $query->count();
+        $list = $query->setOption('field', [])->field('uid,group_id,avatar,phone,nickname,pay_count,pay_price,merchant_count,superior_count,superior_time')->page($page, $limit)->select();
+        // 手机号脱敏
+        foreach ($list as &$item) {
+            if (!$item['phone']) {
+                continue;
             }
-        } else {
-            $list = [];
-            $count = 0;
+            $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
         }
+
+        return compact('list', 'count');
+    }
+
+    /**
+     * @param $uid
+     * @param $nickname
+     * @param $sort
+     * @param $page
+     * @param $limit
+     * @return array
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function getInviteList($uid, $where, $page, $limit)
+    {
+        //$where['superior_uids'] = $this->dao->getSupIds($uid);
+
+        $query = $this->dao->search($where);
+        $query->with(['group' => function ($query) {
+            $query->field('group_id,group_name');
+        }]);
+        $count = $query->count();
+        $list = $query->setOption('field', [])->field('uid,group_id,avatar,phone,nickname,pay_count,pay_price,merchant_count,superior_count,superior_time')->page($page, $limit)->select();
+        // 手机号脱敏
+        foreach ($list as &$item) {
+            if (!$item['phone']) {
+                continue;
+            }
+            $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+        }
+
         return compact('list', 'count');
     }
 

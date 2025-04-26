@@ -311,6 +311,25 @@ class User extends BaseController
 
     /**
      * @return mixed
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function invite_ranking()
+    {
+
+        $where = $this->request->params([ 'sort', 'keyword']);
+        [$start,$stop]= $this->request->params(['start','stop'],true);
+        $where['superior_time'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
+        $group = $this->request->param('group');
+        $where['group'] = $group;
+        [$page, $limit] = $this->getPage();
+        return app('json')->success($this->repository->getInviteList($this->request->uid(),$where, $page, $limit))
+            ;
+    }
+
+    /**
+     * @return mixed
      * @author xaboy
      * @day 2020/6/22
      */

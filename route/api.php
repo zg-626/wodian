@@ -156,6 +156,8 @@ Route::group('api/', function () {
             Route::get('/spread_list', 'User/spread_list');
             //下级列表
             Route::get('/subordinate_list', 'User/subordinate_list');
+            // 邀请龙虎榜
+            Route::get('/invite_ranking', 'User/invite_ranking');
 
             //提现
             Route::get('/extract/lst', 'UserExtract/lst');
