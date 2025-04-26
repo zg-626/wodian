@@ -1174,12 +1174,12 @@ class UserRepository extends BaseRepository
     {
         $where['superior_uids'] = $this->dao->getSupIds($uid);
         if (count($where['superior_uids'])) {
-            $query = $this->search($where);
+            $query = $this->dao->search($where);
             $query->with(['group' => function ($query) {
                 $query->field('group_id,group_name');
             }]);
             $count = $query->count();
-            $list = $query->setOption('field', [])->field('uid,avatar,phone,nickname,pay_count,pay_price,superior_count,superior_time')->page($page, $limit)->select();
+            $list = $query->field('uid,avatar,phone,nickname,pay_count,pay_price,superior_count,superior_time')->page($page, $limit)->select();
             // 手机号脱敏
             foreach ($list as &$item) {
                 if (!$item['phone']) {
