@@ -199,6 +199,8 @@ class MerchantIntentionRepository extends BaseRepository
                     $user = $userRepository->get($intention['uid']);
                     $user->group_id = 2;
                     $user->save();
+                    // 更新代理邀请商户数
+                    $userRepository->incMerchantCount($intention['salesman_id']);
                 }
             } else {
                 Queue::push(SendSmsJob::class, ['tempId' => 'APPLY_MER_FAIL', 'id' => $smsData]);

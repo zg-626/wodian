@@ -411,6 +411,13 @@ class UserDao extends BaseDao
         ]);
     }
 
+    public function incMerchantCount($uid)
+    {
+        User::getDB()->where('uid', $uid)->update([
+            'merchant_count' => Db::raw('merchant_count + 1')
+        ]);
+    }
+
     public function decSuperiorCount($uid)
     {
         User::getDB()->where('uid', $uid)->where('superior_count','>',0)->update([
