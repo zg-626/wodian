@@ -207,16 +207,18 @@ class Lakala extends BaseController
         try {
             $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
             $obj = json_decode($obj, true);
-
+            Log::info('拉卡拉发货确认回调更新:0');
             if ($obj['trade_state'] == 'SUCCESS') {
                 Log::info('拉卡拉发货确认回调更新:1');
                 // 替换更新发货后的流水号
                 $out_trade_no = $obj['origin_out_trade_no'];
                 /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+                $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
                     Log::info('拉卡拉发货确认回调更新:2');
                     $res->lkl_log_no = $obj['log_no'] ?? '';
+                    $res->is_share = 1;
                     $res->save();
                     Log::info('拉卡拉发货确认回调更新:3');
                     $order = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);

@@ -101,7 +101,7 @@ class Svip extends BaseController
     public function svipUserInfo()
     {
         if ($this->request->isLogin()) {
-            $user = app()->make(UserRepository::class)->getSearch([])->field('uid,nickname,avatar,is_svip,svip_endtime,svip_save_money')->find($this->request->uid());
+            $user = app()->make(UserRepository::class)->getSearch([])->field('uid,nickname,avatar,is_svip,svip_endtime,svip_save_money,brokerage_price')->find($this->request->uid());
             if ($user && $user['is_svip'] == 3) $user['svip_endtime'] = date('Y-m-d H:i:s',strtotime("+100 year"));
         }
         $data['user'] = $user ?? new \stdClass();

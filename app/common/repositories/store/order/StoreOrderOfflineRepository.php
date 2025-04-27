@@ -284,6 +284,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         // 替换更新发货后的流水号
         $out_trade_no = $data['order_sn'];
         /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
         $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
         if (!empty($res)) {
             $res->lkl_log_no = $data['data']['log_no'];
@@ -460,7 +461,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'remark' => '订单分红入池'
                 ]);
                 // 虚拟发货
-                //$this->virtualDelivery($res);
+                $this->virtualDelivery($res);
 
                 return $this->payAfter($res);
             });
@@ -902,6 +903,19 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
 
         return compact('count', 'list');
+    }
+
+    public function getAutoOfflineShipping()
+    {
+        $now = date('Y-m-d H:i:s');
+        $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-1 minute'));
+
+        return StoreOrderOffline::getDB()
+            ->where('is_share', 0) // 已发货,未分账状态
+            ->where('transaction_id', '<>', '') // transaction_id
+            //->where('pay_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
+            ->where('pay_time', '>', '1970-01-01') // 过滤无效时间
+            ->select();
     }
 
 }
