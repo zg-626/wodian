@@ -28,20 +28,19 @@ class LklApi
 
     public static $config = [
         'org_code' => '982406', //机构号
-        'client_id' => 'lsycs', //第三方client_id
-        'client_secret' => 'XPa1HB5d55Ig0qV8', //第三方client_secret
+        'client_id' => self::DEBUG ? 'lsycs' : 'youban', //第三方client_id
+        'client_secret' => self::DEBUG ? 'XPa1HB5d55Ig0qV8' : 'teQvfjWiJK75FzUp', //第三方client_secret
         'access_token_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkauth/oauth/token' : 'https://tkapi.lakala.com/auth/oauth/token', //请求获取token
         'merchant_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/merchant' : 'https://htkactvi.lakala.com/registration/merchant', //商户进件
         'organization_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration' : 'https://htkactvi.lakala.com/registration', //地区信息
         'bank_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/bank' : 'https://htkactvi.lakala.com/registration/bank', //银行地区信息
         'htk_file_upload_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/file/upload' : 'https://htkactvi.lakala.com/registration/file/upload', //拓客 文件上传
         'customer_cate_url' => self::DEBUG ? 'https://test.wsmsd.cn/sit/htkregistration/customer/category' : 'https://htkactvi.lakala.com/registration/customer/category', //商户类别(进件获取mcc使用)
-        'user_no' => '29153396', //商户归属用户信息
-        'activity_id' => '687', //归属活动信息
+        'user_no' => self::DEBUG ? '29153396' : '24317143', //商户归属用户信息
+        'activity_id' => self::DEBUG ? '687' : '208', //归属活动信息
         'request_ip' => '39.100.91.239', //请求方IP  地址位置信息，风控要求必送
         'app_id' => 'wx5cc8c2f48849239e',
-        'pubKey' => 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB', //测试公钥
-        // 'pubKey' => 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDWHxo8EhiPM6rzV3AYWjuTQVQW6r7WuB4oTvY9gp03XVkAscANa6dkNQvyEOH5m5yCEd5NJkpu4zcM+XdablLUbltSPnwtZE4vbtV4cbIyWM55rZCYgI4UiCAPVFvtYh2H15jcTktR80k756JA3sGtW7Oq0nq5Dy7UJelZ77FsrQIDAQAB', //拓客生产公钥
+        'pubKey' => self::DEBUG ? 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFlliCBA1pksy/YKBrPeq5O0FXPMisHI7R/rTm6FTsdG0ACUBtbdOvDvAFRlZbCL0T1tnfavtqn//jLMpzWowGLOppxseepS6nk/5bremksPW56o4g6kfEykGV5ouFXiAvgdhnexTQxkCcFISwzzT14IOVk/zEw3x/XKrtUID6iwIDAQAB' : 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDWHxo8EhiPM6rzV3AYWjuTQVQW6r7WuB4oTvY9gp03XVkAscANa6dkNQvyEOH5m5yCEd5NJkpu4zcM+XdablLUbltSPnwtZE4vbtV4cbIyWM55rZCYgI4UiCAPVFvtYh2H15jcTktR80k756JA3sGtW7Oq0nq5Dy7UJelZ77FsrQIDAQAB', //拓客公钥
     ];
 
     /**
