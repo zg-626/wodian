@@ -62,8 +62,62 @@ class OrderClient extends BaseOrder
         $params = [
             'order_key' => [
                 'order_number_type' => 1,
-                //'mchid' => $this->config['config']['payment']['merchant_id'],
-                'mchid' => '',
+                'mchid' => $this->config['config']['payment']['merchant_id'],
+                //'mchid' => '',
+                'out_trade_no' => $order_key['out_trade_no'] ?? '',
+                'transaction_id' => $order_key['transaction_id'] ?? '',
+            ],
+            'logistics_type' => $logistics_type,
+            'delivery_mode' => $delivery_mode,
+            'upload_time' => date(DATE_RFC3339),
+            'payer' => [
+                'openid' => $payer_openid
+            ]
+        ];
+
+        if ($delivery_mode == 2) {
+            $params['is_all_delivered'] = $is_all_delivered;
+        }
+
+        foreach ($shipping_list as $shipping) {
+            $contact = $this->handleContact($shipping['contact'] ?? []);
+            $params['shipping_list'][] = [
+                'tracking_no' => $shipping['tracking_no'] ?? '',
+                'express_company' => isset($shipping['express_company']) ? $this->getDelivery($shipping['express_company']) : '',
+                'item_desc' => $shipping['item_desc'],
+                'contact' => $contact
+            ];
+        }
+
+        // 跳转路径
+        $this->setMesJumpPath($path);
+        return $this->shipping($params);
+    }
+
+    /**
+     * 发货
+     * @param array $order_key
+     * @param int $logistics_type
+     * @param array $shipping_list
+     * @param string $payer_openid
+     * @param int $delivery_mode
+     * @param bool $is_all_delivered
+     * @return array
+     * @throws HttpException
+     *
+     * @date 2023/05/10
+     * @author yyw
+     */
+    public function uploadOfflineShippingInfo(array $order_key, int $logistics_type, array $shipping_list, string $payer_openid, $path, int $delivery_mode = 1, bool $is_all_delivered = true)
+    {
+
+        if (!$this->checkManaged()) {
+            throw new ValidateException('开通小程序订单管理服务后重试');
+        }
+        $params = [
+            'order_key' => [
+                'order_number_type' => 2,
+                'mchid' => $order_key['lkl_mer_cup_no']??'',
                 'out_trade_no' => $order_key['out_trade_no'] ?? '',
                 'transaction_id' => $order_key['transaction_id'] ?? '',
             ],

@@ -109,7 +109,7 @@ class LklApi
             'acctNo' => $param['acct_no'],
             'acctName' => $param['acct_name'],
             'agentTag' => $param['agent_tag'],
-            'retUrl' => request()->domain() . '/api/lakala/lklEcApplyNotify'
+            'retUrl' => systemConfig('site_url') .'/api/lakala/lklEcApplyNotify'
         ];
         //个体工商户/企业(有营业执照)
         if (!empty($param['merchant_type'])) {
@@ -619,7 +619,7 @@ class LklApi
             'receiverNo' => $param['lkl_receiver_no'],
             'entrustFileName' => '合作协议',
             'entrustFilePath' => $entrust_image,
-            'retUrl' => request()->domain() . '/api/lakala/lklApplyBindNotify'
+            'retUrl' => systemConfig('site_url') .'/api/lakala/lklApplyBindNotify'
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 分账关系绑定申请参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
@@ -670,7 +670,7 @@ class LklApi
             'splitEntrustFileName' => '结算授权委托书',
             'splitEntrustFilePath' => $split_image,
             'eleContractNo' => $param['lkl_ec_no'],
-            'retUrl' => request()->domain() . '/api/lakala/lklApplyLedgerMerNotify'
+            'retUrl' => systemConfig('site_url') .'/api/lakala/lklApplyLedgerMerNotify'
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 商户分账业务开通请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
@@ -720,7 +720,7 @@ class LklApi
                 'request_ip' => self::$config['request_ip'], //请求方的IP地址
             ], //地址位置信息
             'subject' => '支付', //标题
-            'notify_url' => request()->domain() . '/api/lakala/lklPayNotify',
+            'notify_url' => systemConfig('site_url') .'/api/lakala/lklPayNotify',
             'settle_type' => '1', //结算类型，0或者空常规结算方式，如需接拉卡拉分账需传1
             'remark' => $param['remark'], //商户定义，原样回传
             'acc_busi_fields' => [
@@ -737,7 +737,7 @@ class LklApi
                     ]
                 ]
             ],
-            'complete_notify_url' => request()->domain() . '/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
+            'complete_notify_url' => systemConfig('site_url') .'/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
         ];
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
@@ -830,7 +830,7 @@ class LklApi
             'total_amt' => (string)($param['can_separate_amt']), //单位：分
             'lkl_org_no' => self::$config['org_code'],
             'cal_type' => '0', //分账计算类型 0- 按照指定金额，1- 按照指定比例。默认 0
-            'notify_url' => request()->domain() . '/api/notify/lklSeparateNotify',
+            'notify_url' => systemConfig('site_url') .'/api/notify/lklSeparateNotify',
         ];
 
         $sepParam['recv_datas'] = $param['recv_datas'];

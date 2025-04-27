@@ -65,6 +65,7 @@ return [
         ] : [],
         'pay_success_user_recharge' => [\crmeb\listens\pay\UserRechargeSuccessListen::class],
         'pay_success_offline_order' => [\crmeb\listens\pay\OfflineOrderSuccessListen::class],
+        //'pay_success_shipping' => [\crmeb\listens\pay\ShippingSuccessListen::class],
         'pay_success_user_order' => [\crmeb\listens\pay\UserOrderSuccessListen::class],
         'pay_success_order' => [\crmeb\listens\pay\OrderPaySuccessListen::class],
         'pay_success_presell' => [\crmeb\listens\pay\PresellPaySuccessListen::class],

@@ -5,6 +5,7 @@ namespace app\controller\api\lakala;
 use app\common\model\system\merchant\MerchantEcLkl as LklModel;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use crmeb\basic\BaseController;
+use DateTime;
 use think\facade\Log;
 use think\response\Json;
 use Lakala\OpenAPISDK\V2\V2Configuration;
@@ -164,22 +165,17 @@ class Lakala extends BaseController
      */
     public function lklPayNotify()
     {
+        $param = input('');
+        Db::name('third_notify')->insert(['title' => '拉卡拉支付回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉支付回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
         $config = new Configuration();
         $api = new LakalaNotifyApi($config);
         try {
-            $request = $api->notiApi();
-            // $headers = $request->getHeaders();
-            $originalText = $request->getOriginalText();
-            Db::name('third_notify')->insert(['title' => '拉卡拉支付成功回调', 'content' => $originalText, 'createtime' => time()]);
-
-            $obj = json_decode($originalText, true);
+            $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
+            $obj = json_decode($obj, true);
             if ($obj['trade_status'] == 'SUCCESS') {
-                //钱包类型 account_type 微信：WECHAT 支付宝：ALIPAY 银联：UQRCODEPAY 翼支付: BESTPAY 苏宁易付宝: SUNING  数字人民币-DCPAY
-                // parse_str($obj['remark'], $remark);
-                // $type = isset($remark['pay_type']) ? $remark['pay_type'] : 3;
-
                 $out_trade_no = $obj['out_trade_no'];
-                Log::info('拉卡拉支付成功回调' . var_export($obj, 1));
+
                 try {
                     event('pay_success_' . $obj['remark'], ['order_sn' => $out_trade_no, 'data' => $obj]);
                 } catch (\Exception $e) {
@@ -203,38 +199,43 @@ class Lakala extends BaseController
      */
     public function lklSendcompleteNotify()
     {
+        $param = input('');
+        Db::name('third_notify')->insert(['title' => '拉卡拉发货确认回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉发货确认回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
         $config = new Configuration();
         $api = new LakalaNotifyApi($config);
         try {
-            $request = $api->notiApi();
-            $originalText = $request->getOriginalText();
-            Db::name('third_notify')->insert(['title' => '拉卡拉发货确认回调', 'content' => $originalText, 'createtime' => time()]);
-
-            $obj = json_decode($originalText, true);
+            $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
+            $obj = json_decode($obj, true);
 
             if ($obj['trade_state'] == 'SUCCESS') {
+                Log::info('拉卡拉发货确认回调更新:1');
                 // 替换更新发货后的流水号
                 $out_trade_no = $obj['origin_out_trade_no'];
                 /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
+                    Log::info('拉卡拉发货确认回调更新:2');
                     $res->lkl_log_no = $obj['log_no'] ?? '';
                     $res->save();
+                    Log::info('拉卡拉发货确认回调更新:3');
+                    $order = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
+                    $date = substr($res['lkl_log_date'], 0, 8);
                     $params = [
                         'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
                         'lkl_log_no' => $obj['log_no'], // 用最新的流水号
-                        'lkl_log_date' => $res['lkl_log_date'],
+                        'lkl_log_date' => $date,
                     ];
                     // 可分账金额查询
-                    $api = new \Lakala\LklApi();
-                    $result = $api::lklQueryAmt($params);
-                    if (!$result) {
-                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
-                    }
-                    $can_separate_amt = $result['total_separate_amt'];
-                    if ($can_separate_amt > 0) {
-                        $this->lklSeparate($params, $can_separate_amt, $res);
-                    }
+                    //$this->lklQueryAmt($params,$order);
+                    /*if ($obj['trade_state'] == 'SUCCESS') {
+                        try {
+                            event('pay_success_shipping', ['order_sn' => $out_trade_no, 'data' => $obj]);
+                        } catch (\Exception $e) {
+                            Log::info('拉卡拉发货确认回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
+                            return false;
+                        }
+                    }*/
                 }
             }
 
@@ -246,6 +247,20 @@ class Lakala extends BaseController
         }
     }
 
+    // 拉卡拉可分账查询
+    public function lklQueryAmt($params, $res)
+    {
+        $api = new \Lakala\LklApi();
+        $result = $api::lklQueryAmt($params);
+        if (!$result) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
+        }
+        $can_separate_amt = $result['total_separate_amt'];
+        if ($can_separate_amt > 0) {
+            $this->lklSeparate($params, $can_separate_amt, $res);
+        }
+    }
+
     // 拉卡拉分账参数拼接
     public function lklSeparate($param, $can_separate_amt, $res): void
     {
@@ -254,7 +269,7 @@ class Lakala extends BaseController
         $param['can_separate_amt'] = $can_separate_amt;
         $param['recv_datas'] = [
             [
-                'recv_merchant_no' => '123456', // TODO 拉卡拉分账接收方 后期需要修改
+                'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
                 'separate_value' => $handling_fee
             ],
             [
@@ -275,6 +290,9 @@ class Lakala extends BaseController
      */
     public function lklSeparateNotify()
     {
+        $param = input('');
+        Db::name('third_notify')->insert(['title' => '拉卡拉订单分账回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉订单分账回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
         $config = new Configuration();
         $api = new LakalaNotifyApi($config);
         try {

@@ -622,9 +622,9 @@ class OfflineMiniProgramService
      * @date 2023/05/09
      * @author yyw
      */
-    public function uploadShippingInfo(array $order_key, int $logistics_type, array $shipping_list, string $payer_openid, string $path, int $delivery_mode = 1, bool $is_all_delivered = true, $type = '')
+    public function uploadOfflineShippingInfo(array $order_key, int $logistics_type, array $shipping_list, string $payer_openid, string $path, int $delivery_mode = 1, bool $is_all_delivered = true, $type = '')
     {
-        return $this->order()->uploadShippingInfo($order_key, $logistics_type, $shipping_list, $payer_openid, $path, $delivery_mode, $is_all_delivered);
+        return $this->order()->uploadOfflineShippingInfo($order_key, $logistics_type, $shipping_list, $payer_openid, $path, $delivery_mode, $is_all_delivered);
     }
 
 

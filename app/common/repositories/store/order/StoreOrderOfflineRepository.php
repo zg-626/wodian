@@ -278,6 +278,65 @@ class StoreOrderOfflineRepository extends BaseRepository
         return $orderId;
     }
 
+    // 发货确认
+    public function shipping($data)
+    {
+        // 替换更新发货后的流水号
+        $out_trade_no = $data['order_sn'];
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+        $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
+        if (!empty($res)) {
+            $res->lkl_log_no = $data['data']['log_no'];
+            $res->save();
+            $order = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
+            $date = substr($res['lkl_log_date'], 0, 8);
+            $params = [
+                'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
+                'lkl_log_no' => $data['data']['log_no'], // 用最新的流水号
+                'lkl_log_date' => $date,
+            ];
+            // 可分账金额查询
+            //$this->lklQueryAmt($params,$order);
+        }
+    }
+
+    // 拉卡拉可分账查询
+    public function lklQueryAmt($params, $res)
+    {
+        $api = new \Lakala\LklApi();
+        $result = $api::lklQueryAmt($params);
+        if (!$result) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
+        }
+        $can_separate_amt = $result['total_separate_amt'];
+        if ($can_separate_amt > 0) {
+            $this->lklSeparate($params, $can_separate_amt, $res);
+        }
+    }
+
+    // 拉卡拉分账参数拼接
+    public function lklSeparate($param, $can_separate_amt, $res): void
+    {
+        // 平台抽取的费用
+        $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
+        $param['can_separate_amt'] = $can_separate_amt;
+        $param['recv_datas'] = [
+            [
+                'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
+                'separate_value' => $handling_fee
+            ],
+            [
+                'recv_no' => $param['lkl_mer_cup_no'],
+                'separate_value' => $can_separate_amt - $handling_fee
+            ]
+        ];
+        $api = new \Lakala\LklApi();
+        $result = $api::lklSeparate($param);
+        if (!$result) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
+        }
+    }
+
     public function paySuccess($data)
     {
         /*
@@ -415,7 +474,9 @@ class StoreOrderOfflineRepository extends BaseRepository
         $payer_openid = $this->getPayerOpenid($order['uid']);
         $order_id = $order['order_sn'];
         $order_key = [
-            'out_trade_no' => $order_id
+            'out_trade_no' => $order_id,
+            'transaction_id' => $order['transaction_id'],
+            'lkl_mer_cup_no' => $order['lkl_mer_cup_no']
         ];
         // 不是拆单
         $delivery_mode = 1;
@@ -428,7 +489,38 @@ class StoreOrderOfflineRepository extends BaseRepository
         $item_desc = '用户充值' . $order['pay_price'];
         $shipping_list = $this->getShippingList($logistics_type, $item_desc,'', $delivery_id, $delivery_name);
         $queue_param = compact('order_key', 'logistics_type', 'shipping_list', 'payer_openid', 'path', 'delivery_mode', 'is_all_delivered');
-        OfflineMiniProgramService::create()->uploadShippingInfo($order_key, $logistics_type, $shipping_list, $payer_openid, $path, $delivery_mode, $is_all_delivered);
+        OfflineMiniProgramService::create()->uploadOfflineShippingInfo($order_key, $logistics_type, $shipping_list, $payer_openid, $path, $delivery_mode, $is_all_delivered);
+    }
+
+    /**
+     * 获取商品发货信息
+     * @param string $logistics_type
+     * @param string $receiver_contact
+     * @param string $delivery_id
+     * @param string $delivery_name
+     * @return array|array[]
+     *
+     * @date 2023/10/18
+     * @author yyw
+     */
+    public function getShippingList(string $logistics_type, string $item_desc, string $receiver_contact = '', string $delivery_id = '', string $delivery_name = '')
+    {
+        if ($logistics_type == 1) {
+            return [
+                [
+                    'tracking_no' => $delivery_id ?? '',
+                    'express_company' => $delivery_name ?? '',
+                    'contact' => [
+                        'receiver_contact' => $receiver_contact
+                    ],
+                    'item_desc' => $item_desc
+                ]
+            ];
+        } else {
+            return [
+                ['item_desc' => $item_desc]
+            ];
+        }
     }
 
     /**
