@@ -342,6 +342,11 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'separate_value' => $can_separate_amt - $handling_fee
                 ]
             ];
+            // 同步更新分账总金额
+            $res->total_separate_amt=$can_separate_amt;
+            $res->actual_separate_amt=$can_separate_amt - $handling_fee;
+            $res->save();
+
             $api = new \Lakala\LklApi();
             $result = $api::lklSeparate($param);
             if (!$result) {
