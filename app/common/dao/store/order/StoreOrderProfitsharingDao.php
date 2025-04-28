@@ -72,4 +72,17 @@ class StoreOrderProfitsharingDao extends BaseDao
             ->select();
     }
 
+    public function getAutoLakalasharing()
+    {
+        $now = date('Y-m-d H:i:s');
+        $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-15 minute'));
+
+        return StoreOrderProfitsharing::getDB()
+            ->where('status', 2) // 可分账状态
+            ->where('transaction_id', '<>', '') // transaction_id
+            //->where('create_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
+            ->where('create_time', '>', '1970-01-01') // 过滤无效时间
+            ->select();
+    }
+
 }

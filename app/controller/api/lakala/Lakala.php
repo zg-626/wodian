@@ -4,6 +4,7 @@ namespace app\controller\api\lakala;
 
 use app\common\model\system\merchant\MerchantEcLkl as LklModel;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
+use app\common\repositories\store\order\StoreOrderProfitsharingRepository;
 use crmeb\basic\BaseController;
 use DateTime;
 use think\facade\Log;
@@ -221,23 +222,13 @@ class Lakala extends BaseController
                     $res->is_share = 1;
                     $res->save();
                     Log::info('拉卡拉发货确认回调更新:3');
-                    $order = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
-                    $date = substr($res['lkl_log_date'], 0, 8);
-                    $params = [
-                        'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
-                        'lkl_log_no' => $obj['log_no'], // 用最新的流水号
-                        'lkl_log_date' => $date,
-                    ];
-                    // 可分账金额查询
-                    //$this->lklQueryAmt($params,$order);
-                    /*if ($obj['trade_state'] == 'SUCCESS') {
-                        try {
-                            event('pay_success_shipping', ['order_sn' => $out_trade_no, 'data' => $obj]);
-                        } catch (\Exception $e) {
-                            Log::info('拉卡拉发货确认回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
-                            return false;
-                        }
-                    }*/
+                    // 同步更新订单分账表
+                    /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+                    $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+                    $models =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
+                    $models->status = 2;// 可分账
+                    $models->save();
+
                 }
             }
 
@@ -271,7 +262,7 @@ class Lakala extends BaseController
         $param['can_separate_amt'] = $can_separate_amt;
         $param['recv_datas'] = [
             [
-                'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
+                'recv_merchant_no' => 'SR2024000078730', // TODO 拉卡拉分账接收方 后期需要修改
                 'separate_value' => $handling_fee
             ],
             [

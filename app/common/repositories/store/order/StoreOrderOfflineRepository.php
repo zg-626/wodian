@@ -308,11 +308,20 @@ class StoreOrderOfflineRepository extends BaseRepository
         $result = $api::lklQueryAmt($params);
         if (!$result) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
+            /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+            $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+            $profitsharing =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
+            //$profitsharing->status = -2;
+            $profitsharing->error_msg = $api->getErrorInfo();
+            $profitsharing->save();
         }
-        $can_separate_amt = $result['total_separate_amt'];
-        if ($can_separate_amt > 0) {
-            $this->lklSeparate($params, $can_separate_amt, $res);
+        if (isset($result['total_separate_amt'])) {
+            $can_separate_amt = $result['total_separate_amt'];
+            if ($can_separate_amt > 0) {
+                $this->lklSeparate($params, $can_separate_amt, $res);
+            }
         }
+
     }
 
     // 拉卡拉分账参数拼接

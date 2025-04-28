@@ -34,6 +34,7 @@ return [
         'create_timer' => env('INSTALLED', false) ? [
 //            \crmeb\listens\AutoOrderProfitsharingListen::class,
 //            \crmeb\listens\AutoOrderOfflineProfitsharingListen::class,// 微信服务商自动分账
+            \crmeb\listens\AutoOrderLakalaListen::class,// 拉卡拉自动分账
  //           \crmeb\listens\AutoOrderOfflineShippingListen::class,// 自动虚拟发货
             \crmeb\listens\AuthTakeOrderListen::class,
             \crmeb\listens\AutoCancelGroupOrderListen::class,
@@ -42,7 +43,7 @@ return [
             \crmeb\listens\AutoUnLockBrokerageListen::class,
             \crmeb\listens\AutoSendPayOrderSmsListen::class,
             \crmeb\listens\SyncSmsResultCodeListen::class,
-            \crmeb\listens\SyncBroadcastStatusListen::class, //直播间同步监听，未开启可删除次行
+//            \crmeb\listens\SyncBroadcastStatusListen::class, //直播间同步监听，未开启可删除次行
             \crmeb\listens\RefundOrderAgreeListen::class,
             \crmeb\listens\SeckillTImeCheckListen::class,
             \crmeb\listens\AutoOrderReplyListen::class,
