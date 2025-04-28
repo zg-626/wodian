@@ -188,17 +188,17 @@ class MerchantIntention extends BaseController
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-//        try {
-//            $api = new \Lakala\LklApi();
-//            $result = $api::lklEcApply($params);
-//            if (!$result) {
-//                return app('json')->fail($api->getErrorInfo());
-//            }
-//        } catch (Exception $e) {
-//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-//        }
+        try {
+           $api = new \Lakala\LklApi();
+           $result = $api::lklEcApply($params);
+           if (!$result) {
+               return app('json')->fail($api->getErrorInfo());
+           }
+        } catch (Exception $e) {
+           return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+        }
 
-//        $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
+        $save_data['lkl_ec_apply_id'] = $result['ecApplyId'];
         $save_data['lkl_ec_no'] = '';
         $save_data['lkl_ec_status'] = 'WAIT_AUDI';
         try {
@@ -207,7 +207,6 @@ class MerchantIntention extends BaseController
             return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
 
         }
-        return app('json')->success('提交成功');
         return app('json')->success('提交成功', $result);
     }
 
@@ -226,9 +225,9 @@ class MerchantIntention extends BaseController
         if ($info['lkl_ec_status'] != 'COMPLETED') {
             return app('json')->fail('电子合同未签约完成');
         }
-        // if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
-        //     return app('json')->fail('正在审核中，请耐心等待后台审核...');
-        // }
+        if ($info['lkl_mer_cup_status'] == 'WAIT_AUDI') {
+            return app('json')->fail('正在审核中，请耐心等待后台审核...');
+        }
         if ($info['lkl_mer_cup_status'] == 'SUCCESS') {
             return app('json')->fail('商户进件已审核成功');
         }
@@ -316,17 +315,17 @@ class MerchantIntention extends BaseController
             return app('json')->fail('商户分账业务开通申请已审核成功');
         }
 
-//        try {
-//            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-//            $params['lkl_ec_no'] = $info['lkl_ec_no'];
-//            $api = new \Lakala\LklApi();
-//            $result = $api::lklApplyLedgerMer($params);
-//            if (!$result) {
-//                return app('json')->fail($api->getErrorInfo());
-//            }
-//        } catch (Exception $e) {
-//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-//        }
+       try {
+           $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+           $params['lkl_ec_no'] = $info['lkl_ec_no'];
+           $api = new \Lakala\LklApi();
+           $result = $api::lklApplyLedgerMer($params);
+           if (!$result) {
+               return app('json')->fail($api->getErrorInfo());
+           }
+       } catch (Exception $e) {
+           return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+       }
 
         $data['split_entrust_file_path'] = $params['split_entrust_file_path'];
         $data['lkl_mer_ledger_status'] = 3;
@@ -372,17 +371,17 @@ class MerchantIntention extends BaseController
             return app('json')->fail('商户分账关系绑定已审核成功');
         }
 
-//        try {
-//            $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
-//            $params['lkl_receiver_no'] = '';
-//            $api = new \Lakala\LklApi();
-//            $result = $api::lklApplyBind($params);
-//            if (!$result) {
-//                return app('json')->fail($api->getErrorInfo());
-//            }
-//        } catch (Exception $e) {
-//            return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-//        }
+       try {
+           $params['lkl_mer_cup_no'] = $info['lkl_mer_cup_no'];
+           $params['lkl_receiver_no'] = '';
+           $api = new \Lakala\LklApi();
+           $result = $api::lklApplyBind($params);
+           if (!$result) {
+               return app('json')->fail($api->getErrorInfo());
+           }
+       } catch (Exception $e) {
+           return app('json')->fail('File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+       }
 
         $data['entrust_file_path'] = $params['entrust_file_path'];
         $data['lkl_mer_bind_status'] = 3;
