@@ -160,7 +160,7 @@ checkbox .wx-checkbox-input{width:38rpx;height:38rpx}
 checkbox .wx-checkbox-input.wx-checkbox-input-checked::before{color: #fff!important;}
 checkbox .uni-checkbox-input{width: 38rpx;height: 38rpx}
 checkbox .uni-checkbox-input.uni-checkbox-input-checked,
-checkbox .wx-checkbox-input.wx-checkbox-input-checked{border:1px solid #e93323!important;background-color:#e93323!important;color:#fff!important;}
+/* checkbox .wx-checkbox-input.wx-checkbox-input-checked{border:1px solid #e93323!important;background-color:#e93323!important;color:#fff!important;} */
 checkbox .uni-checkbox-input.uni-checkbox-input-checked::before{font-size: 35rpx}
 .line1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .line2{word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;}
