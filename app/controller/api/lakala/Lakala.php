@@ -263,42 +263,7 @@ class Lakala extends BaseController
         }
     }
 
-    // 拉卡拉可分账查询
-    public function lklQueryAmt($params, $res)
-    {
-        $api = new \Lakala\LklApi();
-        $result = $api::lklQueryAmt($params);
-        if (!$result) {
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
-        }
-        $can_separate_amt = $result['total_separate_amt'];
-        if ($can_separate_amt > 0) {
-            $this->lklSeparate($params, $can_separate_amt, $res);
-        }
-    }
 
-    // 拉卡拉分账参数拼接
-    public function lklSeparate($param, $can_separate_amt, $res): void
-    {
-        // 平台抽取的费用
-        $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
-        $param['can_separate_amt'] = $can_separate_amt;
-        $param['recv_datas'] = [
-            [
-                'recv_merchant_no' => 'SR2024000078730', // TODO 拉卡拉分账接收方 后期需要修改
-                'separate_value' => $handling_fee
-            ],
-            [
-                'recv_no' => $param['lkl_mer_cup_no'],
-                'separate_value' => $can_separate_amt - $handling_fee
-            ]
-        ];
-        $api = new \Lakala\LklApi();
-        $result = $api::lklSeparate($param);
-        if (!$result) {
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
-        }
-    }
     /**
      * @desc 拉卡拉 - 订单分账 回调
      * @author ZhouTing
@@ -320,7 +285,25 @@ class Lakala extends BaseController
 
             // $originalText = '{"separate_no":"20250409770188013954770800","out_separate_no":"2025040919375840689521","cmd_type":"SEPARATE","log_no":"66231317811820","log_date":"20250409","cal_type":"0","separate_type":"1","separate_date":"20250409","finish_date":"20250409","total_amt":"997","status":"SUCCESS","final_status":"SUCCESS","actual_separate_amt":"997","total_fee_amt":"0","detail_datas":[{"recv_merchant_no":"","recv_no":"SR2024000069562","amt":"49"},{"recv_merchant_no":"82210008699006U","recv_no":"82210008699006U","amt":"948"}]}';
             $obj = json_decode($param, true);
+            if ($obj['final_status'] == 'SUCCESS') {
+                // 更新分账状态
+                $out_trade_no = $obj['out_separate_no'];
+                /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+                $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+                $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
+                if (!empty($res)) {
+                    $res->is_share = 1;
+                    $res->save();
 
+                    // 同步更新订单分账表
+                    /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+                    $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+                    $models =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
+                    $models->status = 1;// 分账成功
+                    $models->save();
+
+                }
+            }
 
             //通知拉卡拉，业务处理成功
             $api->success();
