@@ -329,22 +329,26 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         // 平台抽取的费用
         $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
-        $param['can_separate_amt'] = $can_separate_amt;
-        $param['recv_datas'] = [
-            [
-                'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
-                'separate_value' => $handling_fee
-            ],
-            [
-                'recv_no' => $param['lkl_mer_cup_no'],
-                'separate_value' => $can_separate_amt - $handling_fee
-            ]
-        ];
-        $api = new \Lakala\LklApi();
-        $result = $api::lklSeparate($param);
-        if (!$result) {
-            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
+        // 总金额-分账金额>0时
+        if($can_separate_amt - $handling_fee>0){
+            $param['can_separate_amt'] = $can_separate_amt;
+            $param['recv_datas'] = [
+                [
+                    'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
+                    'separate_value' => $handling_fee
+                ],
+                [
+                    'recv_no' => $param['lkl_mer_cup_no'],
+                    'separate_value' => $can_separate_amt - $handling_fee
+                ]
+            ];
+            $api = new \Lakala\LklApi();
+            $result = $api::lklSeparate($param);
+            if (!$result) {
+                record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
+            }
         }
+
     }
 
     public function paySuccess($data)
