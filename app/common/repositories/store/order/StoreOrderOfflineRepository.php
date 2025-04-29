@@ -909,10 +909,10 @@ class StoreOrderOfflineRepository extends BaseRepository
         $query = $this->dao->search($where)->where($this->getOrderType($status))->when($date, function ($query, $date) {
             getModelTime($query, $date, 'pay_time');
         })->with([
-                'user' => function($query){
-                    $query->field('uid,nickname,phone');
-                }
-            ]);
+            'user' => function($query){
+                $query->field('uid,nickname,phone');
+            }
+        ]);
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
         // 手机号脱敏

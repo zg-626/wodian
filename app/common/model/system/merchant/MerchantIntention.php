@@ -58,7 +58,17 @@ class MerchantIntention extends BaseModel
         return implode(',', $value);
     }
 
+    public function setBankImageAttr($value)
+    {
+        return implode(',', $value);
+    }
+
     public function getImagesAttr($value)
+    {
+        return $value ? explode(',', $value) : [];
+    }
+
+    public function getBankImageAttr($value)
     {
         return $value ? explode(',', $value) : [];
     }
