@@ -114,6 +114,7 @@ class MerchantDao extends BaseDao
         if (isset($where['district']) && $where['district'] !== ''){
             //$query->where('district', $where['district']);
             $query->where('city', $where['district']);
+            $query->whereOr('province', $where['district']);
         }
 
 
