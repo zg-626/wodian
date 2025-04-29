@@ -1172,8 +1172,8 @@ class UserRepository extends BaseRepository
      */
     public function getSubordinateList($uid, $where, $page, $limit)
     {
-        $where['superior_uids'] = $this->dao->getSupIds($uid);
-
+        $where['superior_uid'] = $uid;
+        //print_r($where['superior_uids']);exit();
         $query = $this->dao->search($where);
         $query->with(['group' => function ($query) {
             $query->field('group_id,group_name');
