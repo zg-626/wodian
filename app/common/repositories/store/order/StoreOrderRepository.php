@@ -503,10 +503,10 @@ class StoreOrderRepository extends BaseRepository
         $salesmanGroup = $userGroupRepository->get($salesman['group_id']);
         
         // 处理上级佣金
-        $extension_one = bcmul($salesmanGroup->extension/100, $money, 2);
+        $extension_one = bcmul($salesmanGroup->extension/100, $money, 4);
         
         // 发放上级佣金
-        $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, '商务推广佣金');
+        $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, $this->getSuperiorTitle($salesman['group_id']));
 
         // 处理上级佣金分配
         $superior = $salesman;
@@ -574,7 +574,7 @@ class StoreOrderRepository extends BaseRepository
             
             // 如果是大区经理，终止循环
             if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
-                $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
+                $superior_extension = bcmul($superiorGroup->extension/100, $money, 4);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, '大区经理推广佣金');
                 break;
             }
@@ -592,7 +592,7 @@ class StoreOrderRepository extends BaseRepository
                         // 获取讲师分组信息及比例
                         $lecturerGroup = $userGroupRepository->get($lecturer['group_id']);
                         // 给讲师发放佣金
-                        $lecturer_bonus = bcmul($lecturerGroup->extension/100, $money, 2);
+                        $lecturer_bonus = bcmul($lecturerGroup->extension/100, $money, 4);
                         $this->giveBrokerage($order['order_id'],$userBillRepository, $lecturer, $lecturer_bonus, '讲师推广奖励');
                         // 记录讲师ID，避免重复发放
                         $processedUids[] = $lecturer['uid'];
@@ -607,7 +607,7 @@ class StoreOrderRepository extends BaseRepository
                 // if ($superior['group_id'] == self::USER_GROUP['AGENT_3']) {
                 //     break;
                 // }
-                $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
+                $superior_extension = bcmul($superiorGroup->extension/100, $money, 4);
                 $title = $this->getSuperiorTitle($superior['group_id']);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $title);
                 // 记录已处理的用户ID

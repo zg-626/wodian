@@ -49,6 +49,8 @@ class StoreOrderOfflineDao extends BaseDao
             })
             ->when(isset($where['order_type']) && $where['order_type'] !== '', function ($query) use ($where) {
                 $query->where('order_type', $where['order_type']);
+            })->when(isset($where['is_del']) && $where['is_del'] !== '', function ($query) use ($where) {
+                $query->where('is_del', $where['is_del']);
             })
             ->when(isset($where['paid']) && $where['paid'] !== '', function ($query) use ($where) {
                 $query->where('paid', $where['paid']);

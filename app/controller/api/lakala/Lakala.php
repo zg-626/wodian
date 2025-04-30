@@ -222,13 +222,13 @@ class Lakala extends BaseController
     public function lklSendcompleteNotify()
     {
         $param = input('');
+        $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
+        $obj = json_decode($obj, true);
         Db::name('third_notify')->insert(['title' => '拉卡拉发货确认回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉发货确认回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
         $config = new Configuration();
         $api = new LakalaNotifyApi($config);
         try {
-            $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
-            $obj = json_decode($obj, true);
             Log::info('拉卡拉发货确认回调更新:0');
             if ($obj['trade_state'] == 'SUCCESS') {
                 Log::info('拉卡拉发货确认回调更新:1');
@@ -239,6 +239,7 @@ class Lakala extends BaseController
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
                     Log::info('拉卡拉发货确认回调更新:2');
+                    $res->origin_log_no = $res->lkl_log_no ?? '';
                     $res->lkl_log_no = $obj['log_no'] ?? '';
                     $res->is_share = 1;
                     $res->save();

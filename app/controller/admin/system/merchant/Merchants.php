@@ -108,6 +108,7 @@ class Merchants extends BaseController
     {
         $data = $this->checkParam($validate);
         $data['admin_info'] = $this->request->adminInfo();
+        $data['sub_mchid'] = $data['merchant_no'];
         $this->repository->createMerchant($data);
         return app('json')->success('添加成功');
     }
@@ -143,6 +144,7 @@ class Merchants extends BaseController
     public function update($id, MerchantValidate $validate, MerchantCategoryRepository $merchantCategoryRepository)
     {
         $data = $this->checkParam($validate, true);
+        $data['sub_mchid'] = $data['merchant_no'];
         if (!$merchant = $this->repository->get($id))
             return app('json')->fail('数据不存在');
         if ($this->repository->fieldExists('mer_name', $data['mer_name'], $id))
