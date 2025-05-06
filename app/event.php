@@ -63,7 +63,7 @@ return [
             \crmeb\listens\SendSvipCouponListen::class,
             \crmeb\listens\SyncMerchantMarginStatusListen::class,
             \crmeb\listens\SyncQueueStatusListen::class,
-            DividendTaskListen::class,
+            //DividendTaskListen::class,// 自动分红
         ] : [],
         'pay_success_user_recharge' => [\crmeb\listens\pay\UserRechargeSuccessListen::class],
         'pay_success_offline_order' => [\crmeb\listens\pay\OfflineOrderSuccessListen::class],
