@@ -226,8 +226,8 @@ class Lakala extends BaseController
         $obj = json_decode($obj, true);
         Db::name('third_notify')->insert(['title' => '拉卡拉发货确认回调', 'content' => json_encode($param, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉发货确认回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
-        $config = new Configuration();
-        $api = new LakalaNotifyApi($config);
+        //$config = new Configuration();
+        //$api = new LakalaNotifyApi($config);
         try {
             Log::info('拉卡拉发货确认回调更新:0');
             if ($obj['trade_state'] == 'SUCCESS') {
@@ -255,10 +255,10 @@ class Lakala extends BaseController
             }
 
             //通知拉卡拉，业务处理成功
-            $api->success();
+            //$api->success();
         } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉发货确认回调异常: ' . $e->getMessage(), 'lkl');
-            $api->fail($e->getMessage());
+            //$api->fail($e->getMessage());
         }
     }
 

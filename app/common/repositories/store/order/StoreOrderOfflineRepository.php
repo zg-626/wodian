@@ -110,9 +110,9 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*if ($merchant['sub_mchid'] == 0) {
             throw new ValidateException('该商家未申请子商户，无法下单');
         }*/
-        /*if ($merchant['merchant_no'] == 0) {
-            throw new ValidateException('该商家未申请拉卡拉子商户，无法下单');
-        }*/
+        if ($merchant['merchant_no'] == 0 || $merchant['term_nos'] == 0) {
+            throw new ValidateException('该商家未填写拉卡拉商户号或者终端号，无法下单');
+        }
 
         if($merchant['commission_rate']==0){
             throw new ValidateException('该商家未设置积分比例');
@@ -175,10 +175,10 @@ class StoreOrderOfflineRepository extends BaseRepository
         $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
 
         if ($spreadUid) {
-            $extension_one = $money > 0 ? bcmul($money, $extension_one_rate, 2) : 0;
+            $extension_one = $handling_fee > 0 ? bcmul($handling_fee, $extension_one_rate, 2) : 0;
         }
         if ($topUid) {
-            $extension_two = $money > 0 ? bcmul($money, $extension_two_rate, 2) : 0;
+            $extension_two = $handling_fee > 0 ? bcmul($handling_fee, $extension_two_rate, 2) : 0;
         }
 
         $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
@@ -311,7 +311,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
             $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
             $profitsharing =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
-            //$profitsharing->status = -2;
+            $profitsharing->status = -2;
             $profitsharing->error_msg = $api->getErrorInfo();
             $profitsharing->save();
         }
@@ -328,30 +328,47 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function lklSeparate($param, $can_separate_amt, $res): void
     {
         // 平台抽取的费用
-        $handling_fee = (float)bcmul($res->handling_fee, 100, 2);
+        $handling_fee = (float)bcmul($res->handling_fee, 100, 0);
         // 总金额-分账金额>0时
         if($can_separate_amt - $handling_fee>0){
             $param['can_separate_amt'] = $can_separate_amt;
             $param['recv_datas'] = [
                 [
-                    'recv_merchant_no' => 'SR2024000078130', // TODO 拉卡拉分账接收方 后期需要修改
-                    'separate_value' => $handling_fee
+                    'recv_merchant_no' => $param['lkl_mer_cup_no'],
+                    //'separate_value' => $can_separate_amt - $handling_fee
+                    'separate_value' => 1-($res['commission_rate']/100)
                 ],
                 [
-                    'recv_no' => $param['lkl_mer_cup_no'],
-                    'separate_value' => $can_separate_amt - $handling_fee
+                    'recv_no' =>'SR2024000078730' ,// TODO 拉卡拉分账接收方
+                    //'separate_value' => $handling_fee
+                    'separate_value' => $res['commission_rate']/100
                 ]
             ];
             // 同步更新分账总金额
             $res->total_separate_amt=$can_separate_amt;
             $res->actual_separate_amt=$can_separate_amt - $handling_fee;
             $res->save();
+            
+            // 同步更新订单分账表
+            /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+            $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+            $models =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
 
             $api = new \Lakala\LklApi();
+            $param['cal_type']=1;
             $result = $api::lklSeparate($param);
             if (!$result) {
+                $models->status = -2;// 分账失败
+                $models->error_msg = $api->getErrorInfo();
+                $models->save();
                 record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉分账异常: ' . $api->getErrorInfo(), 'separate');
             }
+            // 分账成功 同步状态
+            if(isset($result['log_no'])){
+                $models->status = 1;// 分账成功
+                 $models->save();
+            }
+           
         }
 
     }
@@ -441,6 +458,8 @@ class StoreOrderOfflineRepository extends BaseRepository
                     ];
 
                     $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+                    // 虚拟发货
+                    $this->virtualDelivery($res);
                 }
                 $user = app()->make(UserRepository::class)->get($res['uid']);
                 // 发放推广抵用券
@@ -478,8 +497,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'create_time' => date('Y-m-d H:i:s'),
                     'remark' => '订单分红入池'
                 ]);
-                // 虚拟发货
-                $this->virtualDelivery($res);
+                
 
                 return $this->payAfter($res);
             });
@@ -698,9 +716,13 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function giveIntegral($offlineOrder)
     {
         if ($offlineOrder->give_integral > 0) {
+            $make = app()->make(UserRepository::class);
+            $user = $make->get($offlineOrder->uid);
+            $user->integral=$user->integral+$offlineOrder->give_integral;
+            $user->save();
             app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
                 'link_id' => $offlineOrder['order_id'],
-                'status' => 0,
+                'status' => 1,
                 'title' => '用户增加积分',
                 'number' => $offlineOrder->give_integral,
                 'mark' => '用户成功消费,增加积分' . $offlineOrder->give_integral,
