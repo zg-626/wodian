@@ -110,9 +110,9 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*if ($merchant['sub_mchid'] == 0) {
             throw new ValidateException('该商家未申请子商户，无法下单');
         }*/
-        if ($merchant['merchant_no'] == 0 || $merchant['term_nos'] == 0) {
+        /*if ($merchant['merchant_no'] == 0 || $merchant['term_nos'] == 0) {
             throw new ValidateException('该商家未填写拉卡拉商户号或者终端号，无法下单');
-        }
+        }*/
 
         if($merchant['commission_rate']==0){
             throw new ValidateException('该商家未设置积分比例');

@@ -636,7 +636,7 @@ class StoreOrderRepository extends BaseRepository
             'balance' => $user->brokerage_price + $amount
         ]);
 
-        $user->brokerage_price = bcadd($user->brokerage_price, $amount, 2);
+        $user->brokerage_price = bcadd($user->brokerage_price, $amount, 4);
         $user->save();
     }
 
