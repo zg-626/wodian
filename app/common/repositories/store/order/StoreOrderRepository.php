@@ -488,7 +488,7 @@ class StoreOrderRepository extends BaseRepository
         if ($merchant->salesman_id === 0 || $order['commission_rate'] < 0) return;
 
         // 计算订单佣金基数
-        $commission_rate = bcdiv((string)$order['commission_rate'], '100', 6);
+        $commission_rate = bcdiv((string)$order['commission_rate'], '100', 2);
         $commission_money = bcmul($order['pay_price'], (string)$commission_rate, 2);
         // 用于发放的金额基数
         $money = bcmul(0.6, $commission_money, 2);
@@ -508,13 +508,13 @@ class StoreOrderRepository extends BaseRepository
         // 发放上级佣金
         $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, $this->getSuperiorTitle($salesman['group_id']));
 
-        // 处理上级佣金分配
-        $superior = $salesman;
         $processedUids = [$salesman['uid']]; // 记录已处理过佣金的用户ID
 
-        while ($superior->superior_uid !== 0) {
-            $superior = $userRepository->get($superior->superior_uid);
-            
+        // 处理上级佣金分配
+        while ($salesman->superior_uid !== 0) {
+            // 实时获取上级信息
+            $superior = $userRepository->get($salesman->superior_uid);
+
             // 如果已经处理过该用户的佣金，跳过
             if (in_array($superior['uid'], $processedUids)) {
                 continue;
@@ -531,7 +531,7 @@ class StoreOrderRepository extends BaseRepository
                 break;
             }
 
-            // 如果上级是区县级代理商
+            // 如果上级是区县级代理商,初版：根据上下级关系
             if ($superior['group_id'] == self::USER_GROUP['AGENT_1']) {
             
                 // 获取上级（市级代理商）
@@ -653,6 +653,8 @@ class StoreOrderRepository extends BaseRepository
             self::USER_GROUP['AGENT_2'] => '市级代理商推广佣金',
             self::USER_GROUP['AGENT_3'] => '省级代理商推广佣金',
             self::USER_GROUP['AREA_MANAGER'] => '大区经理推广佣金',
+            self::USER_GROUP['NORMAL_SALESMAN'] => '商务推广佣金',
+            self::USER_GROUP['SENIOR_SALESMAN'] => '高级商务推广佣金',
             self::USER_GROUP['LECTURER'] => '讲师推广佣金',
         ];
         
