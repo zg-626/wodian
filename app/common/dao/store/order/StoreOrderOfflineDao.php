@@ -196,10 +196,32 @@ class StoreOrderOfflineDao extends BaseDao
         }), $day, 'pay_time')->sum('pay_price');
     }
 
+    public function dayOrderSettlementPrice($day, $merId = null)
+    {
+        return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->where('origin_log_no','<>','')->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'pay_time')->sum('pay_price');
+    }
+
+    public function dayOrderUnSettlementPrice($day, $merId = null)
+    {
+        return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->where('origin_log_no', '')->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'pay_time')->sum('pay_price');
+    }
+
     // 手续费
     public function dayOrderCommission($day, $merId = null)
     {
         return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'pay_time')->sum('handling_fee');
+    }
+
+    // 已结算手续费
+    public function dayOrderSettlementCommission($day, $merId = null)
+    {
+        return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->where('origin_log_no','<>','')->when($merId, function ($query, $merId) {
             $query->where('mer_id', $merId);
         }), $day, 'pay_time')->sum('handling_fee');
     }

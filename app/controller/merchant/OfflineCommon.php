@@ -107,8 +107,16 @@ class OfflineCommon extends BaseController
         $payPrice = (float)$repository->dayOrderPrice($date, $merId);
         // 手续费
         $payFee = (float)$repository->dayOrderCommission($date, $merId);
+        // 已结算手续费
+        $settlementFee = (float)$repository->dayOrderSettlementCommission($date, $merId);
         // 实际收款
         $actualPrice=$payPrice-$payFee;
+        // 已结算
+        $settlementPrice = (float)$repository->dayOrderSettlementPrice($date, $merId);
+        // 未结算
+        $unSettlementPrice = (float)$repository->dayOrderUnSettlementPrice($date, $merId);
+        // 实际结算
+        $actualSettlementPrice=$settlementPrice-$settlementFee;
         // 下单用户
         $payUser = (float)$repository->dayOrderUserNum($date, $merId);
         $visitNum = (float)$userVisitRepository->dateVisitUserNum($date, $merId);
@@ -117,7 +125,7 @@ class OfflineCommon extends BaseController
         $integral = (float)$billRepository->dayFieldCount($date, $merId, 'mer_integral');
         // 抵扣金
         $deduction = (float)$billRepository->dayFieldCount($date, $merId, 'coupon_amount');
-        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore','actualPrice','payFee', 'integral', 'deduction');
+        return compact('orderNum', 'payPrice', 'payUser', 'visitNum', 'likeStore','actualPrice','payFee', 'integral', 'deduction', 'settlementPrice', 'unSettlementPrice','actualSettlementPrice','settlementFee');
     }
 
     /**
