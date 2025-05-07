@@ -408,7 +408,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
         $type = explode('-',$res['order_type'])[0].'-';
         if ($type == self::TYPE_SVIP) {
-            return Db::transaction(function () use($data, $res) {
+            //return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
                 $res->transaction_id = $data['data']['acc_trade_no']??'';
                 $res->lkl_log_no = $data['data']['log_no']??'';
@@ -500,10 +500,10 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'create_time' => date('Y-m-d H:i:s'),
                     'remark' => '订单分红入池'
                 ]);
-                
+
 
                 return $this->payAfter($res);
-            });
+            //});
         }
     }
 

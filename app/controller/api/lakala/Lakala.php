@@ -198,11 +198,7 @@ class Lakala extends BaseController
                 $out_trade_no = $obj['out_trade_no'];
 
                 try {
-                    $data=['order_sn' => $out_trade_no, 'data' => $obj];
-                    /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
-                    $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-                    $storeOrderOfflineRepository->paySuccess($data);
-                    //event('pay_success_' . $obj['remark'], ['order_sn' => $out_trade_no, 'data' => $obj]);
+                    event('pay_success_' . $obj['remark'], ['order_sn' => $out_trade_no, 'data' => $obj]);
                 } catch (\Exception $e) {
                     Log::info('拉卡拉支付回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
                     // return false;
@@ -252,8 +248,11 @@ class Lakala extends BaseController
                     /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                     $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
                     $models =$storeOrderProfitsharingRepository ->getWhere(['order_id' => $res['order_id']]);
-                    $models->status = 2;// 可分账
-                    $models->save();
+                    if($models){
+                        $models->status = 2;// 可分账
+                        $models->save();
+                    }
+
 
                 }
             }

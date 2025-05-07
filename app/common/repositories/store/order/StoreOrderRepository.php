@@ -503,12 +503,12 @@ class StoreOrderRepository extends BaseRepository
 
         // 实时获取上级分组信息及比例
         $salesmanGroup = $userGroupRepository->get(2);//默认使用商务的分组比例
-        
+
         // 处理上级佣金
         $extension_one = bcmul($salesmanGroup->extension/100, $money, 4);
         
         // 发放直接绑定商家的佣金
-        $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, '【直推】'.$this->getSuperiorTitle($salesmanGroup['group_id']));
+        $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, '【直推】'.$this->getSuperiorTitle($salesman->group_id));
 
         $processedUids = [$salesman['uid']]; // 记录已处理过佣金的用户ID
 
@@ -627,18 +627,18 @@ class StoreOrderRepository extends BaseRepository
                 $county_commission = bcmul($county_rate/100, $money, 2);
                 $this->giveBrokerage($orderId, $userBillRepository, $districtUser, $county_commission, $this->getSuperiorTitle($districtUser['group_id']));
                 $processedUids[] = $districtUser['uid'];
-                
+
                 // 处理区代理绑定的大区经理和区域经理
                 $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
             }
-            
+
             // 市级代理让利佣金处理 - 独立于区级代理是否已处理
             if ($cityUser && !in_array($cityUser['uid'], $processedUids)) {
                 // 发放让利部分给市级代理商
                 $city_commission = bcmul($districtGroup->give_profit/100, $money, 2);
                 $this->giveBrokerage($orderId, $userBillRepository, $cityUser, $city_commission, '市级代理商让利佣金');
                 $processedUids[] = $cityUser['uid'];
-                
+
                 // 处理市代理绑定的大区经理和区域经理
                 $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
             }
