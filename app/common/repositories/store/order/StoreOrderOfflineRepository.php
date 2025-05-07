@@ -403,6 +403,9 @@ class StoreOrderOfflineRepository extends BaseRepository
         )),
          */
         $res = $this->dao->getWhere(['order_sn' => $data['order_sn']]);
+        if($res->paid == 1){
+            return true;
+        }
         $type = explode('-',$res['order_type'])[0].'-';
         if ($type == self::TYPE_SVIP) {
             return Db::transaction(function () use($data, $res) {
