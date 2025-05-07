@@ -472,7 +472,7 @@ class StoreOrderRepository extends BaseRepository
      * @param int $merId
      * @param array $order
      */
-    public function addCommissions(int $merId, $order)
+    public function addCommission(int $merId, $order)
     {
         if ($order['pay_price'] <= 0) {
             return;
@@ -743,7 +743,7 @@ class StoreOrderRepository extends BaseRepository
      * @param int $merId
      * @param array $order
      */
-    public function addCommission(int $merId, $order)
+    public function addCommissionOne(int $merId, $order)
     {
         if ($order['pay_price'] <= 0) {
             return;
