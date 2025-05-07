@@ -16,16 +16,20 @@ use app\common\dao\system\merchant\MerchantDao;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderProfitsharingRepository;
+use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\system\attachment\AttachmentRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\jobs\OrderOfflineProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
+use crmeb\services\OfflineMiniProgramService;
 use crmeb\services\QrcodeService;
 use crmeb\services\SwooleTaskService;
 use crmeb\services\WechatService;
+use Exception;
 use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
@@ -113,34 +117,7 @@ class Article extends BaseController
 
         }*/
         // 测试支付回调
-        $data=array (
-            'order_sn' => 'wxs174528612192293719',
-            'appid' => 'wx4409eaedbd62b213',
-            'attach' => 'user_order',
-            'bank_type' => 'OTHERS',
-            'cash_fee' => '1',
-            'fee_type' => 'CNY',
-            'is_subscribe' => 'N',
-            'mch_id' => '1288093001',
-            'nonce_str' => '6397efa100165',
-            'openid' => 'oOdvCvjvCG0FnCwcMdDD_xIODRO0',
-            'out_trade_no' => 'wxs174528612192293719',
-            'result_code' => 'SUCCESS',
-            'return_code' => 'SUCCESS',
-            'sign' => '125C56DE030A461E45D421E44C88BC30',
-            'time_end' => '20221213112118',
-            'total_fee' => '1',
-            'trade_type' => 'JSAPI',
-            'transaction_id' => '4200001656202212131458556229',
-        );
-        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository  **/
 
-        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-        try {
-            $storeOrderOfflineRepository->paySuccess($data);
-        } catch (\Exception $e) {
-            return $e->getMessage().$e->getLine();
-                }
         // 修改商户省市区
         /*try {
             // 获取需要更新的商户数据（只查询有城市ID的商户）
@@ -267,6 +244,87 @@ class Article extends BaseController
         $commission = $commission->extension;
         echo "<pre>";
         print_r($commission);*/
+        //查找支付者openid
+
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+        /*$storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        $order = $storeOrderOfflineRepository->get(1099);
+        $res= $storeOrderOfflineRepository->virtualDelivery($order);
+        print_r($res);*/
+        /*$storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+        $res = $storeOrderOfflineRepository->getWhere(['order_sn' => 'wxs174574285800550945']);
+        if (!empty($res)) {
+
+            try {
+                $res->lkl_log_no = '66201573773646';
+                $res->save();
+                $date = substr($res['lkl_log_date'], 0, 8);
+
+                $params = [
+                    'lkl_mer_cup_no' => $res['lkl_mer_cup_no'],
+                    'lkl_log_no' => '66201573773646', // 用最新的流水号
+                    'lkl_log_date' => $date,
+                ];
+                // 可分账金额查询
+                $api = new \Lakala\LklApi();
+                $result = $api::lklQueryAmt($params);
+                if (!$result) {
+                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉可分账金额查询异常: ' . $api->getErrorInfo(), 'queryAmt');
+                }
+            } catch (\Exception $e) {
+                print_r($e->getMessage().$e->getLine());
+            }
+
+            /*if ($can_separate_amt > 0) {
+                $this->lklSeparate($params, $can_separate_amt, $res);
+            }*/
+        //}*/
+        /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+//        $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+//        $order = $storeOrderOfflineRepository->get(1256);
+//        $merchantRepository = app()->make(MerchantRepository::class);
+//        $merchant = $merchantRepository->get(469);
+//        $userRepository = app()->make(UserRepository::class);
+//        $userGroupRepository = app()->make(UserGroupRepository::class);
+//        $userBillRepository = app()->make(UserBillRepository::class);
+//
+//        // 如果没有上级，则没有佣金
+//        if ($merchant->salesman_id === 0 || $order['commission_rate'] < 0) return;
+//
+//        // 计算订单佣金基数
+//        $commission_rate = (string)$order['commission_rate']/100;
+//        $commission_money = bcmul($order['pay_price'], $commission_rate, 2);
+//        // 用于发放的金额基数
+//        $money = bcmul(0.6, $commission_money, 2);
+//
+//        // 获取商家绑定的上级信息
+//        $salesman = $userRepository->get($merchant->salesman_id);
+//
+//        // 如果商家上级是省级代理商，终止发放佣金
+//        //if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
+//
+//        // 实时获取上级分组信息及比例
+//        $salesmanGroup = $userGroupRepository->get($salesman['group_id']);
+//
+//        // 处理上级佣金
+//        $extension_one = bcmul($salesmanGroup->extension/100, $money, 3);
+//        var_dump($commission_rate);
+//        var_dump($commission_money);
+//        var_dump($salesmanGroup->extension/100);
+//        var_dump($money);
+//        var_dump($extension_one);
+        try {
+            $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+            $data = $storeOrderOfflineRepository->getWhere(['order_sn' => 'wxs174590981926554137']);
+            /** @var StoreOrderRepository $storeOrderRepository */
+            $storeOrderRepository = app()->make(StoreOrderRepository::class);
+            $storeOrderRepository->addCommissions($data->mer_id,$data);
+            //$storeOrderOfflineRepository->computeds($data);
+            //$storeOrderOfflineRepository->virtualDelivery($data);
+
+        } catch (Exception $e) {
+            print_r($e->getMessage());
+        }
         return app('json')->success('测试成功');
     }
 }

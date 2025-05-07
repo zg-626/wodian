@@ -189,8 +189,8 @@ class Lakala extends BaseController
 
         Db::name('third_notify')->insert(['title' => '拉卡拉支付回调', 'content' => $param, 'createtime' => time()]);
         // record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉支付回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'lkl');
-        $config = new Configuration();
-        $api = new LakalaNotifyApi($config);
+//        $config = new Configuration();
+//        $api = new LakalaNotifyApi($config);
         try {
             // $obj = json_encode($param, JSON_UNESCAPED_UNICODE);
             $obj = json_decode($param, true);
@@ -202,15 +202,15 @@ class Lakala extends BaseController
                 } catch (\Exception $e) {
                     Log::info('拉卡拉支付回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
                     // return false;
-                    $api->fail($e->getMessage());
+                    //$api->fail($e->getMessage());
                 }
             }
 
             // 通知拉卡拉，业务处理成功
-            $api->success();
+            //$api->success();
         } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉支付回调异常: ' . $e->getMessage(), 'lkl');
-            $api->fail($e->getMessage());
+            //$api->fail($e->getMessage());
         }
     }
 

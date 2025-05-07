@@ -26,7 +26,7 @@ class AutoUnLockDeductionListen extends TimerService implements ListenerInterfac
     public function handle($event): void
     {
         //TODO 自动解冻抵用卷
-        $this->tick(30000, function () {
+        $this->tick(60000, function () {
             $userBill = app()->make(UserBillRepository::class);
             request()->clearCache();
             $timer = ((int)systemConfig('lock_brokerage_timer'));

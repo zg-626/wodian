@@ -504,6 +504,95 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
+    // 二次补发
+    public function computeds($order)
+    {
+        $res=$order;
+        // 赠送积分
+        $this->giveIntegral($order);
+
+        // 赠送商户积分
+        //$this->giveMerIntegral($order->mer_id,$order);
+        app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+
+        // 所有身份赠送佣金
+        /** @var StoreOrderRepository $storeOrderRepository */
+        $storeOrderRepository = app()->make(StoreOrderRepository::class);
+        $storeOrderRepository->addCommission($order->mer_id,$order);
+
+        // 更新用户支付时间
+        /** @var UserMerchantRepository $userMerchantRepository */
+        $userMerchantRepository = app()->make(UserMerchantRepository::class);
+        $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id);
+//        SwooleTaskService::merchant('notice', [
+//            'type' => 'new_order',
+//            'data' => [
+//                'title' => '新订单',
+//                'message' => '您有一个新的订单',
+//                'id' => $order->order_id
+//            ]
+//        ], $order->mer_id);
+
+        // 创建分账账单
+        /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+        $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+        // 支付金額不是0
+        if ($order->pay_price !== 0) {
+            $profitsharing= [
+                'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
+                'order_id' => $order->order_id,
+                'transaction_id' => $order->transaction_id ?? '',
+                'mer_id' => $order->mer_id,
+                'profitsharing_price' => $order->pay_price,
+                'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
+            ];
+
+            $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+            // 虚拟发货
+            $this->virtualDelivery($res);
+        }
+        $user = app()->make(UserRepository::class)->get($res['uid']);
+        // 发放推广抵用券
+        $this->computed($res,$user);
+        $handling_fee = floatval($order->handling_fee);
+        $total_amount = bcmul((string)$handling_fee, "0.4", 2);
+
+        // 记录本次分红池,手续费的40%
+        $poolInfo = Db::name('dividend_pool')->order('id', 'desc')->find();
+        if (!$poolInfo) {
+            // 第一次创建分红池记录
+            Db::name('dividend_pool')->insert([
+                'total_amount' => $total_amount,
+                'available_amount' => $total_amount,
+                'distributed_amount' => 0,
+                'create_time' => date('Y-m-d H:i:s'),
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            // 更新现有分红池
+            Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
+                'total_amount' => Db::raw('total_amount + ' . $total_amount),
+                'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        // 分红池流水表
+        Db::name('dividend_pool_log')->insert([
+            'order_id' => $order->order_id,
+            'amount' => $total_amount,
+            'handling_fee' => $handling_fee,
+            'mer_id' => $order->mer_id,
+            'uid' => $order->uid,
+            'create_time' => date('Y-m-d H:i:s'),
+            'remark' => '订单分红入池'
+        ]);
+
+        return $this->payAfter($res);
+
+    }
+
     // 虚拟发货
     public function virtualDelivery($order)
     {

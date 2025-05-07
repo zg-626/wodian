@@ -26,7 +26,7 @@ class AutoOrderLakalaListen extends TimerService implements ListenerInterface
 
     public function handle($event): void
     {
-        $this->tick(120000, function () {
+        $this->tick(180000, function () {
             request()->clearCache();
             /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
             $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);

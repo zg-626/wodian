@@ -26,7 +26,7 @@ class AutoUnLockIntegralListen extends TimerService implements ListenerInterface
     public function handle($event): void
     {
         //TODO 自动解冻积分
-        $this->tick(60000, function () {
+        $this->tick(180000, function () {
             $userBill = app()->make(UserBillRepository::class);
             request()->clearCache();
             $timer = ((int)systemConfig('integral_freeze'));
