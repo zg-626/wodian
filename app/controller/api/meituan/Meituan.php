@@ -2,6 +2,7 @@
 
 namespace app\controller\api\meituan;
 
+use app\common\repositories\WaimaiRepositories;
 use crmeb\basic\BaseController;
 use think\response\Json;
 
@@ -52,14 +53,17 @@ class Meituan extends BaseController
     }
 
     // 交易标准三方收银台下单外部接口
-    public function pay()
+    /**
+     * 下单接口
+     ***/
+    public function pay(WaimaiRepositories $repository)
     {
-        $info=[
-            'status'=>0,
-            'msg'=>'成功',
-            'data'=>'123456']
-        ;
-        return  json($info);
+        $params = $this->request->params([
+            'accessKey',
+            'content',
+        ]);
+        $result = $repository->create($params);
+        return json($result);
     }
 
 }
