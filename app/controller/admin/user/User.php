@@ -232,7 +232,7 @@ class User extends BaseController
         if ($data['group_id'] && !$groupRepository->exists($data['group_id']))
             return app('json')->fail('分组不存在');
         // 特定分组支持区域编辑
-        if ($data['group_id'] != 4) {
+        if ($data['group_id'] !== 4 && $data['group_id'] !==5 && $data['group_id'] !==6) {
             $data['province_id'] = $data['city_id'] = $data['district_id'] = '';
         }
         $label_id = (array)$data['label_id'];
