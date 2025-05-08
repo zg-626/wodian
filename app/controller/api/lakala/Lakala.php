@@ -231,17 +231,17 @@ class Lakala extends BaseController
         try {
             Log::info('拉卡拉发货确认回调更新:0');
             if ($obj['trade_state'] == 'SUCCESS') {
-                Log::info('拉卡拉发货确认回调更新:1');
+                //Log::info('拉卡拉发货确认回调更新:1');
                 // 替换更新发货后的流水号
                 $out_trade_no = $obj['origin_out_trade_no'];
                 /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
                 $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
-                    Log::info('拉卡拉发货确认回调更新:2');
+                    //Log::info('拉卡拉发货确认回调更新:2');
                     $res->origin_log_no = $res->lkl_log_no ?? '';
                     $res->lkl_log_no = $obj['log_no'] ?? '';
-                    $res->is_share = 1;
+                    $res->is_share = 2;
                     $res->save();
                     Log::info('拉卡拉发货确认回调更新:3');
                     // 同步更新订单分账表
@@ -294,9 +294,6 @@ class Lakala extends BaseController
                 $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
-                    $res->is_share = 1;
-                    $res->save();
-
                     // 同步更新订单分账表
                     /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                     $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);

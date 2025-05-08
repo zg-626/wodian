@@ -39,11 +39,11 @@ class AutoOrderOfflineShippingListen extends TimerService implements ListenerInt
 
             foreach ($models as $model) {
                 try {
-                    Log::info('开始处理线下自动发货订单', ['order_id' => $model->order_id]);
+                    Log::info('开始处理线下自动发货订单'.$model->order_id);
 
                     // 添加前置检查
                     if ($model->is_share == 1) {
-                        Log::warning('订单已发货，跳过处理', ['order_id' => $model->order_id]);
+                        Log::warning('订单已发货，跳过处理'.$model->order_id);
                         continue;
                     }
 
@@ -56,7 +56,7 @@ class AutoOrderOfflineShippingListen extends TimerService implements ListenerInt
                     });
 
                     $successCount++;
-                    Log::info('订单发货成功', ['order_id' => $model->order_id]);
+                    Log::info('订单发货成功'.$model->order_id);
 
                 } catch (\Throwable $e) {
                     $failCount++;
@@ -79,14 +79,14 @@ class AutoOrderOfflineShippingListen extends TimerService implements ListenerInt
                     // $this->sendAlert($model, $e);
                 }
             }
-
-            // 最终统计日志
-            Log::info('自动发货任务执行完成', [
+            $data=[
                 'total' => count($models),
                 'success' => $successCount,
                 'failed' => $failCount,
                 'failed_orders' => $exceptionOrders
-            ]);
+            ];
+            // 最终统计日志
+            Log::info('自动发货任务执行完成'.json_encode($data));
         });
     }
 

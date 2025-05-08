@@ -621,8 +621,8 @@ class StoreOrderRepository extends BaseRepository
             if(!in_array($districtUser['uid'], $processedUids, true)){
                 Log::info('计算区县级代理商佣金');
                 // 计算区县级代理商佣金 (extension - give_profit)
-                $county_rate = bcsub($districtGroup->extension, $districtGroup->give_profit, 2);
-                $county_commission = bcmul($county_rate/100, $money, 2);
+                //$county_rate = bcsub($districtGroup->extension, $districtGroup->give_profit, 2);
+                $county_commission = bcmul($districtGroup->extension/100, $money, 2);
                 $this->giveBrokerage($orderId, $userBillRepository, $districtUser, $county_commission, $this->getSuperiorTitle($districtUser['group_id']));
                 $processedUids[] = $districtUser['uid'];
 

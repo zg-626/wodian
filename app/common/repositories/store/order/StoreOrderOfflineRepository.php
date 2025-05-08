@@ -1043,7 +1043,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-1 minute'));
 
         return StoreOrderOffline::getDB()
-            ->where('is_share', 0) // 已发货,未分账状态
+            ->where('is_share', 0) // 微发货,未分账状态
             ->where('transaction_id', '<>', '') // transaction_id
             //->where('pay_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
             ->where('pay_time', '>', '1970-01-01') // 过滤无效时间
