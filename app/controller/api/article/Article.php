@@ -21,6 +21,7 @@ use app\common\repositories\system\attachment\AttachmentRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
+use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
 use crmeb\jobs\OrderOfflineProfitsharingJob;
@@ -315,12 +316,16 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $data = $storeOrderOfflineRepository->getWhere(['order_sn' => 'wxs174590981926554137']);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => 1192]);
+            // 更新用户支付时间
+            /** @var UserMerchantRepository $userMerchantRepository */
+            $userMerchantRepository = app()->make(UserMerchantRepository::class);
+            $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->handling_fee,true,$order->order_id);
             /** @var StoreOrderRepository $storeOrderRepository */
-            $storeOrderRepository = app()->make(StoreOrderRepository::class);
-            $storeOrderRepository->addCommissions($data->mer_id,$data);
-            //$storeOrderOfflineRepository->computeds($data);
-            //$storeOrderOfflineRepository->virtualDelivery($data);
+            //$storeOrderRepository = app()->make(StoreOrderRepository::class);
+            //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
+            //$storeOrderOfflineRepository->computeds($order);
+            //$storeOrderOfflineRepository->virtualDelivery($order);
 
         } catch (Exception $e) {
             print_r($e->getMessage());
