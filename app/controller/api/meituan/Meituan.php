@@ -59,7 +59,6 @@ class Meituan extends BaseController
     public function pay(WaimaiRepositories $repository)
     {
         $params = $this->request->params([
-            'accessKey',
             'content',
         ]);
         $result = $repository->create($params);

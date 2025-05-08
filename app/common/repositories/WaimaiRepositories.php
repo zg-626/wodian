@@ -53,7 +53,8 @@ class WaimaiRepositories extends BaseRepository
      * @param array $params
      ***/
     public function create($params){
-        list($accessKey,$content) = array_values($params);
+        list($content) = array_values($params);
+        $accessKey=$this->accessKey;
         if(!$accessKey){
             return $this->response(self::$ERROR_401,'秘钥错误');
         }
