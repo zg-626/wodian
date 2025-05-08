@@ -160,6 +160,8 @@ class UserMerchantRepository extends BaseRepository
      */
     public function updatePayTime($uid, $merId, $pay_price, $flag,$order_id)
     {
+        // 锁客，每个用户只绑定一个商户
+        $this->getMerUser($uid,$merId,$pay_price,$order_id);
         $user = $this->getInfo($uid, $merId);
         $time = date('Y-m-d H:i:s');
         $user->last_pay_time = $time;
@@ -168,8 +170,6 @@ class UserMerchantRepository extends BaseRepository
         $user->pay_price = bcadd($user->pay_price, $pay_price, 2);
         if (!$user->first_pay_time) $user->first_pay_time = $time;
         $user->save();
-        // 锁客，每个用户只绑定一个商户
-        $this->getMerUser($uid,$merId,$pay_price,$order_id);
     }
 
     public function rmLabel($id)
