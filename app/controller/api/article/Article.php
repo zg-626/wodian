@@ -316,15 +316,16 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => 1192]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => 1555]);
+            $user = app()->make(UserRepository::class)->get($order['uid']);
             // 更新用户支付时间
             /** @var UserMerchantRepository $userMerchantRepository */
-            $userMerchantRepository = app()->make(UserMerchantRepository::class);
-            $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->handling_fee,true,$order->order_id);
+            //$userMerchantRepository = app()->make(UserMerchantRepository::class);
+            //$userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->handling_fee,true,$order->order_id);
             /** @var StoreOrderRepository $storeOrderRepository */
             //$storeOrderRepository = app()->make(StoreOrderRepository::class);
             //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
-            //$storeOrderOfflineRepository->computeds($order);
+            $storeOrderOfflineRepository->computed($order,$user);
             //$storeOrderOfflineRepository->virtualDelivery($order);
 
         } catch (Exception $e) {
