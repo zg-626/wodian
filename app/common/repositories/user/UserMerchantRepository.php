@@ -158,10 +158,10 @@ class UserMerchantRepository extends BaseRepository
      * @author xaboy
      * @day 2020/10/21
      */
-    public function updatePayTime($uid, $merId, $pay_price, $flag,$order_id)
+    public function updatePayTime($uid, $merId, $pay_price, $flag,$order_id,$handling_fee)
     {
         // 锁客，每个用户只绑定一个商户
-        $this->getMerUser($uid,$merId,$pay_price,$order_id);
+        $this->getMerUser($uid,$merId,$handling_fee,$order_id);
         $user = $this->getInfo($uid, $merId);
         $time = date('Y-m-d H:i:s');
         $user->last_pay_time = $time;

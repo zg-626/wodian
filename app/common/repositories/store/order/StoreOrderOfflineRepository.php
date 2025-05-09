@@ -439,7 +439,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 // 更新用户支付时间
                 /** @var UserMerchantRepository $userMerchantRepository */
                 $userMerchantRepository = app()->make(UserMerchantRepository::class);
-                $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->handling_fee,true,$order->order_id);
+                $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id,$order->handling_fee);
                 SwooleTaskService::merchant('notice', [
                     'type' => 'new_order',
                     'data' => [
