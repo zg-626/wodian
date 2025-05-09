@@ -628,7 +628,7 @@ class StoreOrderRepository extends BaseRepository
                 $processedUids[] = $districtUser['uid'];
                 
                 // 处理区代理绑定的大区经理和区域经理
-                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
+                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
             }
             
             // 处理市级代理让利佣金
@@ -641,7 +641,7 @@ class StoreOrderRepository extends BaseRepository
                 $processedUids[] = $cityUser['uid'];
                 
                 // 处理市代理绑定的大区经理和区域经理
-                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
+                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
             }
         }
         // 情况2: 只有区县级代理存在
@@ -657,7 +657,7 @@ class StoreOrderRepository extends BaseRepository
                 $processedUids[] = $districtUser['uid'];
                 
                 // 处理区代理绑定的大区经理和区域经理
-                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
+                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
             }
         }
         // 情况3: 只有市级代理存在
@@ -673,7 +673,7 @@ class StoreOrderRepository extends BaseRepository
                 $processedUids[] = $cityUser['uid'];
                 
                 // 处理市代理绑定的大区经理和区域经理
-                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
+                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
             }
         }
 
