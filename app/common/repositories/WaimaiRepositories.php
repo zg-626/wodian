@@ -84,6 +84,7 @@ class WaimaiRepositories extends BaseRepository
         }
 
         $thirdTradeNo = $content['tradeNo'];
+        // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         $thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&token=CC1NRDRJLC76-TK";
 //        $thirdPayUrl = request()->domain().'/pay?';
         $data = compact('thirdTradeNo', 'thirdPayUrl');
