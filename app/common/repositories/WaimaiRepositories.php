@@ -168,15 +168,20 @@ class WaimaiRepositories extends BaseRepository
             $data['refund_amount'] = $refundAmount;
             $data['refund_status'] = self::$PAY_STATUS_0;
             $data['refund_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
+            // TODO 退款操作 start
+
+            // TODO 退款操作 end
             if ($total_refund_amount == $trade_amount) {
                 $order_data['refund_amount'] = $trade_amount;
                 $order_data['refund_time'] = date('Y-m-d H:i:s');
                 $order_data['refund_status'] = self::$PAY_STATUS_1;
+                $data['refund_time'] = date('Y-m-d H:i:s');
                 $data['refund_status'] = self::$PAY_STATUS_1;
             } else {
                 $order_data['refund_amount'] = $order['refund_amount'] + $refundAmount;
                 $order_data['refund_time'] = date('Y-m-d H:i:s');
                 $order_data['refund_status'] = self::$PAY_STATUS_2;
+                $data['refund_time'] = date('Y-m-d H:i:s');
                 $data['refund_status'] = self::$PAY_STATUS_2;
             }
             try {
