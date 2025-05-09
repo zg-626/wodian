@@ -613,54 +613,68 @@ class StoreOrderRepository extends BaseRepository
         // 查询区县级代理用户
         $districtUser = $userRepository->getWhere(['district_id' => $merchantDistrictId, 'group_id' => self::USER_GROUP['AGENT_1']]);
 
-        // 处理区县级代理佣金
-        if ($districtUser) {
-            $districtGroup = $userGroupRepository->get($districtUser['group_id']);
-
-            // 区县级代理佣金处理
-            if(!in_array($districtUser['uid'], $processedUids, true)){
-                Log::info('计算区县级代理商佣金');
-                // 计算区县级代理商佣金 (extension - give_profit)
-                //$county_rate = bcsub($districtGroup->extension, $districtGroup->give_profit, 2);
-                $county_commission = bcmul($districtGroup->extension/100, $money, 2);
+        // 情况1: 区县级代理和市级代理同时存在
+        if ($districtUser && $cityUser) {
+            Log::info('区县级代理和市级代理同时存在');
+            
+            // 处理区县级代理佣金
+            if (!in_array($districtUser['uid'], $processedUids, true)) {
+                $districtGroup = $userGroupRepository->get($districtUser['group_id']);
+                
+                // 区县级代理获得 (extension - give_profit) 的佣金
+                $county_rate = bcsub($districtGroup->extension, $districtGroup->give_profit, 2);
+                $county_commission = bcmul($county_rate/100, $money, 2);
                 $this->giveBrokerage($orderId, $userBillRepository, $districtUser, $county_commission, $this->getSuperiorTitle($districtUser['group_id']));
                 $processedUids[] = $districtUser['uid'];
-
+                
                 // 处理区代理绑定的大区经理和区域经理
-                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
+                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
             }
-
-            // 市级代理让利佣金处理 - 独立于区级代理是否已处理
-            if ($cityUser && !in_array($cityUser['uid'], $processedUids)) {
-                Log::info('发放让利部分给市级代理商');
-                // 发放让利部分给市级代理商
+            
+            // 处理市级代理让利佣金
+            if (!in_array($cityUser['uid'], $processedUids, true)) {
+                $districtGroup = $userGroupRepository->get($districtUser['group_id']);
+                
+                // 市级代理获得区县级代理的 give_profit 让利部分
                 $city_commission = bcmul($districtGroup->give_profit/100, $money, 2);
                 $this->giveBrokerage($orderId, $userBillRepository, $cityUser, $city_commission, '市级代理商让利佣金');
                 $processedUids[] = $cityUser['uid'];
-
+                
                 // 处理市代理绑定的大区经理和区域经理
-                $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
+                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
             }
-        } else if(!$districtUser && $cityUser && !in_array($cityUser['uid'], $processedUids, true)){
-            Log::info('没有区县级代理，市级代理获得全部佣金');
-            // 没有区县级代理，市级代理获得全部佣金
-            $cityGroup = $userGroupRepository->get($cityUser['group_id']);
-            $city_commission = bcmul($cityGroup->extension/100, $money, 2);
-            $this->giveBrokerage($orderId, $userBillRepository, $cityUser, $city_commission, $this->getSuperiorTitle($cityUser['group_id']));
-            $processedUids[] = $cityUser['uid'];
-            // 处理市代理绑定的大区经理和区域经理
-            $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
         }
-
-        // 如果只有市级代理，没有区县级代理，处理市级代理佣金
-        if ($cityUser &&!in_array($cityUser['uid'], $processedUids, true) &&!$districtUser) {
-            Log::info('如果只有市级代理，没有区县级代理，处理市级代理佣金');
-            $cityGroup = $userGroupRepository->get($cityUser['group_id']);
-            $city_commission = bcmul($cityGroup->extension/100, $money, 2); // 计算市级代理佣金
-            $this->giveBrokerage($orderId, $userBillRepository, $cityUser, $city_commission, $this->getSuperiorTitle($cityUser['group_id']));
-            $processedUids[] = $cityUser['uid'];
-            // 处理市代理绑定的大区经理和区域经理
-            $processedUids[]=$this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
+        // 情况2: 只有区县级代理存在
+        else if ($districtUser && !$cityUser) {
+            Log::info('只有区县级代理存在');
+            
+            if (!in_array($districtUser['uid'], $processedUids, true)) {
+                $districtGroup = $userGroupRepository->get($districtUser['group_id']);
+                
+                // 区县级代理获得完整的 extension 佣金
+                $county_commission = bcmul($districtGroup->extension/100, $money, 2);
+                $this->giveBrokerage($orderId, $userBillRepository, $districtUser, $county_commission, $this->getSuperiorTitle($districtUser['group_id']));
+                $processedUids[] = $districtUser['uid'];
+                
+                // 处理区代理绑定的大区经理和区域经理
+                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $districtUser, $money, $processedUids);
+            }
+        }
+        // 情况3: 只有市级代理存在
+        else if (!$districtUser && $cityUser) {
+            Log::info('只有市级代理存在');
+            
+            if (!in_array($cityUser['uid'], $processedUids, true)) {
+                $cityGroup = $userGroupRepository->get($cityUser['group_id']);
+                
+                // 市级代理获得完整的 extension 佣金
+                $city_commission = bcmul($cityGroup->extension/100, $money, 2);
+                $this->giveBrokerage($orderId, $userBillRepository, $cityUser, $city_commission, $this->getSuperiorTitle($cityUser['group_id']));
+                $processedUids[] = $cityUser['uid'];
+                
+                // 处理市代理绑定的大区经理和区域经理
+                $this->processAgentSuperiors($orderId, $userRepository, $userBillRepository, $userGroupRepository, $cityUser, $money, $processedUids);
+            }
         }
 
         // 返回已处理的用户ID数组
