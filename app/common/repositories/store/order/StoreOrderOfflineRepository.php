@@ -175,10 +175,10 @@ class StoreOrderOfflineRepository extends BaseRepository
         $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
 
         if ($spreadUid) {
-            $extension_one = $handling_fee > 0 ? bcmul($handling_fee, $extension_one_rate, 2) : 0;
+            $extension_one = $handling_fee > 0 ? bcmul($handling_fee, $extension_one_rate, 4) : 0;
         }
         if ($topUid) {
-            $extension_two = $handling_fee > 0 ? bcmul($handling_fee, $extension_two_rate, 2) : 0;
+            $extension_two = $handling_fee > 0 ? bcmul($handling_fee, $extension_two_rate, 4) : 0;
         }
 
         $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
@@ -432,6 +432,10 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $storeOrderRepository = app()->make(StoreOrderRepository::class);
                 $storeOrderRepository->addCommission($order->mer_id,$order);
 
+                $user = app()->make(UserRepository::class)->get($res['uid']);
+                // 发放推广抵用券
+                $this->computed($order,$user);
+
                 // 更新用户支付时间
                 /** @var UserMerchantRepository $userMerchantRepository */
                 $userMerchantRepository = app()->make(UserMerchantRepository::class);
@@ -464,9 +468,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     // 虚拟发货
                     $this->virtualDelivery($res);
                 }
-                $user = app()->make(UserRepository::class)->get($res['uid']);
-                // 发放推广抵用券
-                $this->computed($res,$user);
+
                 $handling_fee = floatval($order->handling_fee);
                 $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
@@ -715,12 +717,12 @@ class StoreOrderOfflineRepository extends BaseRepository
     }
 
     /**
-     * @param StoreOrderOffline $order
+     * @param  $order
      * @param User $user
      * @author xaboy
      * @day 2020/8/3
      */
-    public function computed(StoreOrderOffline $order, User $user)
+    public function computed($order, User $user)
     {
         $userBillRepository = app()->make(UserBillRepository::class);
         if ($order->spread_uid) {
