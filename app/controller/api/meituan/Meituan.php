@@ -19,28 +19,6 @@ class Meituan extends BaseController
         return  json($info);
     }
 
-    //交易标准三方收银台关单外部接口
-    public function close()
-    {
-        $info=[
-            'status'=>0,
-            'msg'=>'成功',
-            'data'=>'123456']
-        ;
-        return  json($info);
-    }
-
-    // 交易标准三方收银台退款外部接口
-    public function refund()
-    {
-        $info=[
-            'status'=>0,
-            'msg'=>'成功',
-            'data'=>'123456']
-        ;
-        return  json($info);
-    }
-
     // 交易标准三方收银台支付查询外部接口
     public function query()
     {
@@ -59,9 +37,38 @@ class Meituan extends BaseController
     public function pay(WaimaiRepositories $repository)
     {
         $params = $this->request->params([
+            'accessKey',
             'content',
         ]);
         $result = $repository->create($params);
+        return json($result);
+    }
+
+    //交易标准三方收银台关单外部接口
+    /**
+     * 关单接口
+     **/
+    public function close(WaimaiRepositories $repository)
+    {
+        $params = $this->request->params([
+            'accessKey',
+            'content',
+        ]);
+        $result = $repository->close($params);
+        return json($result);
+    }
+
+    // 交易标准三方收银台退款外部接口
+    /**
+     * 退款接口
+     **/
+    public function refund(WaimaiRepositories $repository)
+    {
+        $params = $this->request->params([
+            'accessKey',
+            'content',
+        ]);
+        $result = $repository->refund($params);
         return json($result);
     }
 
