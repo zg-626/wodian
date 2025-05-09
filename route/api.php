@@ -348,8 +348,13 @@ Route::group('api/', function () {
             Route::get('/dump_temp', '/getFormData');
             Route::get('/delivery_config', '/getDeliveryConfig');
             Route::get('/delivery_options', '/getDeliveryOptions');
-
+            Route::get('/order_info', '/orderInfo');
         })->prefix('api.server.StoreOrderOffline')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
+
+//        Route::group('admin_offline', function () {
+//            Route::get('/order_info', '/orderInfo');
+//
+//        })->prefix('api.server.StoreOrderOffline')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
 
         //管理员退款单
         Route::group('server/:merId/refund', function () {

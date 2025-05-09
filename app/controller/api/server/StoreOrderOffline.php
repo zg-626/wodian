@@ -14,11 +14,14 @@
 namespace app\controller\api\server;
 
 
+use app\common\model\system\merchant\Merchant as merchantModel;
+use app\common\model\store\order\StoreOrderOffline as offModel;
 use app\common\repositories\delivery\DeliveryStationRepository;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
+use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\UserBillRepository;
 use app\controller\merchant\OfflineCommon;
 use crmeb\basic\BaseController;
@@ -382,6 +385,21 @@ class StoreOrderOffline extends BaseController
         $data = $this->request->params(['verify_code','data']);
         $orderRepository->verifyOrder($order->verify_code, $merId, $data,  $this->request->serviceInfo()->service_id);
         return app('json')->success('订单核销成功');
+    }
+
+    /**
+     * TODO 订单信息
+     * @param $id
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 10/28/21
+     */
+    public function orderInfo(MerchantRepository $repository)
+    {
+        $user = $this->request->userInfo()->hidden(['label_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price'])->toArray();
+        $res = $repository->getOrderInfo($user);
+        return app('json')->success($res);
+
     }
 
 }

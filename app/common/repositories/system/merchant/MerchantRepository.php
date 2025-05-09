@@ -16,7 +16,9 @@ namespace app\common\repositories\system\merchant;
 
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreOrder;
+use app\common\model\store\order\StoreOrderOffline as offModel;
 use app\common\model\store\product\ProductReply;
+use app\common\model\system\merchant\Merchant as merchantModel;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\coupon\StoreCouponRepository;
@@ -1117,5 +1119,36 @@ class MerchantRepository extends BaseRepository
     public function getMerchantCount($uid): float
     {
         return $this->dao->search(['salesman_id' => $uid])->count();
+    }
+
+    public function getOrderInfo($user): array
+    {
+        $mer_ids = [];
+        $mer_count = 0;
+        $order_count = 0;
+        switch ($user['group_id']){
+            case 2:
+            case 9:
+                $mer_ids = merchantModel::where('salesman_id',$user['uid'])->column('mer_id');
+                break;
+            case 4:
+                $mer_ids = merchantModel::where('district_id',$user['district_id'])->column('mer_id');
+                break;
+            case 5:
+                if($user['city'] == '市辖区'){
+                    $mer_ids = merchantModel::where('city_id',$user['city_id'])->where('province_id',$user['province_id'])->column('mer_id');
+                } else{
+                    $mer_ids = merchantModel::where('city_id',$user['city_id'])->column('mer_id');
+                }
+                break;
+            case 6:
+                $mer_ids = merchantModel::where('province_id',$user['province_id'])->column('mer_id');
+                break;
+        }
+        $mer_count = count($mer_ids);
+        if($mer_count > 0){
+            $order_count = offModel::where('paid',1)->where('mer_id','in',$mer_ids)->count('order_id');
+        }
+        return compact('mer_count','order_count');
     }
 }

@@ -21,6 +21,7 @@ use app\common\repositories\BaseRepository;
 use app\common\repositories\store\product\ProductRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use crmeb\jobs\SendSmsJob;
+use think\exception\ValidateException;
 use think\facade\Queue;
 use think\Model;
 
