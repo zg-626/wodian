@@ -180,8 +180,15 @@ class PayQrcodeRepository extends BaseRepository
      */
     public function payCodeLst($merId)
     {
-        $qrcode=[];
         $qrcode= $this->dao->getQrcode($merId);
+        // 获取海报背景
+        $pay_image = systemConfig('pay_image');
+        if($qrcode){
+            foreach ($qrcode as $k=>$v){
+                $qrcode[$k]['pay_image'] = $pay_image;
+            }
+
+        }
         return $qrcode;
 
 
