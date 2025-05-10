@@ -61,6 +61,14 @@ class PayQrcodeRepository extends BaseRepository
         if ($qrcode) {
             throw new ValidateException('此比例已存在，请勿重复创建');
         }
+        // 比例不能大于自身的比例
+        if($ratio > $info['commission_rate']){
+            throw new ValidateException('比例不能大于签到的比例');
+        }
+        // 比例不能小于2
+        if($ratio < 2){
+            throw new ValidateException('比例不能小于2');
+        }
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         // 参数
         $params = '/payPage'. '?target=eqcode'. '&shopId=' . $merId. '&pvRatio=' . $ratio;
@@ -117,6 +125,14 @@ class PayQrcodeRepository extends BaseRepository
         $qrcode = $this->dao->getWhere(['mer_id' => $merId,'status'=>1,'commission_rate' => $ratio, 'wechat_qrcode_id' => ['neq', $id]]);
         if ($qrcode) {
             throw new ValidateException('此比例已存在，请重新输入');
+        }
+        // 比例不能大于自身的比例
+        if($ratio > $info['commission_rate']){
+            throw new ValidateException('比例不能大于签到的比例');
+        }
+        // 比例不能小于2
+        if($ratio < 2){
+            throw new ValidateException('比例不能小于2');
         }
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         // 参数
