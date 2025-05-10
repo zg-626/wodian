@@ -15,6 +15,7 @@ namespace app\common\repositories\system\merchant;
 
 
 use app\common\dao\system\merchant\MerchantDao;
+use app\common\dao\wechat\PayQrcodeDao;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\store\order\StoreOrderOffline as offModel;
 use app\common\model\store\product\ProductReply;
@@ -39,6 +40,7 @@ use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRelationRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
+use app\common\repositories\wechat\PayQrcodeRepository;
 use app\common\repositories\wechat\RoutineQrcodeRepository;
 use crmeb\jobs\ChangeMerchantStatusJob;
 use crmeb\jobs\ClearMerchantStoreJob;
@@ -529,8 +531,10 @@ class MerchantRepository extends BaseRepository
         if (empty($mer_avatar)) throw new ValidateException('商户头像不能为空，请上传后再生成');
         $ratio=$merchant['commission_rate'];// 默认积分比例
         $siteUrl = rtrim(systemConfig('site_url'), '/');
-        $codeUrl = $siteUrl .'/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;//二维码链接
-        $name = md5('shop' . $shopId . date('Ymd')) . '.jpg';
+        // 参数
+        $params = '/payPage'. '?target=eqcode'. '&shopId=' . $shopId. '&pvRatio=' . $ratio;
+        $codeUrl = $siteUrl .$params;//二维码链接
+        $name = md5('shop' . $shopId . $ratio. date('Ymd')) . '.jpg';
         $logoPath = $mer_avatar; // Logo 图片路径
         $imageInfo = app()->make(QrcodeService::class)->getQRCodeLogoPath($codeUrl, $name,$logoPath);
         if (is_string($imageInfo)) throw new ValidateException('二维码生成失败');
@@ -545,6 +549,24 @@ class MerchantRepository extends BaseRepository
         // 保存
         $merchant->mer_qrcode = $urlCode;
         $merchant->save();
+        // 同步到付款码列表
+        /** @var PayQrcodeDao $payQrcodeDao */
+        $payQrcodeDao = app()->make(PayQrcodeDao::class);
+        $qrcodeInfo = $payQrcodeDao->getWhere(['mer_id' => $shopId,'status'=>1, 'commission_rate' => $ratio]);
+        $data = [
+            'mer_id' => $shopId,
+            'qrcode' => $urlCode,
+            'ticket' => $params,
+            'third_type' => 'shop',
+            'commission_rate' => $ratio,
+            'add_time' => time()
+        ];
+        //$qrcodeInfo->save($data);
+        if($qrcodeInfo){
+            $qrcodeInfo->save($data);
+        }
+        $payQrcodeDao->create($data);
+
         // 获取海报背景
         $pay_image = systemConfig('pay_image');
         return [
@@ -692,7 +714,7 @@ class MerchantRepository extends BaseRepository
 
         // 佣金比例
         $percentage = '0.05'; // 5%
-        $number = bcmul($pay_price, $percentage, 2);
+        $number = bcmul($pay_price, $percentage, 4);
 
         app()->make(UserBillRepository::class)->incBill($merId, 'mer_brokerage', 'mer_brokerage', [
             'link_id' => $orderId,
@@ -707,6 +729,60 @@ class MerchantRepository extends BaseRepository
 
         $this->dao->addBrokerage($merId, $number);
 
+    }
+
+    // 创建付款码
+    public function createPayCode($merId,$ratio,$info): ?array
+    {
+        $mer_avatar=$info['mer_avatar'];
+        // 如果头像为空不能生成
+        if (empty($mer_avatar)) throw new ValidateException('商户头像不能为空，请上传后再生成');
+        /** @var PayQrcodeRepository $pay */
+        $pay = app()->make(PayQrcodeRepository::class);
+        try {
+            return $pay->createQrcode($merId, $ratio, $info);
+        } catch (\Exception $exception) {
+            throw new ValidateException($exception->getMessage());
+        }
+    }
+
+    // 修改付款码
+    public function updatePayCode($id,$ratio,$info): ?array
+    {
+        $mer_avatar=$info['mer_avatar'];
+        // 如果头像为空不能生成
+        if (empty($mer_avatar)) throw new ValidateException('商户头像不能为空，请上传后再生成');
+        /** @var PayQrcodeRepository $pay */
+        $pay = app()->make(PayQrcodeRepository::class);
+        try {
+            return $pay->updateQrcode($id, $ratio, $info);
+        } catch (\Exception $exception) {
+            throw new ValidateException($exception->getMessage());
+        }
+    }
+
+    // 删除付款码
+    public function delPayCode($id): void
+    {
+        /** @var PayQrcodeRepository $pay */
+        $pay = app()->make(PayQrcodeRepository::class);
+        try {
+            $pay->deleteQrcode($id);
+        }catch (\Exception $exception) {
+            throw new ValidateException($exception->getMessage());
+        }
+    }
+
+    // 付款码列表
+    public function payCodeLst($mer_id)
+    {
+        /** @var PayQrcodeRepository $pay */
+        $pay = app()->make(PayQrcodeRepository::class);
+        try {
+            return $pay->payCodeLst($mer_id);
+        }catch (\Exception $exception) {
+            throw new ValidateException($exception->getMessage());
+        }
     }
 
     public function subMerIntegral(int $merId, string $orderType, int $orderId, float $integral)

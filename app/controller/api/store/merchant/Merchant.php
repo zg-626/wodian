@@ -128,6 +128,44 @@ class Merchant extends BaseController
         return app('json')->success($this->repository->getPayCode(intval($id)));
     }
 
+    // 创建付款码
+    public function createPayCode($mer_id,$ratio)
+    {
+        $info =$this->repository->merExists((int)$mer_id);
+        if(!$info)
+            return app('json')->fail('店铺已打烊');
+
+        if(!$ratio)
+            return app('json')->fail('请输入付款码比例');
+        $info=$this->repository->createPayCode((int)$mer_id,$ratio,$info);
+        return app('json')->success($info);
+
+    }
+
+    // 修改付款码
+    public function updatePayCode($id,$mer_id,$ratio)
+    {
+        $info =$this->repository->get((int)$mer_id)->toArray();
+        if(!$info)
+            return app('json')->fail('店铺已打烊');
+        if(!$ratio)
+            return app('json')->fail('请输入付款码比例');
+        $info=$this->repository->updatePayCode((int)$id,$ratio,$info);
+        return app('json')->success($info);
+    }
+
+    // 删除付款码
+    public function delPayCode($id){
+        $this->repository->delPayCode((int)$id);
+        return app('json')->success('删除成功');
+    }
+
+    // 付款码列表
+    public function payCodeLst($id){
+        $info =$this->repository->payCodeLst((int)$id);
+        return app('json')->success($info);
+    }
+
     public function localLst()
     {
         [$page, $limit] = $this->getPage();

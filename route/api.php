@@ -578,6 +578,14 @@ Route::group('api/', function () {
             Route::get('/qrcode/:id', 'Merchant/qrcode');
             // 付款码
             Route::get('/pay_code/:id', 'Merchant/payCode');
+            // 创建付款码
+            Route::post('/create_pay_code', 'Merchant/createPayCode');
+            // 修改付款码
+            Route::post('/update_pay_code', 'Merchant/updatePayCode');
+            // 删除付款码
+            Route::post('/delete_pay_code', 'Merchant/delPayCode');
+            // 付付码列表
+            Route::get('/pay_code_lst/:id', 'Merchant/payCodeLst');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');
