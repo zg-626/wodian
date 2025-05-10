@@ -773,6 +773,18 @@ class MerchantRepository extends BaseRepository
         }
     }
 
+    // 开启关闭付款码
+    public function closePayCode($id,$status): void
+    {
+        /** @var PayQrcodeRepository $pay */
+        $pay = app()->make(PayQrcodeRepository::class);
+        try {
+            $pay->closePayCode($id,$status);
+        }catch (\Exception $exception) {
+            throw new ValidateException($exception->getMessage());
+        }
+    }
+
     // 付款码列表
     public function payCodeLst($mer_id)
     {

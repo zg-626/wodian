@@ -15,6 +15,7 @@ namespace app\common\model\wechat;
 
 
 use app\common\model\BaseModel;
+use think\model\concern\SoftDelete;
 
 /**
  * Class PayQrcode
@@ -24,6 +25,9 @@ use app\common\model\BaseModel;
  */
 class PayQrcode extends BaseModel
 {
+    use SoftDelete;
+    protected $deleteTime = 'delete_time';
+    protected $defaultSoftDelete = 0;
 
     /**
      * @return string

@@ -177,8 +177,17 @@ class PayQrcodeRepository extends BaseRepository
     {
         $qrcodeInfo = $this->dao->getWhere(['wechat_qrcode_id' => $id]);
         if($qrcodeInfo){
-            $qrcodeInfo->status = 0;
-            $qrcodeInfo->save();
+            $qrcodeInfo->delete();
+        }
+
+    }
+
+    // 开启关闭付款码
+    public function closePayCode($id,$status): void
+    {
+        $qrcodeInfo = $this->dao->getWhere(['wechat_qrcode_id' => $id]);
+        if($qrcodeInfo){
+            $qrcodeInfo->save(['status' => $status]);
         }
 
     }

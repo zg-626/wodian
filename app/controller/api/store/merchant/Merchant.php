@@ -160,6 +160,12 @@ class Merchant extends BaseController
         return app('json')->success('删除成功');
     }
 
+    // 开启关闭付款码
+    public function closePayCode($id,$status){
+        $this->repository->closePayCode((int)$id,$status);
+        return app('json')->success('设置成功');
+    }
+
     // 付款码列表
     public function payCodeLst($id){
         $info =$this->repository->payCodeLst((int)$id);

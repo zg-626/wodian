@@ -67,6 +67,6 @@ class PayQrcodeDao extends BaseDao
      */
     public function getQrcode($mer_id)
     {
-        return PayQrcode::getDB()->where('mer_id', $mer_id)->where('status', 1)->select()->toArray();
+        return PayQrcode::getDB()->where('mer_id', $mer_id)->select()->toArray();
     }
 }
