@@ -186,7 +186,7 @@ class User extends BaseController
         [$page, $limit] = $this->getPage();
         [$start,$stop]= $this->request->params(['start','stop'],true);
         $where['date'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
-        $where['category'] = 'brokerage_price';
+        $where['category'] = 'coupon_amount';
         return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
     }
 

@@ -386,12 +386,12 @@ class UserRepository extends BaseRepository
     public function changeIntegralForm($id)
     {
         return Elm::createForm(Route::buildUrl('systemUserChangeIntegral', compact('id'))->build(), [
-            Elm::radio('type', '修改抵扣金：', 1)->options([
+            Elm::radio('type', '修改抵用券：', 1)->options([
                 ['label' => '增加', 'value' => 1],
                 ['label' => '减少', 'value' => 0],
             ])->requiredNum(),
-            Elm::number('coupon_amount', '抵扣金')->required()->min(0)->max(50)
-        ])->setTitle('修改用户抵扣金');
+            Elm::number('coupon_amount', '抵用券')->required()->min(0)->max(50)
+        ])->setTitle('修改用户抵用券');
     }
 
     /**
@@ -501,18 +501,18 @@ class UserRepository extends BaseRepository
                 $make->incBill($id, 'coupon_amount', 'sys_inc', [
                     'link_id' => $adminId,
                     'status' => 1,
-                    'title' => '系统增加抵扣金',
+                    'title' => '系统增加抵用券',
                     'number' => $integral,
-                    'mark' => '系统增加了' . $integral . '抵扣金',
+                    'mark' => '系统增加了' . $integral . '抵用券',
                     'balance' => $balance
                 ]);
             } else {
                 $make->decBill($id, 'coupon_amount', 'sys_dec', [
                     'link_id' => $adminId,
                     'status' => 1,
-                    'title' => '系统减少抵扣金',
+                    'title' => '系统减少抵用券',
                     'number' => $integral,
-                    'mark' => '系统减少了' . $integral . '抵扣金',
+                    'mark' => '系统减少了' . $integral . '抵用券',
                     'balance' => $balance
                 ]);
             }
@@ -1062,7 +1062,7 @@ class UserRepository extends BaseRepository
                         'mark' => '邀请好友奖励' . $integral . '积分',
                         'balance' => $spread->integral
                     ]);*/
-                    // 邀请赠送抵扣金
+                    // 邀请赠送抵用券
                 }
                 $spread->save();
                 $user->save();
