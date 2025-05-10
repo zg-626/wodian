@@ -63,7 +63,7 @@ class PayQrcodeRepository extends BaseRepository
         }
         // 比例不能大于自身的比例
         if($ratio > $info['commission_rate']){
-            throw new ValidateException('比例不能大于签到的比例');
+            throw new ValidateException('比例不能大于签订的比例');
         }
         // 比例不能小于2
         if($ratio < 2){
@@ -128,7 +128,7 @@ class PayQrcodeRepository extends BaseRepository
         }
         // 比例不能大于自身的比例
         if($ratio > $info['commission_rate']){
-            throw new ValidateException('比例不能大于签到的比例');
+            throw new ValidateException('比例不能大于签订的比例');
         }
         // 比例不能小于2
         if($ratio < 2){
