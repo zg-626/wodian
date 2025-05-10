@@ -584,6 +584,8 @@ Route::group('api/', function () {
             Route::post('/update_pay_code', 'Merchant/updatePayCode');
             // 删除付款码
             Route::post('/delete_pay_code', 'Merchant/delPayCode');
+            // 开启关闭付款码
+            Route::post('/close_pay_code', 'Merchant/closePayCode');
             // 付付码列表
             Route::get('/pay_code_lst/:id', 'Merchant/payCodeLst');
             Route::get('/local', 'Merchant/localLst');
