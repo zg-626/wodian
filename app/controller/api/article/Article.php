@@ -316,8 +316,13 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => 1555]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => 1184]);
             $user = app()->make(UserRepository::class)->get($order['uid']);
+            if($order->deduction > 0){
+                /** @var MerchantRepository $merchantRepository */
+                $merchantRepository=app()->make(MerchantRepository::class);
+                $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction);
+            }
             // 更新用户支付时间
             /** @var UserMerchantRepository $userMerchantRepository */
             //$userMerchantRepository = app()->make(UserMerchantRepository::class);
@@ -325,7 +330,7 @@ class Article extends BaseController
             /** @var StoreOrderRepository $storeOrderRepository */
             //$storeOrderRepository = app()->make(StoreOrderRepository::class);
             //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
-            $storeOrderOfflineRepository->computed($order,$user);
+            //$storeOrderOfflineRepository->computed($order,$user);
             //$storeOrderOfflineRepository->virtualDelivery($order);
 
         } catch (Exception $e) {
