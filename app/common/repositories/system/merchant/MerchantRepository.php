@@ -686,6 +686,25 @@ class MerchantRepository extends BaseRepository
         }
     }
 
+    // 线下支付用，增加金额
+    public function addOlllineMoney(int $merId, string $orderType, int $orderId, float $money)
+    {
+        if ($money <= 0) return;
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,mer_money')->find();
+            app()->make(UserBillRepository::class)->incBill($merId, 'mer_lock_money', $orderType, [
+                'link_id' => ($orderType === 'order' ? 1 : 2) . $orderId,
+                'mer_id' => $merId,
+                'status' => 1,
+                'title' => '平台补贴，给商户发放余额',
+                'number' => $money,
+                'mark' => '平台补贴，给商户发放余额',
+                'balance' => $merchant->mer_money+$money
+            ]);
+
+            $this->dao->addMoney($merId, $money);
+
+    }
+
     public function addMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
     {
         if ($integral <= 0) return;

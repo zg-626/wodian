@@ -17,6 +17,7 @@ namespace app\common\repositories\store\order;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\dao\user\LabelRuleDao;
+use app\common\dao\wechat\PayQrcodeDao;
 use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
@@ -113,34 +114,53 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*if ($merchant['merchant_no'] == 0 || $merchant['term_nos'] == 0) {
             throw new ValidateException('该商家未填写拉卡拉商户号或者终端号，无法下单');
         }*/
+        // 判断扫码下单还是直接下单
+        if ($params['commission_rate'] === 0) {
+            // 直接下单使用商家签订的比例
+            $commission_rate=$merchant['commission_rate'];
+            if($commission_rate==0){
+                throw new ValidateException('该商家未设置积分比例');
+            }
+        }else{
+            // 扫码下单使用扫码的比例
+            $commission_rate=$params['commission_rate'];
 
-        if($merchant['commission_rate']==0){
-            throw new ValidateException('该商家未设置积分比例');
+            // 判断付款码是否禁用
+            /** @var PayQrcodeDao $payQrcodeDao */
+            $payQrcodeDao = app()->make(PayQrcodeDao::class);
+            $qrcodeInfo = $payQrcodeDao->getWhere(['mer_id' => $merchant['mer_id'],'status'=>1, 'commission_rate' => $commission_rate]);
+
+            if (!$qrcodeInfo) {
+                throw new ValidateException('该比例的付款码已禁用或删除');
+            }
+
+            // 判断扫码的比例是否大于商家的比例
+            if($commission_rate>$merchant['commission_rate']){
+                throw new ValidateException('该商家的积分最大比例为：'.$merchant['commission_rate'].'，您扫码的比例为：'.$commission_rate.'，请联系客服');
+            }
+            // 判断扫码的比例是否小于2
+            if($commission_rate<2 || $commission_rate==0){
+                throw new ValidateException('平台允许商家的积分最小比例为：2，您扫码的比例为：'.$commission_rate.'，请联系客服');
+            }
         }
+
 
         $rate=0;
         // 计算平台手续费
-        if(($money > 0) && $merchant['commission_rate'] > 0) {
-            $rate = $merchant['commission_rate'] /100;
-            $handling_fee = bcmul($money,$rate, 2);
+        if(($money > 0) && $commission_rate > 2) {
+            $rate = $commission_rate /100;
+            $handling_fee = bcmul($total_price,$rate, 2);// 2025/03/07 改为根据总金额计算手续费
         }
 
         //积分配置
         $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
 
-        //$svip_status = $user->is_svip > 0 && systemConfig('svip_switch_status') == '1';
-
         $pay_price = $money;
 
-        //$svip_integral_rate = $svip_status ? app()->make(MemberinterestsRepository::class)->getSvipInterestVal(MemberinterestsRepository::HAS_TYPE_PAY) : 0;
-
-        //计算赠送积分, 只有普通商品赠送积分
-        //$giveIntegralFlag = $sysIntegralConfig['integral_status'] && $sysIntegralConfig['integral_order_rate'] > 0;
-        $giveIntegralFlag = 1;
 
         $total_give_integral = 0;
 
-        //$order_total_give_integral = 0;
+
         if ($pay_price > 0 && $rate) {
             $total_give_integral = bcmul($pay_price, $rate, 2);
         }
@@ -154,8 +174,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             $user->save();
 
         }
-
-        //$order_total_give_integral = bcadd($total_give_integral, $order_total_give_integral, 0);
 
         $isSelfBuy = $user->is_promoter && systemConfig('extension_self') ? 1 : 0;
         if ($isSelfBuy) {
@@ -192,7 +210,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'uid'        => $user->uid,
             'order_type' => self::TYPE_SVIP,
             'pay_type'   =>  $params['pay_type'],
-            'commission_rate'=>$merchant['commission_rate'],
+            'commission_rate'=>$commission_rate,
             'handling_fee' => $handling_fee,
             'status'     => 1,
             'mer_id'     => $mer_id,
@@ -417,15 +435,19 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
-                // 商户增加余额
-                //app()->make(MerchantRepository::class)->addLockMoney($order->mer_id, 'order', $order->order_id, $order->pay_price);
+
+                /** @var MerchantRepository $merchantRepository */
+                $merchantRepository=app()->make(MerchantRepository::class);
+                // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
+                if($order->deduction > 0){
+                    $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction);
+                }
 
                 // 赠送积分
                 $this->giveIntegral($order);
 
                 // 赠送商户积分
-                //$this->giveMerIntegral($order->mer_id,$order);
-                app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+                $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
 
                 // 所有身份赠送佣金
                 /** @var StoreOrderRepository $storeOrderRepository */
@@ -812,7 +834,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($offlineOrder->give_integral > 0) {
             $make = app()->make(UserRepository::class);
             $user = $make->get($offlineOrder->uid);
-            $user->integral=$user->integral+$offlineOrder->give_integral;
+            $user->integral += $offlineOrder->give_integral;
             $user->save();
             app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
                 'link_id' => $offlineOrder['order_id'],
