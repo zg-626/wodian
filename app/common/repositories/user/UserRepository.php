@@ -1241,7 +1241,7 @@ class UserRepository extends BaseRepository
         }
         $query = $this->search($where);
         $count = $query->count();
-        $list = $query->setOption('field', [])->field('uid,avatar,nickname,is_promoter,pay_count,pay_price,spread_count,create_time,spread_time,spread_limit')->page($page, $limit)->select();
+        $list = $query->setOption('field', [])->field('uid,avatar,nickname,is_promoter,pay_count,pay_price,spread_count,create_time,spread_time,spread_limit,phone')->page($page, $limit)->select();
         return compact('list', 'count');
     }
 
