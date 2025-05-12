@@ -743,7 +743,7 @@ class MerchantRepository extends BaseRepository
             'number' => $number,
             'mark' => '用户成功消费,增加锁客佣金' . $number,
 
-            'balance' => $merchant->brokerage_price+(int)$number
+            'balance' => $merchant->brokerage_price+((float)$number)
         ]);
 
         $this->dao->addBrokerage($merId, $number);
