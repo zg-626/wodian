@@ -540,22 +540,33 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function computeds($order)
     {
         $res=$order;
+
+        /** @var MerchantRepository $merchantRepository */
+        $merchantRepository=app()->make(MerchantRepository::class);
+        // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
+        if($order->deduction > 0){
+            $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction);
+        }
+
         // 赠送积分
         $this->giveIntegral($order);
 
         // 赠送商户积分
-        //$this->giveMerIntegral($order->mer_id,$order);
-        app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+        $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
 
         // 所有身份赠送佣金
         /** @var StoreOrderRepository $storeOrderRepository */
         $storeOrderRepository = app()->make(StoreOrderRepository::class);
         $storeOrderRepository->addCommission($order->mer_id,$order);
 
+        $user = app()->make(UserRepository::class)->get($res['uid']);
+        // 发放推广抵用券
+        $this->computed($order,$user);
+
         // 更新用户支付时间
         /** @var UserMerchantRepository $userMerchantRepository */
         $userMerchantRepository = app()->make(UserMerchantRepository::class);
-        $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id);
+        $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id,$order->handling_fee);
 //        SwooleTaskService::merchant('notice', [
 //            'type' => 'new_order',
 //            'data' => [
@@ -569,7 +580,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
         // 支付金額不是0
-        if ($order->pay_price !== 0) {
+        if ($order->pay_price > 0) {
             $profitsharing= [
                 'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
                 'order_id' => $order->order_id,
