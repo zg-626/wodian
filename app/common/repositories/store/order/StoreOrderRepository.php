@@ -402,7 +402,7 @@ class StoreOrderRepository extends BaseRepository
                     ];
                 }
                 /** @var UserMerchantRepository $userMerchantRepository */
-                $userMerchantRepository->updatePayTime($uid, $order->mer_id, $order->pay_price,true,$order->order_id);
+                $userMerchantRepository->updatePayTime($uid, $order->mer_id, $order->pay_price,true,$order->order_id,$order->handling_fee);
                 SwooleTaskService::merchant('notice', [
                     'type' => 'new_order',
                     'data' => [

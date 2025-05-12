@@ -28,11 +28,13 @@ use app\common\repositories\system\merchant\FinancialRecordRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\user\MemberinterestsRepository;
 use app\common\repositories\user\UserBillRepository;
+use app\common\repositories\user\UserBrokerageRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\wechat\WechatUserRepository;
 use crmeb\jobs\OrderProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
+use crmeb\jobs\UserBrokerageLevelJob;
 use crmeb\services\MiniProgramService;
 use crmeb\services\OfflineMiniProgramService;
 use crmeb\services\OfflinePayService;
@@ -476,6 +478,16 @@ class StoreOrderOfflineRepository extends BaseRepository
                     ]
                 ], $order->mer_id);
 
+                if ($order->spread_uid) {
+                    Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_pay_num', 'inc' => 1]);
+                    Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_money', 'inc' => $order->pay_price]);
+                }
+                app()->make(UserRepository::class)->update($order->uid, [
+                    'pay_count' => Db::raw('pay_count+' . 1),
+                    'pay_price' => Db::raw('pay_price+' . $order->pay_price),
+                    //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
+                ]);
+
                 // 创建分账账单
                 /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                 $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
@@ -495,6 +507,12 @@ class StoreOrderOfflineRepository extends BaseRepository
                     // 虚拟发货
                     $this->virtualDelivery($res);
                 }
+
+                Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_PAY_SUCCESS', 'id' => $order->order_id]);
+                Queue::push(SendSmsJob::class, ['tempId' => 'ADMIN_PAY_SUCCESS_CODE', 'id' => $order->order_id]);
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_money', 'inc' => $order->pay_price]);
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_num', 'inc' => 1]);
+                app()->make(UserBrokerageRepository::class)->incMemberValue($order->uid, 'member_pay_num', $order->order_id);
 
                 $handling_fee = floatval($order->handling_fee);
                 $total_amount = bcmul((string)$handling_fee, "0.4", 2);
@@ -834,14 +852,14 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
-    public function giveMerIntegral($mer_id, $groupOrder)
+    public function giveMerIntegral($mer_id, $order)
     {
-        if ($groupOrder->give_integral > 0) {
+        if ($order->give_integral > 0) {
             /**
              * @var MerchantDao $merchant
              */
             $merchant = app()->make(MerchantDao::class);
-            $merchant->addIntegral($mer_id, $groupOrder->give_integral);
+            $merchant->addIntegral($mer_id, $order->give_integral);
         }
     }
 
