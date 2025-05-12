@@ -739,9 +739,9 @@ class MerchantRepository extends BaseRepository
             'link_id' => $orderId,
             'mer_id' => $merId,
             'status' => 1,
-            'title' => '商户锁客，增加佣金',
+            'title' => '商户锁客，增加佣金(放入余额)',
             'number' => $number,
-            'mark' => '用户成功消费,增加锁客佣金' . $number,
+            'mark' => '用户成功消费,增加锁客佣金(放入余额)' . $number,
 
             'balance' => $merchant->brokerage_price+((float)$number)
         ]);
