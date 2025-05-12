@@ -502,6 +502,8 @@ class User extends BaseController
         return app('json')->success(compact('integral', 'lockIntegral', 'deductionIntegral', 'totalGainIntegral', 'clear'));
     }
 
+
+    // 积分记录
     public function integralList(UserBillRepository $repository)
     {
         if (!systemConfig('integral_status')) {
