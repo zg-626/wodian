@@ -21,7 +21,7 @@ class StoreOrderProfitsharing extends BaseModel
 
     const TYPE_NAME = ['order' => '订单支付', 'presell' => '尾款支付'];
 
-    const STATUS_NAME = [0 => '待分账', 1 => '已分账', -1 => '已退款', -2 => '退款失败'];
+    const STATUS_NAME = [0 => '待分账', 1 => '已分账',2=>'待分账', -1 => '已退款', -2 => '退款失败'];
 
     public static function tablePk(): string
     {
