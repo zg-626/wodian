@@ -115,7 +115,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             throw new ValidateException('该商家未填写拉卡拉商户号或者终端号，无法下单');
         }*/
         // 判断扫码下单还是直接下单
-        if ($params['commission_rate'] === 0) {
+        if ($params['commission_rate'] == 0) {
             // 直接下单使用商家签订的比例
             $commission_rate=$merchant['commission_rate'];
             if($commission_rate==0){
@@ -130,18 +130,18 @@ class StoreOrderOfflineRepository extends BaseRepository
             $payQrcodeDao = app()->make(PayQrcodeDao::class);
             $qrcodeInfo = $payQrcodeDao->getWhere(['mer_id' => $merchant['mer_id'],'status'=>1, 'commission_rate' => $commission_rate]);
 
-            if (!$qrcodeInfo) {
+            /*if (!$qrcodeInfo) {
                 throw new ValidateException('该比例的付款码已禁用或删除');
-            }
+            }*/
 
             // 判断扫码的比例是否大于商家的比例
-            if($commission_rate>$merchant['commission_rate']){
-                throw new ValidateException('该商家的积分最大比例为：'.$merchant['commission_rate'].'，您扫码的比例为：'.$commission_rate.'，请联系客服');
-            }
+            // if($commission_rate>$merchant['commission_rate']){
+            //     throw new ValidateException('该商家的积分最大比例为：'.$merchant['commission_rate'].'，您扫码的比例为：'.$commission_rate.'，请联系客服');
+            // }
             // 判断扫码的比例是否小于2
-            if($commission_rate<2 || $commission_rate==0){
-                throw new ValidateException('平台允许商家的积分最小比例为：2，您扫码的比例为：'.$commission_rate.'，请联系客服');
-            }
+            // if($commission_rate<2 || $commission_rate==0){
+            //     throw new ValidateException('平台允许商家的积分最小比例为：2，您扫码的比例为：'.$commission_rate.'，请联系客服');
+            // }
         }
 
 
@@ -149,7 +149,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         // 计算平台手续费
         if(($money > 0) && $commission_rate > 2) {
             $rate = $commission_rate /100;
-            $handling_fee = bcmul($total_price,$rate, 2);// 2025/03/07 改为根据总金额计算手续费
+            $handling_fee = bcmul($money,$rate, 2);
         }
 
         //积分配置
@@ -161,14 +161,19 @@ class StoreOrderOfflineRepository extends BaseRepository
         $total_give_integral = 0;
 
 
-        if ($pay_price > 0 && $rate) {
-            $total_give_integral = bcmul($pay_price, $rate, 2);
+        // 根据总金额计算积分，不根据实际支付金额
+        if ($total_price > 0 && $rate) {
+            $total_give_integral = bcmul($total_price, $rate, 2);
         }
 
-        // 抵扣金额
+        // 抵用券额
         if(isset($params['user_deduction']) && $params['user_deduction'] > 0){
-            // 计算抵扣后的抵扣金
+            // 计算抵扣后的抵用券
             $user_coupon_amount = $user->coupon_amount;
+            // 判断用户的抵用券是否大于抵用券额
+            if($user_coupon_amount < $params['user_deduction']){
+                throw new ValidateException('您的抵用券不足');
+            }
             $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);
             $user->coupon_amount = $deduction_money;
             $user->save();
@@ -475,7 +480,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                 $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
                 // 支付金額不是0
-                if ($order->pay_price !== 0) {
+                if ($order->pay_price > 0) {
                     $profitsharing= [
                         'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
                         'order_id' => $order->order_id,
@@ -834,7 +839,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($offlineOrder->give_integral > 0) {
             $make = app()->make(UserRepository::class);
             $user = $make->get($offlineOrder->uid);
-            $user->integral += $offlineOrder->give_integral;
+            $user->integral=$user->integral+$offlineOrder->give_integral;
             $user->save();
             app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
                 'link_id' => $offlineOrder['order_id'],
@@ -903,7 +908,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 app()->make(MerchantRepository::class)->subMerIntegral($offlineOrder->mer_id, 'mer_integral', $offlineOrder->order_id, $offlineOrder->integral);
             }
 
-            // 退回抵扣金
+            // 退回抵用券
             if($offlineOrder->deduction > 0){
                 $make = app()->make(UserRepository::class);
                 $make->update($offlineOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $offlineOrder->deduction)]);
@@ -920,22 +925,22 @@ class StoreOrderOfflineRepository extends BaseRepository
         $user_coupon_amount = $user->coupon_amount;
         $deductionlFlag = $userDeduction  > 0;
         $deduction = [
-            'use' => 0, // 使用的抵扣金数量
+            'use' => 0, // 使用的抵用券数量
             'price' => 0 // 抵扣的金额
         ];
         $finalAmount=0;
-        //计算抵扣金抵扣
+        //计算抵用券抵扣
         if ($deductionlFlag && $user_coupon_amount > 0 && $money > 0) {
 
             $eductionRate = 100;
 
             // 如果抵扣比例大于0
             if ($eductionRate > 0) {
-                // 计算抵扣金额（抵扣金额 = 订单金额 * 抵扣比例）
-                $deductionAmount = min($money, $user_coupon_amount); // 最大只能抵扣订单金额或抵扣金数量
-                $deduction['use'] = intval($deductionAmount); // 使用的抵扣金数量
+                // 计算抵用券额（抵用券额 = 订单金额 * 抵扣比例）
+                $deductionAmount = min($money, $user_coupon_amount); // 最大只能抵扣订单金额或抵用券数量
+                $deduction['use'] = intval($deductionAmount); // 使用的抵用券数量
                 $deduction['price'] = $deductionAmount; // 抵扣的金额
-                // 更新剩余抵扣金
+                // 更新剩余抵用券
                 $user_coupon_amount -= $deduction['use'];
                 // 计算抵扣后的金额
                 $finalAmount = $money - $deduction['price'];

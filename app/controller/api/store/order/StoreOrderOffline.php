@@ -44,7 +44,7 @@ class StoreOrderOffline extends BaseController
         $params = $this->request->params(['pay_type','return_url','to_uid','user_deduction',['commission_rate',0]]);
         if (!in_array($params['pay_type'], ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
-        if ($money<0)
+        if ($money<=0)
             return app('json')->fail('金额不能小于0');
         if(!$mer_id)
             return app('json')->fail('缺少商户id');
