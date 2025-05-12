@@ -19,6 +19,7 @@ use app\common\model\user\User;
 use app\common\model\wechat\WechatUser;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\community\CommunityRepository;
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\service\StoreServiceRepository;
 use app\common\repositories\system\attachment\AttachmentRepository;
@@ -1287,6 +1288,66 @@ class UserRepository extends BaseRepository
                 $query->field('avatar,nickname,uid');
             },
             'orderProduct'
+        ])->select()->toArray();
+        foreach ($list as $k => $item) {
+            if ($item['is_selfbuy']) {
+                if ($item['uid'] == $uid) {
+                    $list[$k]['brokerage'] = $item['extension_one'];
+                } else if (in_array($item['uid'], $ids)) {
+                    $list[$k]['brokerage'] = $item['extension_two'];
+                } else {
+                    $list[$k]['brokerage'] = 0;
+                }
+            } else {
+                $list[$k]['brokerage'] = in_array($item['uid'], $ids) ? $item['extension_one'] : $item['extension_two'];
+            }
+            unset($list[$k]['extension_one'], $list[$k]['extension_two']);
+        }
+        return compact('count', 'list');
+    }
+
+    /**
+     * @param $uid
+     * @param $page
+     * @param $limit
+     * @param array $where
+     * @return array
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/26
+     */
+    public function subOfflineOrder($uid, $page, $limit, array $where = []): array
+    {
+        if (isset($where['level'])) {
+            if (!$where['level']) {
+                $ids = $this->dao->getSubIds($uid);
+                $subIds = $ids ? $this->dao->getSubAllIds($ids) : [];
+            } else if ($where['level'] == 2) {
+                $ids = $this->dao->getSubIds($uid);
+                $subIds = $ids ? $this->dao->getSubAllIds($ids) : [];
+                $ids = [];
+            } else if ($where['level'] == -1) {
+                $ids = [];
+                $subIds = [];
+            } else {
+                $ids = $this->dao->getSubIds($uid);
+                $subIds = [];
+            }
+        } else {
+            $ids = $this->dao->getSubIds($uid);
+            $subIds = $ids ? $this->dao->getSubAllIds($ids) : [];
+        }
+        $all = array_unique(array_merge($ids, $subIds));
+        $all[] = -1;
+        $query = app()->make(StoreOrderOfflineRepository::class)->usersOrderQuery($where, $all, (!isset($where['level']) || !$where['level'] || $where['level'] == -1) ? $uid : 0);
+        $count = $query->count();
+        $list = $query->page($page, $limit)->field('uid,order_sn,pay_time,extension_one,extension_two,is_selfbuy')->with([
+            'user' => function ($query) {
+                $query->field('avatar,nickname,uid');
+            },
+            //'orderProduct'
         ])->select()->toArray();
         foreach ($list as $k => $item) {
             if ($item['is_selfbuy']) {

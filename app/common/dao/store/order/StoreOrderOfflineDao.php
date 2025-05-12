@@ -17,6 +17,7 @@ use app\common\dao\BaseDao;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\LabelRule;
+use think\db\BaseQuery;
 use think\facade\Db;
 
 class StoreOrderOfflineDao extends BaseDao

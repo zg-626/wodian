@@ -180,6 +180,8 @@ Route::group('api/', function () {
             Route::get('merchant_integral', 'User/merchant_integral');
             //推广人订单
             Route::get('spread_order', 'User/spread_order');
+            //推广人订单
+            Route::get('spread_offline_order', 'User/spread_offline_order');
             //推广人排行榜
             Route::get('spread_top', 'User/spread_top');
             //佣金排行榜

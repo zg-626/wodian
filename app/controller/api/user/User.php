@@ -219,6 +219,24 @@ class User extends BaseController
     }
 
     /**
+     * @return mixed
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/22
+     */
+    public function spread_offline_order()
+    {
+        [$page, $limit] = $this->getPage();
+        $where= $this->request->params(['keyword']);
+        [$start,$stop]= $this->request->params(['start','stop'],true);
+        $where['create_time'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
+        $data = $this->repository->subOfflineOrder($this->request->uid(), $page, $limit,$where);
+        return app('json')->success($data);
+    }
+
+    /**
      * TODO
      * @return mixed
      * @author Qinii
