@@ -33,7 +33,8 @@ class BonusOfflineService extends BaseRepository
                 return false;
             }
 
-            $totalAmount = $poolInfo['available_amount'];
+            // 保留两位小数
+            $totalAmount = round($poolInfo['available_amount'], 2);
 
             // 检查分红条件
             if (!$this->checkBonusCondition($totalAmount, $poolInfo)) {

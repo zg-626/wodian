@@ -107,7 +107,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         /*** @var MerchantDao $merchant */
         $merchant = app()->make(MerchantDao::class);
 
-        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no,term_nos')->find();
+        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no,term_nos,province,city,province_id,city_id')->find();
 
         // 判断有没有申请子商户
         /*if ($merchant['sub_mchid'] == 0) {
@@ -146,9 +146,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             // }
         }
 
-
         $rate=0;
-        // 计算平台手续费
+        // 根据总金额计算平台手续费，不根据实际支付金额
         if(($money > 0) && $commission_rate > 2) {
             $rate = $commission_rate /100;
             $handling_fee = bcmul($money,$rate, 2);
@@ -159,9 +158,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         $pay_price = $money;
 
-
         $total_give_integral = 0;
-
 
         // 根据总金额计算积分，不根据实际支付金额
         if ($total_price > 0 && $rate) {
@@ -195,6 +192,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $topUid = $topUser->uid ?? 0;
         $extension_one=0;
         $extension_two=0;
+
         // 推广比例
         $extension_one_rate = systemConfig('extension_one_rate')?:0.03;
         $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
@@ -206,9 +204,18 @@ class StoreOrderOfflineRepository extends BaseRepository
             $extension_two = $handling_fee > 0 ? bcmul($handling_fee, $extension_two_rate, 4) : 0;
         }
 
+        // 关联商家市区信息
+        $city = $merchant['city'];
+        $city_id = $merchant['city_id'];
+        // 判断是否是直辖市
+        if($merchant['city']=='市辖区'){
+            $city = $merchant['province'];
+            $city_id = $merchant['province_id'];
+        }
+
         $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
         $data = [
-            'title'     => '线下门店支付',
+            'title'     => '线下门店订单',
             'link_id'   => 0,
             'order_sn'  => $order_sn,
             'lkl_mer_cup_no' => $merchant['merchant_no'],
@@ -231,6 +238,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             'total_price' => $total_price,
             'deduction' => $params['user_deduction']?: 0,
             'deduction_money' => $params['user_deduction']?: 0,
+            'city' => $city,
+            'city_id' => $city_id,
             'to_uid'=>$params['to_uid']?:0
         ];
 
@@ -518,13 +527,15 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
                 // 记录本次分红池,手续费的40%
-                $poolInfo = Db::name('dividend_pool')->order('id', 'desc')->find();
+                $poolInfo = Db::name('dividend_pool')->where('city_id',$order->city_id)->order('id', 'desc')->find();
                 if (!$poolInfo) {
                     // 第一次创建分红池记录
                     Db::name('dividend_pool')->insert([
                         'total_amount' => $total_amount,
                         'available_amount' => $total_amount,
                         'distributed_amount' => 0,
+                        'city_id' => $order->city_id,
+                        'city' => $order->city,
                         'create_time' => date('Y-m-d H:i:s'),
                         'update_time' => date('Y-m-d H:i:s')
                     ]);
@@ -544,6 +555,8 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'handling_fee' => $handling_fee,
                     'mer_id' => $order->mer_id,
                     'uid' => $order->uid,
+                    'city' => $order->city,
+                    'city_id' => $order->city_id,
                     'create_time' => date('Y-m-d H:i:s'),
                     'remark' => '订单分红入池'
                 ]);
