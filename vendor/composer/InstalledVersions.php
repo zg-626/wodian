@@ -32,7 +32,7 @@ private static $installed = array (
     'aliases' => 
     array (
     ),
-    'reference' => '09fa0053471389b1b6bca77de03bf8c047c34ea1',
+    'reference' => '0697d23d7e3c6c9b8045f962fdae345b3e85fcdb',
     'name' => 'topthink/think',
   ),
   'versions' => 
@@ -252,6 +252,15 @@ private static $installed = array (
       array (
       ),
       'reference' => '83b609028194aa042ea33b5af2d41a7427de80e6',
+    ),
+    'gregwar/captcha' => 
+    array (
+      'pretty_version' => 'v1.2.1',
+      'version' => '1.2.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '229d3cdfe33d6f1349e0aec94a26e9205a6db08e',
     ),
     'guzzle/batch' => 
     array (
@@ -1091,7 +1100,7 @@ private static $installed = array (
       'aliases' => 
       array (
       ),
-      'reference' => '09fa0053471389b1b6bca77de03bf8c047c34ea1',
+      'reference' => '0697d23d7e3c6c9b8045f962fdae345b3e85fcdb',
     ),
     'topthink/think-helper' => 
     array (
