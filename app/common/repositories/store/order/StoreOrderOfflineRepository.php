@@ -518,12 +518,6 @@ class StoreOrderOfflineRepository extends BaseRepository
                     $this->virtualDelivery($res);
                 }
 
-                Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_PAY_SUCCESS', 'id' => $order->order_id]);
-                Queue::push(SendSmsJob::class, ['tempId' => 'ADMIN_PAY_SUCCESS_CODE', 'id' => $order->order_id]);
-                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_money', 'inc' => $order->pay_price]);
-                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_num', 'inc' => 1]);
-                app()->make(UserBrokerageRepository::class)->incMemberValue($order->uid, 'member_pay_num', $order->order_id);
-
                 $handling_fee = floatval($order->handling_fee);
                 $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
@@ -562,10 +556,58 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'remark' => '订单分红入池'
                 ]);
 
+                Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_PAY_SUCCESS', 'id' => $order->order_id]);
+                Queue::push(SendSmsJob::class, ['tempId' => 'ADMIN_PAY_SUCCESS_CODE', 'id' => $order->order_id]);
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_money', 'inc' => $order->pay_price]);
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_num', 'inc' => 1]);
+                app()->make(UserBrokerageRepository::class)->incMemberValue($order->uid, 'member_pay_num', $order->order_id);
 
                 return $this->payAfter($res);
             //});
         }
+    }
+
+    // 补发奖池
+    public function red($order)
+    {
+        $handling_fee = floatval($order->handling_fee);
+        $total_amount = bcmul((string)$handling_fee, "0.4", 2);
+
+        // 记录本次分红池,手续费的40%
+        $poolInfo = Db::name('dividend_pool')->where('city_id',$order->city_id)->order('id', 'desc')->find();
+        if (!$poolInfo) {
+            // 第一次创建分红池记录
+            Db::name('dividend_pool')->insert([
+                'total_amount' => $total_amount,
+                'available_amount' => $total_amount,
+                'distributed_amount' => 0,
+                'city_id' => $order->city_id,
+                'city' => $order->city,
+                'create_time' => date('Y-m-d H:i:s'),
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            // 更新现有分红池
+            Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
+                'total_amount' => Db::raw('total_amount + ' . $total_amount),
+                'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        // 分红池流水表
+        Db::name('dividend_pool_log')->insert([
+            'order_id' => $order->order_id,
+            'amount' => $total_amount,
+            'handling_fee' => $handling_fee,
+            'mer_id' => $order->mer_id,
+            'uid' => $order->uid,
+            'city' => $order->city,
+            'city_id' => $order->city_id,
+            'create_time' => date('Y-m-d H:i:s'),
+            'remark' => '订单分红入池'
+        ]);
+
     }
 
     // 二次补发
