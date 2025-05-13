@@ -61,13 +61,22 @@ class PayQrcodeRepository extends BaseRepository
         if ($qrcode) {
             throw new ValidateException('此比例已存在，请勿重复创建');
         }
+        // 限制数量
+        $count = $this->dao->getWhere(['mer_id' => $merId,'status'=>1])->count();
+        if ($count >= 5) {
+            throw new ValidateException('最多创建5个二维码');
+        }
         // 比例不能大于自身的比例
         if($ratio > $info['commission_rate']){
             throw new ValidateException('比例不能大于签订的比例');
         }
+        // 比例不能大于20
+        if($ratio > 20){
+            throw new ValidateException('比例不能大于20');
+        }
         // 比例不能小于2
-        if($ratio < 2){
-            throw new ValidateException('比例不能小于2');
+        if($ratio < 3){
+            throw new ValidateException('比例不能小于3');
         }
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         // 参数
