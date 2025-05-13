@@ -1,39 +1,22 @@
 <?php
 
-// +----------------------------------------------------------------------
-// | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016~2022 https://www.crmeb.com All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
-// +----------------------------------------------------------------------
-// | Author: CRMEB Team <admin@crmeb.com>
-// +----------------------------------------------------------------------
-
-
-namespace app\controller\api\store\order;
-
+namespace app\controller\api\meituan;
 
 use app\common\repositories\delivery\DeliveryOrderRepository;
-use app\common\repositories\store\order\StoreOrderCreateRepository;
-use app\common\repositories\store\order\StoreOrderReceiptRepository;
-use app\validate\api\UserReceiptValidate;
-use crmeb\basic\BaseController;
 use app\common\repositories\store\order\StoreCartRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
+use app\common\repositories\store\order\StoreOrderCreateRepository;
+use app\common\repositories\store\order\StoreOrderReceiptRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
-use crmeb\services\ExpressService;
+use app\common\repositories\user\UserRepository;
+use app\common\repositories\WaimaiRepositories;
+use app\validate\api\UserReceiptValidate;
+use crmeb\basic\BaseController;
 use crmeb\services\LockService;
 use think\App;
 use think\exception\ValidateException;
-use think\facade\Log;
+use think\response\Json;
 
-/**
- * Class StoreOrder
- * @package app\controller\api\store\order
- * @author xaboy
- * @day 2020/6/10
- */
 class StoreOrder extends BaseController
 {
     /**
@@ -69,57 +52,29 @@ class StoreOrder extends BaseController
         return app('json')->success($orderInfo);
     }
 
-    public function v2CreateOrder(StoreCartRepository $cartRepository, StoreOrderCreateRepository $orderCreateRepository)
+    public function pay()
     {
-        $cartId = (array)$this->request->param('cart_id', []);
-        $addressId = (int)$this->request->param('address_id');
-        $couponIds = (array)$this->request->param('use_coupon', []);
-        $takes = (array)$this->request->param('takes', []);
-        $useIntegral = (bool)$this->request->param('use_integral', false);
-        $receipt_data = (array)$this->request->param('receipt_data', []);
-        $extend = (array)$this->request->param('extend', []);
-        $mark = (array)$this->request->param('mark', []);
         $payType = $this->request->param('pay_type');
         $key = (string)$this->request->param('key');
-        $post = (array)$this->request->param('post');
-
-        if(!$key){
+        $phone = $this->request->param('phone');
+        $trade_no = $this->request->param('trade_no');
+        /** @var UserRepository $user*/
+        $user = app()->make(UserRepository::class);
+        $userInfo = $user->getWhere(['phone' => $phone]);
+        /*if(!$key){
             return app('json')->fail('订单操作超时,请刷新页面');
-        }
-
-        $isPc = $payType === 'pc';
-        if ($isPc) {
-            $payType = 'balance';
-        }
-
-        if (!in_array($payType, StoreOrderRepository::PAY_TYPE, true))
+        }*/
+        if (!$userInfo)
+            return app('json')->fail('用户不存在，请在小程序注册');
+        /** @var StoreGroupOrderRepository $groupOrderRepository */
+        $groupOrderRepository = app()->make(StoreGroupOrderRepository::class);
+        $groupOrder = $groupOrderRepository->getOrderByTradeNo($userInfo->uid, $trade_no);
+        if (!$groupOrder)
+            return app('json')->fail('订单不存在');
+        if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
-
-        $validate = app()->make(UserReceiptValidate::class);
-        foreach ($receipt_data as $receipt) {
-            if (!is_array($receipt)) throw new ValidateException('发票信息有误');
-            $validate->check($receipt);
-        }
-
-        $uid = $this->request->uid();
-        if (!($count = count($cartId)) || $count != count($cartRepository->validIntersection($cartId, $uid)))
-            return app('json')->fail('已生成订单，请勿重复提交～');
-//        if (!$addressId)
-//            return app('json')->fail('请选择地址');
-
-        $groupOrder = app()->make(LockService::class)->exec('order.create', function () use ($key, $orderCreateRepository, $receipt_data, $mark, $extend, $cartId, $payType, $takes, $couponIds, $useIntegral, $addressId, $post) {
-            return $orderCreateRepository->v2CreateOrder($key, array_search($payType, StoreOrderRepository::PAY_TYPE), $this->request->userInfo(), $cartId, $extend, $mark, $receipt_data, $takes, $couponIds, $useIntegral, $addressId, $post);
-        });
-
-        if ($groupOrder['pay_price'] == 0) {
-            $this->repository->paySuccess($groupOrder);
-            return app('json')->status('success', '支付成功', ['order_id' => $groupOrder['group_order_id']]);
-        }
-        if ($isPc) {
-            return app('json')->success(['order_id' => $groupOrder->group_order_id]);
-        }
         try {
-            return $this->repository->pay($payType, $this->request->userInfo(), $groupOrder, $this->request->param('return_url'), $this->request->isApp());
+            return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
         } catch (\Exception $e) {
             return app('json')->status('error', $e->getMessage(), ['order_id' => $groupOrder->group_order_id]);
         }
@@ -233,15 +188,6 @@ class StoreOrder extends BaseController
         return app('json')->success('取消成功');
     }
 
-    /**
-     * @param $id
-     * @param StoreGroupOrderRepository $groupOrderRepository
-     * @return mixed
-     * @description  重新发起支付
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\DbException
-     * @throws \think\db\exception\ModelNotFoundException
-     */
     public function groupOrderPay($id, StoreGroupOrderRepository $groupOrderRepository)
     {
         //TODO 佣金结算,佣金退回,物流查询
@@ -311,4 +257,5 @@ class StoreOrder extends BaseController
         $res = $orderRepository->show($id, $this->request->uid());
         return app('json')->success($res);
     }
+
 }

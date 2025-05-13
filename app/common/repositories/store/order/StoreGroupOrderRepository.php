@@ -95,6 +95,11 @@ class StoreGroupOrderRepository extends BaseRepository
         return $this->search(['uid' => $uid])->where('group_order_id', $id)->append(['give_coupon'])->find();
     }
 
+    // 根据trade_no查询订单
+    public function getOrderByTradeNo($uid,$trade_no){
+        return $this->search(['paid' => 0, 'is_del' => 0,'uid' => $uid])->where('trade_no', $trade_no)->find();
+    }
+
     /**
      * @param $id
      * @return array|\think\Model|null

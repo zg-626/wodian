@@ -62,6 +62,9 @@ class StoreGroupOrderDao extends BaseDao
         ->when(isset($where['uid']) && $where['uid'] !== '', function ($query) use ($where) {
             $query->where('uid', $where['uid']);
         })
+        ->when(isset($where['trade_no']) && $where['trade_no'] !== '', function ($query) use ($where) {
+            $query->where('trade_no', $where['trade_no']);
+        })
         ->when(!is_null($is_points), function ($query) use ($is_points) {
             if ($is_points) {
                 $query->where('activity_type', 20);

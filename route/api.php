@@ -615,7 +615,7 @@ Route::group('api/', function () {
             // 美团免登外卖地址
             Route::any('/mt_waimai', 'Waimai/mtWaimai');
             //美团外卖支付接口
-            Route::post('meituan_pay', 'Order/pay');
+            Route::post('meituan_pay', 'StoreOrder/pay');
         })->prefix('api.meituan.');
 
         // 拉卡拉回调接口
