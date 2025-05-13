@@ -412,26 +412,7 @@ class Auth extends BaseController
         $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
         $user->append(['service','group', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral','merchant']);
         $data = $user->toArray();
-        // 线下订单金额统计
-        $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
-        $query = $storeOrderOfflineDao->getWhere(['uid' => $user['uid'], 'paid' => 1]);
-        // 检查返回值是否有效
-        if ($query !== null) {
-            $offlineOrderPrice = $query->sum('pay_price');
-        } else {
-            $offlineOrderPrice = 0;
-        }
-        // 线上订单金额统计
-        $storeOrderDao = app()->make(StoreOrderDao::class);
-        $orderQuery = $storeOrderDao->getWhere(['uid' => $user['uid'], 'paid' => 1, 'status' => [0,1, 2, 3]]);
-        // 检查返回值是否有效
-        if ($orderQuery !== null) {
-            $orderPrice = $query->sum('pay_price');
-        } else {
-            $orderPrice = 0;
-        }
-        $data['pay_price']=$orderPrice+$offlineOrderPrice;
-        $data['total_consume'] = $data['pay_price'];
+        $data['total_consume'] = $user['pay_price'];
         $data['extension_status'] = systemConfig('extension_status');
         if (systemConfig('member_status'))
             $data['member_icon'] = $this->request->userInfo()->member->brokerage_icon ?? '';
@@ -455,6 +436,13 @@ class Auth extends BaseController
         if ($merchantRepository->fieldExists('mer_phone', $user['phone'])){
             $data['is_shop'] = 1;
         }
+        /*// 线下订单金额统计
+        $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
+        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $user->uid, 'paid' => 1])->sum('pay_price');
+        // 线上订单金额统计
+        $storeOrderDao = app()->make(StoreOrderDao::class);
+        $orderPrice = $storeOrderDao->getWhere(['uid' => $user->uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
+        $user['pay_price']=$orderPrice;*/
         return app('json')->success($data);
     }
 

@@ -1137,23 +1137,8 @@ class StoreOrderRepository extends BaseRepository
         $refund = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['uid' => $uid, 'status' => [0, 1, 2]]);
         // 线下订单金额统计
         $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
-        $query = $storeOrderOfflineDao->getWhere(['uid' => $uid, 'paid' => 1]);
-        // 检查返回值是否有效
-        if ($query !== null) {
-            $offlineOrderPrice = $query->sum('pay_price');
-        } else {
-            $offlineOrderPrice = 0;
-        }
-        // 线上订单金额统计
-        $storeOrderDao = app()->make(StoreOrderDao::class);
-        $orderQuery = $storeOrderDao->getWhere(['uid' => $uid, 'paid' => 1, 'status' => [0,1, 2, 3]]);
-        // 检查返回值是否有效
-        if ($orderQuery !== null) {
-            $orderPrice = $query->sum('pay_price');
-        } else {
-            $orderPrice = 0;
-        }
-        $orderPrice += $offlineOrderPrice;
+        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $uid, 'paid' => 1])->sum('pay_price');
+        $orderPrice = $this->dao->getWhere(['uid' => $uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
         //线下订单数量统计
         $offlineOrderCount = $storeOrderOfflineDao->search(['uid' => $uid, 'paid' => 1])->count();
         $orderCount = $this->dao->search(['uid' => $uid, 'paid' => 1])->count()+$offlineOrderCount;
