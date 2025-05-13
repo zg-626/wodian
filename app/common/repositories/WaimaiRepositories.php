@@ -12,15 +12,17 @@ class WaimaiRepositories extends BaseRepository
     public $entId = '104984';
     public $accessKey = 'EI69RLOYPPMP-TK';
     public $secretKey = 'FOAd7WvvJb+lDSHSaAeUnQ==';
+    // 美团免登录测试环境地址
+    public $url = 'https://waimai-openapi.apigw.test.meituan.com';
+    // 美团免登录线上环境地址
+    public $onlineUrl = 'https://bep-openapi.meituan.com';
 
     //美团外卖入口
     public function mt_waimai($params)
     {
         $meituanService = new MeituanService();
-        // 美团免登录测试环境地址
-        $url = 'https://waimai-openapi.apigw.test.meituan.com/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
-        // 美团免登录线上环境地址
-        //$url = 'https://bep-openapi.meituan.com/api/sqt/open/login/h5/loginFree/redirection';
+        $url = $this->url.'/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
+        //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
         $staffPhone = isset($params['mobile']) ? $params['mobile'] : ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
         $staffEmail = isset($params['staffEmail']) ? $params['staffEmail'] : ''; //员工邮箱
         $staffNum = isset($params['staffNum']) ? $params['staffNum'] : ''; //员工工号
@@ -215,6 +217,21 @@ class WaimaiRepositories extends BaseRepository
      */
     public function payCallback($params)
     {
+        $meituanService = new MeituanService();
+        $url = $this->url.'/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
+        //$url = $this->onlineUrl.'/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
+
+        $ts = $meituanService->getMillisecond();// 13位时间戳。若请求发起时间与平台接受请求时间相差大于10分钟，平台将直接拒绝本次请求
+        $tradeNo = $params['tradeNo'];// 交易号，每笔支付的唯一标识，需要以此字段做幂等处理
+        $thirdTradeNo = $params['thirdTradeNo'];// 客户平台交易号
+        $tradeAmount = $params['tradeAmount'];// 支付金额(不包含服务费)，单位元，支持小数点后两位
+        $nonce = $meituanService->randstr(32);
+
+        $data = ['ts' => $ts, 'entId' => $this->entId, 'tradeNo' => $tradeNo, 'nonce' => $nonce,'thirdTradeNo' => $thirdTradeNo,'tradeAmount' => $tradeAmount];
+        $content = $meituanService->aes_encrypt($data, $this->secretKey);
+        $postData = ['accessKey' => $this->accessKey, 'content' => $content];
+        $result = $meituanService->loginFree2Post($url, $postData);
+        return $result;
 
     }
 
