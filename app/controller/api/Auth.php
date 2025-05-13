@@ -414,10 +414,10 @@ class Auth extends BaseController
         $data = $user->toArray();
         // 线下订单金额统计
         $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
-        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $user->uid, 'paid' => 1])->sum('pay_price');
+        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $user['uid'], 'paid' => 1])->sum('pay_price');
         // 线上订单金额统计
         $storeOrderDao = app()->make(StoreOrderDao::class);
-        $orderPrice = $storeOrderDao->getWhere(['uid' => $user->uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
+        $orderPrice = $storeOrderDao->getWhere(['uid' => $user['uid'], 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
         $data['pay_price']=$orderPrice;
         $data['total_consume'] = $data['pay_price'];
         $data['extension_status'] = systemConfig('extension_status');
@@ -443,7 +443,6 @@ class Auth extends BaseController
         if ($merchantRepository->fieldExists('mer_phone', $user['phone'])){
             $data['is_shop'] = 1;
         }
-
         return app('json')->success($data);
     }
 
