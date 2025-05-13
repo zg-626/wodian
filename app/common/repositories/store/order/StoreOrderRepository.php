@@ -12,6 +12,7 @@
 namespace app\common\repositories\store\order;
 
 use app\common\dao\store\order\StoreOrderDao;
+use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
@@ -1135,7 +1136,10 @@ class StoreOrderRepository extends BaseRepository
         $done = $this->dao->search(['uid' => $uid, 'status' => 3, 'paid' => 1])->where('StoreOrder.is_del', 0)->count();
         $refund = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['uid' => $uid, 'status' => [0, 1, 2]]);
         //$orderPrice = $this->dao->search(['uid' => $uid, 'paid' => 1])->sum('pay_price');
-        $orderCount = $this->dao->search(['uid' => $uid, 'paid' => 1])->count();
+        //线下订单统计
+        $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
+        $offlineOrderCount = $storeOrderOfflineDao->search(['uid' => $uid, 'paid' => 1])->count();
+        $orderCount = $this->dao->search(['uid' => $uid, 'paid' => 1])->count()+$offlineOrderCount;
         return compact('noComment', 'done', 'refund', 'noDeliver', 'noPay', 'noPostage', 'orderCount', 'all');
     }
 
