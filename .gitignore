@@ -5,3 +5,8 @@
 .env
 .example.env
 runtime/*
+/.trae
+/logs
+.history
+.lh
+/app/common/repositories/system/DataScreenRepository - 副本.php
