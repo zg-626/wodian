@@ -63,7 +63,7 @@ class MeituanService
         return $str;
     }
 
-    // MeituanService.php
+    // 基于美团方法，获取302响应的header信息和location
     public function loginFree2Posts($url, $postData) {
         $ch = curl_init();
 

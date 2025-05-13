@@ -208,6 +208,17 @@ class WaimaiRepositories extends BaseRepository
 
     }
 
+    /**
+     * 美团支付成功通知接口
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayCallback#支付成功通知接口
+     * 客户平台通过【支付成功通知】接口将支付成功状态同步给美团企业版，美团企业版将推动交易完成。
+     * @param array $params
+     */
+    public function payCallback($params)
+    {
+
+    }
+
     public function validateParams($params)
     {
         list($accessKey, $content) = array_values($params);
