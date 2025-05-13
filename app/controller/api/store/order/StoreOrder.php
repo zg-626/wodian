@@ -168,7 +168,7 @@ class StoreOrder extends BaseController
      */
     public function number()
     {
-        return app('json')->success(['orderPrice' => $this->request->userInfo()->pay_price] + $this->repository->userOrderNumber($this->request->uid()));
+        return app('json')->success($this->repository->userOrderNumber($this->request->uid()));
     }
 
     /**

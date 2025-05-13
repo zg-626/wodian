@@ -176,6 +176,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);
             $user->coupon_amount = $deduction_money;
             $user->save();
+            $total_price=$params['user_deduction'];
 
         }
 

@@ -14,6 +14,8 @@
 namespace app\controller\api;
 
 
+use app\common\dao\store\order\StoreOrderDao;
+use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
@@ -410,7 +412,14 @@ class Auth extends BaseController
         $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
         $user->append(['service','group', 'topService', 'total_collect_product', 'total_collect_store', 'total_coupon', 'total_visit_product', 'total_unread', 'total_recharge', 'lock_integral', 'total_integral','merchant']);
         $data = $user->toArray();
-        $data['total_consume'] = $user['pay_price'];
+        // 线下订单金额统计
+        $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
+        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $user->uid, 'paid' => 1])->sum('pay_price');
+        // 线上订单金额统计
+        $storeOrderDao = app()->make(StoreOrderDao::class);
+        $orderPrice = $storeOrderDao->getWhere(['uid' => $user->uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
+        $data['pay_price']=$orderPrice;
+        $data['total_consume'] = $data['pay_price'];
         $data['extension_status'] = systemConfig('extension_status');
         if (systemConfig('member_status'))
             $data['member_icon'] = $this->request->userInfo()->member->brokerage_icon ?? '';

@@ -1135,12 +1135,14 @@ class StoreOrderRepository extends BaseRepository
         $noComment = $this->dao->search(['uid' => $uid, 'status' => 2, 'paid' => 1])->where('StoreOrder.is_del', 0)->count();
         $done = $this->dao->search(['uid' => $uid, 'status' => 3, 'paid' => 1])->where('StoreOrder.is_del', 0)->count();
         $refund = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['uid' => $uid, 'status' => [0, 1, 2]]);
-        //$orderPrice = $this->dao->search(['uid' => $uid, 'paid' => 1])->sum('pay_price');
-        //线下订单统计
+        // 线下订单金额统计
         $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
+        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $uid, 'paid' => 1])->sum('pay_price');
+        $orderPrice = $this->dao->getWhere(['uid' => $uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
+        //线下订单数量统计
         $offlineOrderCount = $storeOrderOfflineDao->search(['uid' => $uid, 'paid' => 1])->count();
         $orderCount = $this->dao->search(['uid' => $uid, 'paid' => 1])->count()+$offlineOrderCount;
-        return compact('noComment', 'done', 'refund', 'noDeliver', 'noPay', 'noPostage', 'orderCount', 'all');
+        return compact('noComment', 'done', 'refund', 'noDeliver', 'noPay', 'noPostage', 'orderCount', 'all', 'orderPrice');
     }
 
     /**
