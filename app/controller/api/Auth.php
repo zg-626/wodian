@@ -414,11 +414,23 @@ class Auth extends BaseController
         $data = $user->toArray();
         // 线下订单金额统计
         $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
-        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $user['uid'], 'paid' => 1])->sum('pay_price');
+        $query = $storeOrderOfflineDao->getWhere(['uid' => $user['uid'], 'paid' => 1]);
+        // 检查返回值是否有效
+        if ($query !== null) {
+            $offlineOrderPrice = $query->sum('pay_price');
+        } else {
+            $offlineOrderPrice = 0;
+        }
         // 线上订单金额统计
         $storeOrderDao = app()->make(StoreOrderDao::class);
-        $orderPrice = $storeOrderDao->getWhere(['uid' => $user['uid'], 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
-        $data['pay_price']=$orderPrice;
+        $orderQuery = $storeOrderDao->getWhere(['uid' => $user['uid'], 'paid' => 1, 'status' => [0,1, 2, 3]]);
+        // 检查返回值是否有效
+        if ($orderQuery !== null) {
+            $orderPrice = $query->sum('pay_price');
+        } else {
+            $orderPrice = 0;
+        }
+        $data['pay_price']=$orderPrice+$offlineOrderPrice;
         $data['total_consume'] = $data['pay_price'];
         $data['extension_status'] = systemConfig('extension_status');
         if (systemConfig('member_status'))
