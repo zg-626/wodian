@@ -135,6 +135,45 @@ class WaimaiRepositories extends BaseRepository
     }
 
     /**
+     * 支付状态查询接口
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayQuery#支付状态查询接口
+     * 美团企业版通过【支付状态查询】接口主动查询客户平台的交易支付状态。
+     * 触发条件：调用【下单接口】后，超过5s未收到支付成功消息，即会调用【支付状态查询】接口。
+     * 调用频次：一共尝试9次查询，1-3次，每隔5s查询一次；4-6次，每隔10s查询一次；7-9次，每隔300s查询一次。
+     * @param array $params
+     ***/
+    public function query($params)
+    {
+        $content_res = $this->validateParams($params);
+        if ($content_res['status'] != 200) {
+            return $content_res;
+        }
+        $content = $content_res['data'];
+
+        $tradeNo = $content['tradeNo'];
+        $order = MeituanOrder::where('trade_no', $tradeNo)->find();
+        if (!$order) {
+            return $this->response(self::$ERROR_410, '支付单不存在');
+        }
+
+        $data['pay_status'] = self::$PAY_STATUS_10;
+        $data['close_time'] = date('Y-m-d H:i:s');
+        $data['close_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
+        try {
+            $order->save($data);
+        } catch (Exception $e) {
+            return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+        }
+
+        $thirdTradeNo = $tradeNo;
+        $data = compact('tradeNo', 'thirdTradeNo');
+        $meituanService = new MeituanService();
+        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
+        return $this->response(0, '成功', $dataEncrypt);
+
+    }
+
+    /**
      * 退款接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdRefund
      * 当用户在美团企业版发起退款时，美团企业版根据【退款接口】通知客户平台，为保证双方交易状态一致，客户平台需执行退款，并返回退款成功。当接口出现网络超时或服务繁忙响应（错误码 501）时，美团企业版会重试退款，具体重试策略参考附录

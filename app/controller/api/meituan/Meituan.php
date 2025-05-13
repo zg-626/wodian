@@ -22,12 +22,12 @@ class Meituan extends BaseController
     // 交易标准三方收银台支付查询外部接口
     public function query()
     {
-        $info=[
-            'status'=>0,
-            'msg'=>'成功',
-            'data'=>'123456']
-        ;
-        return  json($info);
+        $params = $this->request->params([
+            'accessKey',
+            'content',
+        ]);
+        $result = $repository->query($params);
+        return json($result);
     }
 
     // 交易标准三方收银台下单外部接口
