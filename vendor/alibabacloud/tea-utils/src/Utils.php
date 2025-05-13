@@ -19,6 +19,9 @@ class Utils
      */
     public static function toBytes($string)
     {
+        if (self::is_bytes($string)) {
+            return $string;
+        }
         $bytes = [];
         for ($i = 0; $i < \strlen($string); ++$i) {
             $bytes[] = \ord($string[$i]);
@@ -36,6 +39,9 @@ class Utils
      */
     public static function toString($bytes)
     {
+        if (\is_string($bytes)) {
+            return $bytes;
+        }
         $str = '';
         foreach ($bytes as $ch) {
             $str .= \chr($ch);
@@ -177,15 +183,15 @@ class Utils
      */
     public static function toJSONString($object)
     {
-        if (null === $object) {
-            $object = new \stdClass();
+        if (is_string($object)) {
+            return $object;
         }
 
         if ($object instanceof Model) {
             $object = $object->toMap();
         }
 
-        return json_encode($object);
+        return json_encode($object, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -314,7 +320,11 @@ class Utils
      */
     public static function assertAsBoolean($value)
     {
-        return \is_bool($value);
+        if (\is_bool($value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('It is not a boolean value.');
     }
 
     /**
@@ -322,21 +332,18 @@ class Utils
      *
      * @param mixed $value
      *
-     * @return bool the string value
+     * @return string the string value
      */
     public static function assertAsString($value)
     {
-        return \is_string($value);
+        if (\is_string($value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('It is not a string value.');
     }
 
-    /**
-     * Assert a value, if it is a bytes, return it, otherwise throws.
-     *
-     * @param mixed $value
-     *
-     * @return bool the bytes value
-     */
-    public static function assertAsBytes($value)
+    private static function is_bytes($value)
     {
         if (!\is_array($value)) {
             return false;
@@ -359,15 +366,48 @@ class Utils
     }
 
     /**
+     * Assert a value, if it is a bytes, return it, otherwise throws.
+     *
+     * @param mixed $value
+     *
+     * @return bytes the bytes value
+     */
+    public static function assertAsBytes($value)
+    {
+        if (self::is_bytes($value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('It is not a bytes value.');
+    }
+
+    /**
      * Assert a value, if it is a number, return it, otherwise throws.
      *
      * @param mixed $value
      *
-     * @return bool the number value
+     * @return int the number value
      */
     public static function assertAsNumber($value)
     {
-        return is_numeric($value);
+        if (\is_numeric($value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('It is not a number value.');
+    }
+
+    /**
+     * Assert a value, if it is a integer, return it, otherwise throws
+     * @param mixed $value
+     * @return int the integer value
+     */
+    public static function assertAsInteger($value){
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('It is not a int value.');
     }
 
     /**

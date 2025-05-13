@@ -120,6 +120,7 @@ class QrCodeTest extends TestCase
             'writer' => 'png',
             'size' => 300,
             'margin' => 10,
+            'round_block_size_mode' => 'shrink',
         ]);
 
         $pngData = $qrCode->writeString();
@@ -145,6 +146,72 @@ class QrCodeTest extends TestCase
 
         $this->assertTrue(imagesx($image) === $size + 2 * $margin);
         $this->assertTrue(imagesy($image) === $size + 2 * $margin);
+    }
+
+    /**
+     * @testdox Size and margin are handled correctly with rounded blocks
+     * @dataProvider roundedSizeProvider
+     */
+    public function testSetSizeRounded($size, $margin, $round, $mode, $expectedSize): void
+    {
+        $qrCode = new QrCode('QR Code contents with some length to have some data');
+        $qrCode->setRoundBlockSize($round, $mode);
+        $qrCode->setSize($size);
+        $qrCode->setMargin($margin);
+
+        $pngData = $qrCode->writeString();
+        $image = imagecreatefromstring($pngData);
+
+        $this->assertTrue(imagesx($image) === $expectedSize);
+        $this->assertTrue(imagesy($image) === $expectedSize);
+    }
+
+    public function roundedSizeProvider()
+    {
+        return [
+            [
+                'size' => 400,
+                'margin' => 0,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_ENLARGE,
+                'expectedSize' => 406,
+            ],
+            [
+                'size' => 400,
+                'margin' => 5,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_ENLARGE,
+                'expectedSize' => 416,
+            ],
+            [
+                'size' => 400,
+                'margin' => 0,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_MARGIN,
+                'expectedSize' => 400,
+            ],
+            [
+                'size' => 400,
+                'margin' => 5,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_MARGIN,
+                'expectedSize' => 410,
+            ],
+            [
+                'size' => 400,
+                'margin' => 0,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_SHRINK,
+                'expectedSize' => 377,
+            ],
+            [
+                'size' => 400,
+                'margin' => 5,
+                'round' => true,
+                'mode' => QrCode::ROUND_BLOCK_SIZE_MODE_SHRINK,
+                'expectedSize' => 387,
+            ],
+        ];
     }
 
     /**
@@ -189,7 +256,7 @@ class QrCodeTest extends TestCase
 
         $image = imagecreatefromstring(file_get_contents($filename));
 
-        $this->assertTrue(is_resource($image));
+        $this->assertTrue(false !== $image);
 
         imagedestroy($image);
     }

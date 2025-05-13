@@ -25,7 +25,7 @@ use Symfony\Component\String\Exception\RuntimeException;
  */
 class ByteString extends AbstractString
 {
-    private const ALPHABET_ALPHANUMERIC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    private const ALPHABET_ALPHANUMERIC = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
     public function __construct(string $string = '')
     {
@@ -42,7 +42,7 @@ class ByteString extends AbstractString
      * Copyright (c) 2004-2020, Facebook, Inc. (https://www.facebook.com/)
      */
 
-    public static function fromRandom(int $length = 16, string $alphabet = null): self
+    public static function fromRandom(int $length = 16, ?string $alphabet = null): self
     {
         if ($length <= 0) {
             throw new InvalidArgumentException(sprintf('A strictly positive length is expected, "%d" given.', $length));
@@ -103,7 +103,10 @@ class ByteString extends AbstractString
     public function camel(): parent
     {
         $str = clone $this;
-        $str->string = lcfirst(str_replace(' ', '', ucwords(preg_replace('/[^a-zA-Z0-9\x7f-\xff]++/', ' ', $this->string))));
+
+        $parts = explode(' ', trim(ucwords(preg_replace('/[^a-zA-Z0-9\x7f-\xff]++/', ' ', $this->string))));
+        $parts[0] = 1 !== \strlen($parts[0]) && ctype_upper($parts[0]) ? $parts[0] : lcfirst($parts[0]);
+        $str->string = implode('', $parts);
 
         return $str;
     }
@@ -210,7 +213,7 @@ class ByteString extends AbstractString
         return '' === $this->string || preg_match('//u', $this->string);
     }
 
-    public function join(array $strings, string $lastGlue = null): parent
+    public function join(array $strings, ?string $lastGlue = null): parent
     {
         $str = clone $this;
 
@@ -235,7 +238,7 @@ class ByteString extends AbstractString
 
     public function match(string $regexp, int $flags = 0, int $offset = 0): array
     {
-        $match = ((PREG_PATTERN_ORDER | PREG_SET_ORDER) & $flags) ? 'preg_match_all' : 'preg_match';
+        $match = ((\PREG_PATTERN_ORDER | \PREG_SET_ORDER) & $flags) ? 'preg_match_all' : 'preg_match';
 
         if ($this->ignoreCase) {
             $regexp .= 'i';
@@ -244,7 +247,7 @@ class ByteString extends AbstractString
         set_error_handler(static function ($t, $m) { throw new InvalidArgumentException($m); });
 
         try {
-            if (false === $match($regexp, $this->string, $matches, $flags | PREG_UNMATCHED_AS_NULL, $offset)) {
+            if (false === $match($regexp, $this->string, $matches, $flags | \PREG_UNMATCHED_AS_NULL, $offset)) {
                 $lastError = preg_last_error();
 
                 foreach (get_defined_constants(true)['pcre'] as $k => $v) {
@@ -265,7 +268,7 @@ class ByteString extends AbstractString
     public function padBoth(int $length, string $padStr = ' '): parent
     {
         $str = clone $this;
-        $str->string = str_pad($this->string, $length, $padStr, STR_PAD_BOTH);
+        $str->string = str_pad($this->string, $length, $padStr, \STR_PAD_BOTH);
 
         return $str;
     }
@@ -273,7 +276,7 @@ class ByteString extends AbstractString
     public function padEnd(int $length, string $padStr = ' '): parent
     {
         $str = clone $this;
-        $str->string = str_pad($this->string, $length, $padStr, STR_PAD_RIGHT);
+        $str->string = str_pad($this->string, $length, $padStr, \STR_PAD_RIGHT);
 
         return $str;
     }
@@ -281,7 +284,7 @@ class ByteString extends AbstractString
     public function padStart(int $length, string $padStr = ' '): parent
     {
         $str = clone $this;
-        $str->string = str_pad($this->string, $length, $padStr, STR_PAD_LEFT);
+        $str->string = str_pad($this->string, $length, $padStr, \STR_PAD_LEFT);
 
         return $str;
     }
@@ -353,7 +356,7 @@ class ByteString extends AbstractString
         return $str;
     }
 
-    public function slice(int $start = 0, int $length = null): parent
+    public function slice(int $start = 0, ?int $length = null): parent
     {
         $str = clone $this;
         $str->string = (string) substr($this->string, $start, $length ?? \PHP_INT_MAX);
@@ -363,13 +366,13 @@ class ByteString extends AbstractString
 
     public function snake(): parent
     {
-        $str = $this->camel()->title();
+        $str = $this->camel();
         $str->string = strtolower(preg_replace(['/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'], '\1_\2', $str->string));
 
         return $str;
     }
 
-    public function splice(string $replacement, int $start = 0, int $length = null): parent
+    public function splice(string $replacement, int $start = 0, ?int $length = null): parent
     {
         $str = clone $this;
         $str->string = substr_replace($this->string, $replacement, $start, $length ?? \PHP_INT_MAX);
@@ -377,7 +380,7 @@ class ByteString extends AbstractString
         return $str;
     }
 
-    public function split(string $delimiter, int $limit = null, int $flags = null): array
+    public function split(string $delimiter, ?int $limit = null, ?int $flags = null): array
     {
         if (1 > $limit = $limit ?? \PHP_INT_MAX) {
             throw new InvalidArgumentException('Split limit must be a positive integer.');
@@ -423,12 +426,12 @@ class ByteString extends AbstractString
         return $str;
     }
 
-    public function toUnicodeString(string $fromEncoding = null): UnicodeString
+    public function toUnicodeString(?string $fromEncoding = null): UnicodeString
     {
         return new UnicodeString($this->toCodePointString($fromEncoding)->string);
     }
 
-    public function toCodePointString(string $fromEncoding = null): CodePointString
+    public function toCodePointString(?string $fromEncoding = null): CodePointString
     {
         $u = new CodePointString();
 

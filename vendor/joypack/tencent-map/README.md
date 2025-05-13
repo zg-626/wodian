@@ -1,180 +1,37 @@
-##### 腾讯位置服务
+# tencent-map
 
-###### 地址解析（地址转坐标）
-```
-// 命名空间
-use Joypack\Tencent\Map\WebService\AddressOption;
-use Joypack\Tencent\Map\WebService\Address;
+#### 介绍
+fork https://github.com/joypack/tencent-map
 
-// 实例化参数
-$option = new AddressOption();
-// 设置接口 key
-$option->setKey('<your app key>');
-// 如果使用签名方式校验则需要配置 secret
-$option->setSecret('<your app secret>');
-// 设置要解析坐标的地址
-$option->setAddress('安徽省合肥市瑶海区方庙街道万达金街');
+#### 软件架构
+软件架构说明
 
-// 将参数在这里传递
-// 非开发模式只记录 error 类型的日志
-$address = new Address($option, <日志存储路径>, <是否开发模式>);
 
-// 授权IP校验方式通信（无sig参数）
-// $res = $address->request();
+#### 安装教程
 
-// 通过签名校验的方式通信
-// 无需使用 $option->setSig()
-$res = $address->request(true);
+1.  xxxx
+2.  xxxx
+3.  xxxx
 
-// $res->logger->print($res, true);
+#### 使用说明
 
-// 判断请求是否异常
-if($res->error) {
-    $res->logger->print($res->error, true);
-}
+1.  xxxx
+2.  xxxx
+3.  xxxx
 
-// 打印接口返回的原始数据
-// $res->logger->print($res->getOriginal(), true);
+#### 参与贡献
 
-// 判断接口返回状态
-if($res->status) {
-    // 打印接口返回信息
-    $res->logger->print($res->message, true);
-}
+1.  Fork 本仓库
+2.  新建 Feat_xxx 分支
+3.  提交代码
+4.  新建 Pull Request
 
-// 打印接口返回数据（内部已完成Array解析）
-$res->logger->print($res->result, true);
-```
 
-###### 逆地址解析（坐标位置描述）
-```
-// 命名空间
-use Joypack\Tencent\Map\WebService\LocationOption;
-use Joypack\Tencent\Map\WebService\Location;
+#### 特技
 
-// 实例化参数
-$option = new LocationOption();
-// 设置接口 key
-$option->setKey('<your app key>');
-// 如果使用签名方式校验则需要配置 secret
-$option->setSecret('<your app secret>');
-// 设置要解析地址的经纬度坐标
-$option->setLocation(31.877089, 117.347885);
-
-// 将参数在这里传递
-// 非开发模式只记录 error 类型的日志
-$location = new Location($option, LOG_PATH, true);
-
-// 授权IP校验方式通信（无sig参数）
-// $res = $address->request();
-
-// 通过签名校验的方式通信
-// 无需使用 $option->setSig()
-$res = $location->request(true);
-
-// $res->logger->print($res, true);
-
-// 判断请求是否异常
-if($res->error) {
-    $res->logger->print($res->error, true);
-}
-
-// 打印接口返回的原始数据
-// $res->logger->print($res->getOriginal(), true);
-
-// 判断接口返回状态
-if($res->status) {
-    // 打印接口返回信息
-    $res->logger->print($res->message, true);
-}
-
-// 打印接口返回数据（内部已完成Array解析）
-$res->logger->print($res->result, true);
-// 打印经纬度
-$res->logger->print($res->result['location']['lng']);
-```
-
-###### 坐标转换
-```
-// 命名空间
-use Joypack\Tencent\Map\WebService\TranslateOption;
-use Joypack\Tencent\Map\WebService\Translate;
-
-// 实例化参数
-$option = new TranslateOption();
-$option->setKey('<your app key>');
-$option->setSecret('<your app secret>');
-// 设置要转换的经纬度类型
-$option->setType($option::TYPE_BAIDU);
-// 设置经要转换的经纬度
-$option->setLocation(31.877089, 117.347885);
-
-// 
-$location = new Translate($option, LOG_PATH, true);
-
-// 授权IP校验方式通信（无sig参数）
-// $res = $address->request();
-
-// 通过签名校验的方式通信
-// 无需使用 $option->setSig()
-$res = $location->request(true);
-
-// $res->logger->print($res, true);
-
-// 判断请求是否异常
-if($res->error) {
-    $res->logger->print($res->error, true);
-}
-
-// 打印接口返回的原始数据
-// $res->logger->print($res->getOriginal(), true);
-
-// 判断接口返回状态
-if($res->status) {
-    // 打印接口返回信息
-    $res->logger->print($res->message, true);
-}
-
-// 打印接口返回数据（内部已完成Array解析）
-$res->logger->print($res->locations, true);
-```
-
-###### IP定位
-```
-// 命名空间
-use Joypack\Tencent\Map\WebService\IpOption;
-use Joypack\Tencent\Map\WebService\Ip;
-
-$option = new IpOption();
-$option->setKey('<your app key>');
-$option->setSecret('<your app secret>');
-$option->setIp('202.106.0.20');
-
-$location = new Ip($option, LOG_PATH, true);
-
-// 授权IP校验方式通信（无sig参数）
-// $res = $address->request();
-
-// 通过签名校验的方式通信
-// 无需使用 $option->setSig()
-$res = $location->request(true);
-
-// $res->logger->print($res, true);
-
-// 判断请求是否异常
-if($res->error) {
-    $res->logger->print($res->error, true);
-}
-
-// 打印接口返回的原始数据
-// $res->logger->print($res->getOriginal(), true);
-
-// 判断接口返回状态
-if($res->status) {
-    // 打印接口返回信息
-    $res->logger->print($res->message, true);
-}
-
-// 打印接口返回数据（内部已完成Array解析）
-$res->logger->print($res->result, true);
-```
+1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
+2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
+3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
+4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
+5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
+6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
