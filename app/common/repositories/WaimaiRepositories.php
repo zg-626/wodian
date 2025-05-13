@@ -78,23 +78,20 @@ class WaimaiRepositories extends BaseRepository
         $data['trade_amount'] = $content['tradeAmount'];
         $data['pay_status'] = self::$PAY_STATUS_0;
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-        // 获取美团员工信息
-        $staffInfo = $content['staffInfo'];
-        $data['phone'] = $staffInfo['staffPhone'];
+        $data['phone'] = $content['staffInfo']['staffPhone'];
         try {
             MeituanOrder::create($data);
         } catch (Exception $e) {
             return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-        $thirdTradeNo = $content['tradeNo'];
+        $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         //$thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&phone=18511111111";
         $thirdPayUrl = request()->domain().'/pay?tradeNo=$thirdTradeNo&phone=$phone';
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
-        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
-        return $this->response(0, '成功', $dataEncrypt);
+        return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
 
     /**
