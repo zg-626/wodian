@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '09fa0053471389b1b6bca77de03bf8c047c34ea1',
+    'reference' => 'aef61bbede937015f6f453b06891d7b9d6991a61',
     'name' => 'topthink/think',
   ),
   'versions' => 
@@ -182,6 +182,24 @@
       ),
       'reference' => '6433826dd02c9e5be8a127320dc13e7e6625d020',
     ),
+    'doctrine/inflector' => 
+    array (
+      'pretty_version' => '2.0.10',
+      'version' => '2.0.10.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '5817d0659c5b50c9b950feb9af7b9668e2c436bc',
+    ),
+    'doctrine/instantiator' => 
+    array (
+      'pretty_version' => '1.5.0',
+      'version' => '1.5.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '0a0fa9780f5d4e507415a065172d26a98d02047b',
+    ),
     'doctrine/lexer' => 
     array (
       'pretty_version' => '1.2.3',
@@ -226,6 +244,15 @@
       array (
       ),
       'reference' => '83b609028194aa042ea33b5af2d41a7427de80e6',
+    ),
+    'gregwar/captcha' => 
+    array (
+      'pretty_version' => 'v1.2.1',
+      'version' => '1.2.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '229d3cdfe33d6f1349e0aec94a26e9205a6db08e',
     ),
     'guzzle/batch' => 
     array (
@@ -434,6 +461,60 @@
       array (
       ),
       'reference' => 'e4490cabc77465aaee90b20cfc9a770f8c04be6b',
+    ),
+    'hyperf/context' => 
+    array (
+      'pretty_version' => 'v2.2.33',
+      'version' => '2.2.33.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'f2e77442693a07d47f7ca97f8b2fdb8e17196a47',
+    ),
+    'hyperf/contract' => 
+    array (
+      'pretty_version' => 'v2.2.33',
+      'version' => '2.2.33.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '1ebf037c91d76ec05af9e5cb3335b0f5ec810e27',
+    ),
+    'hyperf/engine' => 
+    array (
+      'pretty_version' => 'v1.2.2',
+      'version' => '1.2.2.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '12fdb2b4cec9ee92fc808321a7378cc6251e52cd',
+    ),
+    'hyperf/macroable' => 
+    array (
+      'pretty_version' => 'v2.2.33',
+      'version' => '2.2.33.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'e4e1b3ed614a5a9d4c24a48b0b3a554eb712af9f',
+    ),
+    'hyperf/pimple' => 
+    array (
+      'pretty_version' => 'v2.1.0',
+      'version' => '2.1.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '388655a68455c5245bc06a5b9e6bb3a9a77b7eb7',
+    ),
+    'hyperf/utils' => 
+    array (
+      'pretty_version' => 'v2.2.34',
+      'version' => '2.2.34.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '9c8519392166a6c8057cc52f7d02e1ac638581f5',
     ),
     'intervention/image' => 
     array (
@@ -1065,7 +1146,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => '09fa0053471389b1b6bca77de03bf8c047c34ea1',
+      'reference' => 'aef61bbede937015f6f453b06891d7b9d6991a61',
     ),
     'topthink/think-helper' => 
     array (
