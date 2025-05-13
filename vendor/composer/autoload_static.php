@@ -29,6 +29,7 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'a9ed0d27b5a698798a89181429f162c5' => __DIR__ . '/..' . '/khanamiryan/qrcode-detector-decoder/lib/Common/customFunctions.php',
         'ec838a45422f15144062a735bf321ce1' => __DIR__ . '/..' . '/ucloud/ufile-php-sdk/src/functions.php',
         '6b998e7ad3182c0d21d23780badfa07b' => __DIR__ . '/..' . '/yansongda/supports/src/Functions.php',
+        'bbeb7603826cb9296dde3ca1a840af47' => __DIR__ . '/..' . '/hyperf/utils/src/Functions.php',
         '9e090711773bfc38738f5dbaee5a7f14' => __DIR__ . '/..' . '/overtrue/wechat/src/Payment/helpers.php',
         'f67964341ef83e59f1cc6a3916599312' => __DIR__ . '/..' . '/qcloud/cos-sdk-v5/src/Qcloud/Cos/Common.php',
         '841780ea2e1d6545ea3a253239d59c05' => __DIR__ . '/..' . '/qiniu/php-sdk/src/Qiniu/functions.php',
@@ -139,6 +140,15 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             'Intervention\\Image\\' => 19,
         ),
+        'H' => 
+        array (
+            'Hyperf\\Utils\\' => 13,
+            'Hyperf\\Pimple\\' => 14,
+            'Hyperf\\Macroable\\' => 17,
+            'Hyperf\\Engine\\' => 14,
+            'Hyperf\\Contract\\' => 16,
+            'Hyperf\\Context\\' => 15,
+        ),
         'G' => 
         array (
             'GuzzleHttp\\Psr7\\' => 16,
@@ -161,6 +171,8 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         ),
         'D' => 
         array (
+            'Doctrine\\Instantiator\\' => 22,
+            'Doctrine\\Inflector\\' => 19,
             'Doctrine\\Common\\Lexer\\' => 22,
             'Darabonba\\OpenApi\\' => 18,
             'Darabonba\\GatewaySpi\\' => 21,
@@ -430,6 +442,30 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             0 => __DIR__ . '/..' . '/intervention/image/src/Intervention/Image',
         ),
+        'Hyperf\\Utils\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/utils/src',
+        ),
+        'Hyperf\\Pimple\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/pimple/src',
+        ),
+        'Hyperf\\Macroable\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/macroable/src',
+        ),
+        'Hyperf\\Engine\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/engine/src',
+        ),
+        'Hyperf\\Contract\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/contract/src',
+        ),
+        'Hyperf\\Context\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hyperf/context/src',
+        ),
         'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
@@ -473,6 +509,14 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'EasyWeChat\\' => 
         array (
             0 => __DIR__ . '/..' . '/overtrue/wechat/src',
+        ),
+        'Doctrine\\Instantiator\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator',
+        ),
+        'Doctrine\\Inflector\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Inflector',
         ),
         'Doctrine\\Common\\Lexer\\' => 
         array (

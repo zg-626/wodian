@@ -56,7 +56,8 @@
         "alibabacloud/dysmsapi-20170525": "2.0.9",
         "fastknife/ajcaptcha": "^1.1",
         "async-aws/s3": "^1.13",
-        "yansongda/pay": "~3.3.0"
+        "yansongda/pay": "~3.3.0",
+        "hyperf/pimple": "~2.1.0"
     },
     "require-dev": {
         "symfony/var-dumper": "^4.2",

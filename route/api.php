@@ -759,7 +759,7 @@ Route::group('api/', function () {
     //登录
     Route::post('auth', 'api.Auth/authLogin');
     //支付宝授权登录
-    Route::get('auth/alipay', 'api.Auth/alipayAuth');
+    Route::post('auth/alipay', 'api.Auth/alipayAuth');
     //短信登录
     Route::post('auth/smslogin', 'api.Auth/smsLogin');
     //注册
