@@ -207,7 +207,8 @@ class WaimaiRepositories extends BaseRepository
     /**
      * 关单接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdClosePay
-     * 当订单超过支付时效，美团企业版通过关单接口向客户平台发起关单请求，客户平台需要将未付款的交易单关闭并拦截用户支付。在交易创建后，用户在超过交易关单时间后仍然未支付成功，会触发交易关单。关单时间参考下单接口中的tradeExpiringTime。
+     * 当订单超过支付时效，美团企业版通过关单接口向客户平台发起关单请求，客户平台需要将未付款的交易单关闭并拦截用户支付。
+     * 在交易创建后，用户在超过交易关单时间后仍然未支付成功，会触发交易关单。关单时间参考下单接口中的tradeExpiringTime。
      * @param array $params
      ***/
     public function close($params)
@@ -243,7 +244,8 @@ class WaimaiRepositories extends BaseRepository
     /**
      * 退款接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdRefund
-     * 当用户在美团企业版发起退款时，美团企业版根据【退款接口】通知客户平台，为保证双方交易状态一致，客户平台需执行退款，并返回退款成功。当接口出现网络超时或服务繁忙响应（错误码 501）时，美团企业版会重试退款，具体重试策略参考附录
+     * 当用户在美团企业版发起退款时，美团企业版根据【退款接口】通知客户平台，为保证双方交易状态一致，客户平台需执行退款，并返回退款成功。
+     * 当接口出现网络超时或服务繁忙响应（错误码 501）时，美团企业版会重试退款，具体重试策略参考附录
      * @param array $params
      ***/
     public function refund($params)
