@@ -51,6 +51,7 @@ use think\facade\Cache;
 use think\facade\Log;
 use think\facade\Queue;
 use crmeb\jobs\SendSmsJob;
+use Yansongda\Pay\Pay;
 
 /**
  * Class Auth
@@ -275,6 +276,14 @@ class Auth extends BaseController
         $userRepository->loginAfter($user[1]);
 
         return app('json')->success($userRepository->returnToken($user[1], $tokenInfo));
+    }
+
+    // 支付宝授权登录
+    public function alipayAuth()
+    {
+        $config=systemConfig('alipay');
+        Pay::config($config);
+
     }
 
     public function getCaptcha()
