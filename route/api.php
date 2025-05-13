@@ -378,9 +378,6 @@ Route::group('api/', function () {
             Route::post(':id', '/verify');
         })->prefix('api.store.order.StoreOrderVerify')->middleware(\app\common\middleware\MerchantServerMiddleware::class, 0);
 
-        // 美团免登外卖地址
-        Route::any('/mt_waimai', 'Waimai/mtWaimai');
-
         //社区
         Route::group('community', function () {
 
@@ -615,6 +612,10 @@ Route::group('api/', function () {
             Route::any('/query', 'Meituan/query');
             // 交易标准三方收银台下单外部接口
             Route::any('/pay', 'Meituan/pay');
+            // 美团免登外卖地址
+            Route::any('/mt_waimai', 'Waimai/mtWaimai');
+            //美团外卖支付接口
+            Route::post('meituan_pay', 'Order/pay');
         })->prefix('api.meituan.');
 
         // 拉卡拉回调接口
