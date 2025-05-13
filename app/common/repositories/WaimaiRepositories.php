@@ -12,16 +12,15 @@ class WaimaiRepositories extends BaseRepository
     public $entId = '104984';
     public $accessKey = 'EI69RLOYPPMP-TK';
     public $secretKey = 'FOAd7WvvJb+lDSHSaAeUnQ==';
-    // 测试环境地址
-    public $url = 'https://waimai-openapi.apigw.test.meituan.com/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
-    // 线上环境地址
-    public $onlineUrl = 'https://bep-openapi.meituan.com/api/sqt/open/login/h5/loginFree/redirection';
 
     //美团外卖入口
     public function mt_waimai($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url;
+        // 美团免登录测试环境地址
+        $url = 'https://waimai-openapi.apigw.test.meituan.com/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
+        // 美团免登录线上环境地址
+        //$url = 'https://bep-openapi.meituan.com/api/sqt/open/login/h5/loginFree/redirection';
         $staffPhone = isset($params['mobile']) ? $params['mobile'] : ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
         $staffEmail = isset($params['staffEmail']) ? $params['staffEmail'] : ''; //员工邮箱
         $staffNum = isset($params['staffNum']) ? $params['staffNum'] : ''; //员工工号
