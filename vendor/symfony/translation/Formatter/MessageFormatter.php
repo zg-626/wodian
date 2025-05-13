@@ -14,6 +14,9 @@ namespace Symfony\Component\Translation\Formatter;
 use Symfony\Component\Translation\IdentityTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+// Help opcache.preload discover always-needed symbols
+class_exists(IntlFormatter::class);
+
 /**
  * @author Abdellatif Ait boudad <a.aitboudad@gmail.com>
  */
@@ -25,7 +28,7 @@ class MessageFormatter implements MessageFormatterInterface, IntlFormatterInterf
     /**
      * @param TranslatorInterface|null $translator An identity translator to use as selector for pluralization
      */
-    public function __construct(TranslatorInterface $translator = null, IntlFormatterInterface $intlFormatter = null)
+    public function __construct(?TranslatorInterface $translator = null, ?IntlFormatterInterface $intlFormatter = null)
     {
         $this->translator = $translator ?? new IdentityTranslator();
         $this->intlFormatter = $intlFormatter ?? new IntlFormatter();

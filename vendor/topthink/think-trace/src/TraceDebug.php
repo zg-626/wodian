@@ -71,7 +71,7 @@ class TraceDebug
         $response = $next($request);
 
         // Trace调试注入
-        if (false) {
+        if ($debug) {
             $data = $response->getContent();
             $this->traceDebug($response, $data);
             $response->content($data);
