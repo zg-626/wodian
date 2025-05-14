@@ -15,6 +15,7 @@ use crmeb\basic\BaseController;
 use crmeb\services\LockService;
 use think\App;
 use think\exception\ValidateException;
+use think\facade\Log;
 use think\response\Json;
 
 class StoreOrder extends BaseController
@@ -56,6 +57,7 @@ class StoreOrder extends BaseController
     {
         $payType = $this->request->param('pay_type');
         $key = (string)$this->request->param('key');
+        $pay_price = $this->request->param('pay_price');
         $phone = $this->request->param('phone');
         $trade_no = $this->request->param('trade_no');
         /** @var UserRepository $user*/
@@ -71,9 +73,22 @@ class StoreOrder extends BaseController
         $groupOrder = $groupOrderRepository->getOrderByTradeNo($userInfo->uid, $trade_no);
         if (!$groupOrder)
             return app('json')->fail('订单不存在');
+        // 同步修改美团订单表
+        $order = (new \app\common\model\meituan\MeituanOrder)->where('trade_no', $tradeNo)->find();
+        if (!$order) {
+            return app('json')->fail('美团订单不存在');
+        }
+
         if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
         try {
+            // 同步美团传过来的支付价格
+            if ($pay_price) {
+                $groupOrder->pay_price = $pay_price;
+                $groupOrder->save();
+                $order->pay_price = $pay_price;
+                $order->save();
+            }
             return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
         } catch (\Exception $e) {
             return app('json')->status('error', $e->getMessage(), ['order_id' => $groupOrder->group_order_id]);
