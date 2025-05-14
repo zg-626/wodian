@@ -16,6 +16,7 @@ namespace app\common\repositories\wechat;
 
 use app\common\dao\BaseDao;
 use app\common\dao\wechat\PayQrcodeDao;
+use app\common\model\wechat\PayQrcode;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\system\attachment\AttachmentRepository;
 use crmeb\services\QrcodeService;
@@ -57,12 +58,12 @@ class PayQrcodeRepository extends BaseRepository
      */
     public function createQrcode($merId, $ratio, $info): array
     {
-        $qrcode = $this->dao->getWhere(['mer_id' => $merId,'status'=>1, 'commission_rate' => $ratio]);
+        $qrcode = (new \app\common\model\wechat\PayQrcode)->where(['mer_id' => $merId,'status'=>1, 'commission_rate' => $ratio,'delete_time' => 0])->find();
         if ($qrcode) {
             throw new ValidateException('此比例已存在，请勿重复创建');
         }
         // 限制数量
-        $count = $this->dao->getWhere(['mer_id' => $merId,'status'=>1])->count();
+        $count = (new \app\common\model\wechat\PayQrcode)->where(['mer_id' => $merId,'status'=>1,'delete_time' => 0])->count();
         if ($count >= 5) {
             throw new ValidateException('最多创建5个二维码');
         }
@@ -131,7 +132,7 @@ class PayQrcodeRepository extends BaseRepository
     {
         $merId=$info['mer_id'];
         // 排除自身id
-        $qrcode = $this->dao->getWhere(['mer_id' => $merId,'status'=>1,'commission_rate' => $ratio, 'wechat_qrcode_id' => ['neq', $id]]);
+        $qrcode = (new \app\common\model\wechat\PayQrcode)->where(['mer_id' => $merId,'status'=>1,'commission_rate' => $ratio, 'wechat_qrcode_id' => ['neq', $id,'delete_time' => 0]]);
         if ($qrcode) {
             throw new ValidateException('此比例已存在，请重新输入');
         }
@@ -139,9 +140,13 @@ class PayQrcodeRepository extends BaseRepository
         if($ratio > $info['commission_rate']){
             throw new ValidateException('比例不能大于签订的比例');
         }
-        // 比例不能小于2
-        if($ratio < 2){
-            throw new ValidateException('比例不能小于2');
+        // 比例不能大于20
+        if($ratio > 20){
+            throw new ValidateException('比例不能大于20');
+        }
+        // 比例不能小于3
+        if($ratio < 3){
+            throw new ValidateException('比例不能小于3');
         }
         $siteUrl = rtrim(systemConfig('site_url'), '/');
         // 参数
