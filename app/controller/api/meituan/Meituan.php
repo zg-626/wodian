@@ -20,7 +20,7 @@ class Meituan extends BaseController
     }
 
     // 交易标准三方收银台支付查询外部接口
-    public function query()
+    public function query(WaimaiRepositories $repository)
     {
         $params = $this->request->params([
             'accessKey',

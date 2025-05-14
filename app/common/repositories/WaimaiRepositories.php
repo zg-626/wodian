@@ -151,9 +151,11 @@ class WaimaiRepositories extends BaseRepository
             'create_content' => $order['create_content'],
         ];
         try {
-            MeituanOrder::create($data);
             $group_order = StoreGroupOrder::create($groupOrder);
-            $_order['group_order_id'] = $group_order['group_order_id'];
+            $group_order_id = $group_order['group_order_id'];
+            $data['group_order_id'] = $group_order_id;
+            MeituanOrder::create($data);
+            $_order['group_order_id'] = $group_order_id;
             StoreOrder::create($_order);
         } catch (Exception $e) {
             return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
@@ -162,7 +164,7 @@ class WaimaiRepositories extends BaseRepository
         $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         //$thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&phone=18511111111";
-        $thirdPayUrl = request()->domain() . '/pay?tradeNo=$thirdTradeNo&phone=$phone';
+        $thirdPayUrl = request()->domain() . '/pay?tradeNo=$thirdTradeNo&phone=$phone&group_order_id=$group_order_id';
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
@@ -170,7 +172,7 @@ class WaimaiRepositories extends BaseRepository
 
     /**
      * 支付状态查询接口
-     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayQuery#支付状态查询接口
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayQuery
      * 美团企业版通过【支付状态查询】接口主动查询客户平台的交易支付状态。
      * 触发条件：调用【下单接口】后，超过5s未收到支付成功消息，即会调用【支付状态查询】接口。
      * 调用频次：一共尝试9次查询，1-3次，每隔5s查询一次；4-6次，每隔10s查询一次；7-9次，每隔300s查询一次。
