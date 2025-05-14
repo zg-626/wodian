@@ -65,8 +65,9 @@ class WaimaiRepositories extends BaseRepository
         if ($content_res['status'] != 0) {
             return $content_res;
         }
-        //$content = $content_res['data'];
-        $content = json_decode($content_res['data'], true);
+        $content = $content_res['data'];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团订单数据: ' . json_encode($content, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
 
         if (!isset($content['staffInfo']) || !$content['staffInfo']) {
             return $this->response(self::$ERROR_402, '员工信息参数缺失');
@@ -74,6 +75,9 @@ class WaimaiRepositories extends BaseRepository
 
         $tradeNo = $content['tradeNo'];
         $order = MeituanOrder::where('trade_no', $tradeNo)->find();
+        if ($order) {
+            return false;
+        }
         if ($order && $order['pay_status'] != self::$PAY_STATUS_0) {
             return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
         }
@@ -91,8 +95,7 @@ class WaimaiRepositories extends BaseRepository
         $data['business_discount_pay_amount'] = $content['businessDiscountPayAmount']??0;
         $data['pay_status'] = self::$PAY_STATUS_0;
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-        //
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团订单数据: ' . $data['create_content'], 'meituan_order_create');
+
         $user = User::where('phone', $phone)->field('uid,nickname,phone')->findOrEmpty()->toArray();
         $data['uid'] = $user['uid']?? 0;
         if(!$user){
