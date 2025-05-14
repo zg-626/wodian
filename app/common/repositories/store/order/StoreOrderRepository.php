@@ -16,6 +16,7 @@ use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\system\merchant\MerchantDao;
 use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
+use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\delivery\DeliveryOrderRepository;
@@ -1137,8 +1138,8 @@ class StoreOrderRepository extends BaseRepository
         $refund = app()->make(StoreRefundOrderRepository::class)->getWhereCount(['uid' => $uid, 'status' => [0, 1, 2]]);
         // 线下订单金额统计
         $storeOrderOfflineDao = app()->make(StoreOrderOfflineDao::class);
-        $offlineOrderPrice = $storeOrderOfflineDao->getWhere(['uid' => $uid, 'paid' => 1])->sum('pay_price');
-        $orderPrice = $this->dao->getWhere(['uid' => $uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
+        $offlineOrderPrice = (new \app\common\model\store\order\StoreOrderOffline)->where(['uid' => $uid, 'paid' => 1])->sum('pay_price');
+        $orderPrice = (new \app\common\model\store\order\StoreOrder)->where(['uid' => $uid, 'paid' => 1, 'status' => [0,1, 2, 3]])->sum('pay_price')+$offlineOrderPrice;
         //线下订单数量统计
         $offlineOrderCount = $storeOrderOfflineDao->search(['uid' => $uid, 'paid' => 1])->count();
         $orderCount = $this->dao->search(['uid' => $uid, 'paid' => 1])->count()+$offlineOrderCount;
