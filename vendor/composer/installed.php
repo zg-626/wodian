@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => 'aef61bbede937015f6f453b06891d7b9d6991a61',
+    'reference' => 'b85e0c2b4924b9cb80aefcab6a80912bf6670953',
     'name' => 'topthink/think',
   ),
   'versions' => 
@@ -83,6 +83,15 @@
       ),
       'reference' => '1619cb96c158384f72b873e1f85de8b299c9c367',
     ),
+    'alibabacloud/tea-fileform' => 
+    array (
+      'pretty_version' => '0.3.4',
+      'version' => '0.3.4.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '4bf0c75a045c8115aa8cb1a394bd08d8bb833181',
+    ),
     'alibabacloud/tea-utils' => 
     array (
       'pretty_version' => '0.2.21',
@@ -100,6 +109,15 @@
       array (
       ),
       'reference' => '3e0c000bf536224eebbac913c371bef174c0a16a',
+    ),
+    'alipaysdk/easysdk' => 
+    array (
+      'pretty_version' => '2.2.3',
+      'version' => '2.2.3.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'c6008839a22a5fca08e9f8536730f7abfed522d5',
     ),
     'aliyuncs/oss-sdk-php' => 
     array (
@@ -1146,7 +1164,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => 'aef61bbede937015f6f453b06891d7b9d6991a61',
+      'reference' => 'b85e0c2b4924b9cb80aefcab6a80912bf6670953',
     ),
     'topthink/think-helper' => 
     array (

@@ -13,9 +13,9 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         'd767e4fc2dc52fe66584ab8c6684783e' => __DIR__ . '/..' . '/adbario/php-dot-notation/src/helpers.php',
         '9b552a3cc426e3287cc811caefa3cf53' => __DIR__ . '/..' . '/topthink/think-helper/src/helper.php',
@@ -26,10 +26,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'b6b991a57620e2fb6b2f66f03fe9ddc2' => __DIR__ . '/..' . '/symfony/string/Resources/functions.php',
         'a1105708a18b76903365ca1c4aa61b02' => __DIR__ . '/..' . '/symfony/translation/Resources/functions.php',
         '2cffec82183ee1cea088009cef9a6fc3' => __DIR__ . '/..' . '/ezyang/htmlpurifier/library/HTMLPurifier.composer.php',
+        'bbeb7603826cb9296dde3ca1a840af47' => __DIR__ . '/..' . '/hyperf/utils/src/Functions.php',
         'a9ed0d27b5a698798a89181429f162c5' => __DIR__ . '/..' . '/khanamiryan/qrcode-detector-decoder/lib/Common/customFunctions.php',
         'ec838a45422f15144062a735bf321ce1' => __DIR__ . '/..' . '/ucloud/ufile-php-sdk/src/functions.php',
         '6b998e7ad3182c0d21d23780badfa07b' => __DIR__ . '/..' . '/yansongda/supports/src/Functions.php',
-        'bbeb7603826cb9296dde3ca1a840af47' => __DIR__ . '/..' . '/hyperf/utils/src/Functions.php',
         '9e090711773bfc38738f5dbaee5a7f14' => __DIR__ . '/..' . '/overtrue/wechat/src/Payment/helpers.php',
         'f67964341ef83e59f1cc6a3916599312' => __DIR__ . '/..' . '/qcloud/cos-sdk-v5/src/Qcloud/Cos/Common.php',
         '841780ea2e1d6545ea3a253239d59c05' => __DIR__ . '/..' . '/qiniu/php-sdk/src/Qiniu/functions.php',
@@ -193,8 +193,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             'AsyncAws\\S3\\' => 12,
             'AsyncAws\\Core\\' => 14,
+            'Alipay\\EasySDK\\' => 15,
             'AlibabaCloud\\Tea\\XML\\' => 21,
             'AlibabaCloud\\Tea\\Utils\\' => 23,
+            'AlibabaCloud\\Tea\\FileForm\\' => 26,
             'AlibabaCloud\\Tea\\' => 17,
             'AlibabaCloud\\SDK\\Dysmsapi\\V20170525\\' => 36,
             'AlibabaCloud\\OpenApiUtil\\' => 25,
@@ -562,6 +564,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             0 => __DIR__ . '/..' . '/async-aws/core/src',
         ),
+        'Alipay\\EasySDK\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alipaysdk/easysdk/php/src',
+        ),
         'AlibabaCloud\\Tea\\XML\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/tea-xml/src',
@@ -569,6 +575,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'AlibabaCloud\\Tea\\Utils\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/tea-utils/src',
+        ),
+        'AlibabaCloud\\Tea\\FileForm\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/tea-fileform/src',
         ),
         'AlibabaCloud\\Tea\\' => 
         array (
