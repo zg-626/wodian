@@ -1,8 +1,12 @@
 <?php
 
 namespace app\common\repositories;
+
 use app\common\model\meituan\MeituanOrder;
 use app\common\model\meituan\MeituanOrderRefund;
+use app\common\model\store\order\StoreGroupOrder;
+use app\common\model\store\order\StoreOrder;
+use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use crmeb\services\MeituanService;
 use think\Exception;
@@ -21,7 +25,7 @@ class WaimaiRepositories extends BaseRepository
     public function mt_waimai($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url.'/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
+        $url = $this->url . '/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
         //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
         $staffPhone = isset($params['mobile']) ? $params['mobile'] : ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
         $staffEmail = isset($params['staffEmail']) ? $params['staffEmail'] : ''; //员工邮箱
@@ -41,7 +45,7 @@ class WaimaiRepositories extends BaseRepository
         $location = ['longitude' => $longitude, 'latitude' => $latitude, 'geotype' => $geotype, 'address' => $address];
         $bizParam = ['location' => $location];
         $bizParam = [];
-        $data = ['productType' => $product_type, 'ts' => $ts, 'entId' => $this->entId, 'staffInfo' => $staffInfo, 'nonce' => $nonce,'sceneType'=>9];
+        $data = ['productType' => $product_type, 'ts' => $ts, 'entId' => $this->entId, 'staffInfo' => $staffInfo, 'nonce' => $nonce, 'sceneType' => 9];
         $content = $meituanService->aes_encrypt($data, $this->secretKey);
         $postData = ['accessKey' => $this->accessKey, 'content' => $content];
         $result = $meituanService->loginFree2Posts($url, $postData);
@@ -68,39 +72,143 @@ class WaimaiRepositories extends BaseRepository
         }
         $tradeNo = $content['tradeNo'];
         $order = MeituanOrder::where('trade_no', $tradeNo)->find();
-        if ($order) {
-            if ($order['pay_status'] != self::$PAY_STATUS_0) {
-                return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
-            }
+        if ($order && $order['pay_status'] != self::$PAY_STATUS_0) {
+            return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
         }
 
+        $data['phone'] = $content['staffInfo']['staffPhone'];
         $data['trade_no'] = $tradeNo;
         $data['trade_amount'] = $content['tradeAmount'];
         $data['pay_status'] = self::$PAY_STATUS_0;
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-        // 获取美团员工信息
-        $staffInfo = $content['staffInfo'];
-        $data['phone'] = $staffInfo['staffPhone'];
+
+        $user = User::where('phone', $data['phone'])->field('uid,nickname,phone')->find();
+        $groupOrder = [
+            'uid' => $user['uid'] ?? 0,
+            'group_order_sn' => 'wxo' . $tradeNo,
+            'total_postage' => 0,
+            'total_price' => $content['tradeAmount'],
+            'total_num' => 1,
+            'real_name' => $user['nickname'] ?? '',
+            'user_phone' => $user['phone'] ?? '',
+            'user_address' => '',
+            'pay_price' => $content['tradeAmount'],
+            'coupon_price' => $content['businessDiscountPayAmount'],
+            'pay_postage' => 0,
+            'cost' => $content['tradeAmount'],
+            'coupon_id' => '',
+            'pay_type' => 0,
+            'give_coupon_ids' => '',
+            'integral' => 0,
+            'integral_price' => 0,
+            'deduction' => 0,
+            'deduction_price' => 0,
+            'give_integral' => 0,
+            'activity_type' => 0,
+
+            'is_meituan' => 1,
+            'trade_no' => $tradeNo,
+        ];
+        $_order = [
+            'activity_type' => 0,
+            'commission_rate' => 0,
+            'order_type' => 0,
+            'is_virtual' => 0,
+            'extension_one' => 0,
+            'extension_two' => 0,
+            'order_sn' => $groupOrder['group_order_sn'],
+            'uid' => $user['uid'] ?? 0,
+            'spread_uid' => 0,
+            'top_uid' => 0,
+            'is_selfbuy' => 1,
+            'real_name' => $user['nickname'] ?? '',
+            'user_phone' => $user['phone'] ?? '',
+            'user_address' => '',
+            'cart_id' => '',
+            'total_num' => $groupOrder['total_num'],
+            'total_price' => $groupOrder['total_price'],
+            'total_postage' => $groupOrder['postage_price'],
+            'pay_postage' => $groupOrder['pay_postage'],
+            'svip_discount' => 0,
+            'pay_price' => $groupOrder['pay_price'],
+            'integral' => $groupOrder['integral'],
+            'integral_price' => $groupOrder['integral_price'],
+            'give_integral' => $groupOrder['give_integral'],
+            'deduction' => $groupOrder['deduction'],
+            'deduction_price' => $groupOrder['deduction_price'],
+            'mer_id' => 0,
+            'cost' => $groupOrder['cost'],
+            'order_extend' => '',
+            'coupon_id' => $groupOrder['coupon_id'],
+            'mark' => '',
+            'coupon_price' => $groupOrder['coupon_price'],
+            'platform_coupon_price' => 0,
+            'pay_type' => 0,
+            'refund_switch' => 1,
+
+            'is_meituan' => $groupOrder['is_meituan'],
+            'trade_no' => $groupOrder['trade_no'],
+            'create_content' => $order['create_content'],
+        ];
         try {
             MeituanOrder::create($data);
+            $group_order = StoreGroupOrder::create($groupOrder);
+            $_order['group_order_id'] = $group_order['group_order_id'];
+            StoreOrder::create($_order);
         } catch (Exception $e) {
             return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
         }
 
-        $thirdTradeNo = $content['tradeNo'];
+        $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         //$thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&phone=18511111111";
-        $thirdPayUrl = request()->domain().'/pay?tradeNo=$thirdTradeNo&phone=$phone';
+        $thirdPayUrl = request()->domain() . '/pay?tradeNo=$thirdTradeNo&phone=$phone';
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
-        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
-        return $this->response(0, '成功', $dataEncrypt);
+        return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
+    }
+
+    /**
+     * 支付状态查询接口
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayQuery#支付状态查询接口
+     * 美团企业版通过【支付状态查询】接口主动查询客户平台的交易支付状态。
+     * 触发条件：调用【下单接口】后，超过5s未收到支付成功消息，即会调用【支付状态查询】接口。
+     * 调用频次：一共尝试9次查询，1-3次，每隔5s查询一次；4-6次，每隔10s查询一次；7-9次，每隔300s查询一次。
+     * @param array $params
+     ***/
+    public function query($params)
+    {
+        $content_res = $this->validateParams($params);
+        if ($content_res['status'] != 200) {
+            return $content_res;
+        }
+        $content = $content_res['data'];
+
+        $tradeNo = $content['tradeNo'];
+        $order = MeituanOrder::where('trade_no', $tradeNo)->find();
+        if (!$order) {
+            return $this->response(self::$ERROR_410, '支付单不存在');
+        }
+        $create_content = json_decode($order['create_content'], true);
+
+        $thirdTradeNo = $tradeNo;
+        $payStatus = $order['pay_status'];
+        $tradeTime = $order['create_time'];
+        $tradeAmount = $create_content['tradeAmount'];
+        $entPayAmount = $create_content['entPayAmount'];
+        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount'];
+        $serviceFeeAmount = $create_content['serviceFeeAmount'];
+        $paymentDetails = $order['paymentDetails'];
+        $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
+        $meituanService = new MeituanService();
+        return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
 
     /**
      * 关单接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdClosePay
-     * 当订单超过支付时效，美团企业版通过关单接口向客户平台发起关单请求，客户平台需要将未付款的交易单关闭并拦截用户支付。在交易创建后，用户在超过交易关单时间后仍然未支付成功，会触发交易关单。关单时间参考下单接口中的tradeExpiringTime。
+     * 当订单超过支付时效，美团企业版通过关单接口向客户平台发起关单请求，客户平台需要将未付款的交易单关闭并拦截用户支付。
+     * 在交易创建后，用户在超过交易关单时间后仍然未支付成功，会触发交易关单。关单时间参考下单接口中的tradeExpiringTime。
      * @param array $params
      ***/
     public function close($params)
@@ -129,54 +237,15 @@ class WaimaiRepositories extends BaseRepository
         $thirdTradeNo = $tradeNo;
         $data = compact('tradeNo', 'thirdTradeNo');
         $meituanService = new MeituanService();
-        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
-        return $this->response(0, '成功', $dataEncrypt);
-
-    }
-
-    /**
-     * 支付状态查询接口
-     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdPayQuery#支付状态查询接口
-     * 美团企业版通过【支付状态查询】接口主动查询客户平台的交易支付状态。
-     * 触发条件：调用【下单接口】后，超过5s未收到支付成功消息，即会调用【支付状态查询】接口。
-     * 调用频次：一共尝试9次查询，1-3次，每隔5s查询一次；4-6次，每隔10s查询一次；7-9次，每隔300s查询一次。
-     * @param array $params
-     ***/
-    public function query($params)
-    {
-        $content_res = $this->validateParams($params);
-        if ($content_res['status'] != 200) {
-            return $content_res;
-        }
-        $content = $content_res['data'];
-
-        $tradeNo = $content['tradeNo'];
-        $order = MeituanOrder::where('trade_no', $tradeNo)->find();
-        if (!$order) {
-            return $this->response(self::$ERROR_410, '支付单不存在');
-        }
-
-        $data['pay_status'] = self::$PAY_STATUS_10;
-        $data['close_time'] = date('Y-m-d H:i:s');
-        $data['close_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-        try {
-            $order->save($data);
-        } catch (Exception $e) {
-            return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-        }
-
-        $thirdTradeNo = $tradeNo;
-        $data = compact('tradeNo', 'thirdTradeNo');
-        $meituanService = new MeituanService();
-        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
-        return $this->response(0, '成功', $dataEncrypt);
+        return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
 
     }
 
     /**
      * 退款接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdRefund
-     * 当用户在美团企业版发起退款时，美团企业版根据【退款接口】通知客户平台，为保证双方交易状态一致，客户平台需执行退款，并返回退款成功。当接口出现网络超时或服务繁忙响应（错误码 501）时，美团企业版会重试退款，具体重试策略参考附录
+     * 当用户在美团企业版发起退款时，美团企业版根据【退款接口】通知客户平台，为保证双方交易状态一致，客户平台需执行退款，并返回退款成功。
+     * 当接口出现网络超时或服务繁忙响应（错误码 501）时，美团企业版会重试退款，具体重试策略参考附录
      * @param array $params
      ***/
     public function refund($params)
@@ -243,9 +312,7 @@ class WaimaiRepositories extends BaseRepository
         $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
         $data = compact('thirdRefundNo', 'refundDetails');
         $meituanService = new MeituanService();
-        $dataEncrypt = $meituanService->aes_encrypt($data, $this->secretKey);
-        return $this->response(0, '成功', $dataEncrypt);
-
+        return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
 
     /**
@@ -257,7 +324,7 @@ class WaimaiRepositories extends BaseRepository
     public function payCallback($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url.'/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
+        $url = $this->url . '/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
         //$url = $this->onlineUrl.'/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
 
         $ts = $meituanService->getMillisecond();// 13位时间戳。若请求发起时间与平台接受请求时间相差大于10分钟，平台将直接拒绝本次请求
@@ -266,7 +333,7 @@ class WaimaiRepositories extends BaseRepository
         $tradeAmount = $params['tradeAmount'];// 支付金额(不包含服务费)，单位元，支持小数点后两位
         $nonce = $meituanService->randstr(32);
 
-        $data = ['ts' => $ts, 'entId' => $this->entId, 'tradeNo' => $tradeNo, 'nonce' => $nonce,'thirdTradeNo' => $thirdTradeNo,'tradeAmount' => $tradeAmount];
+        $data = ['ts' => $ts, 'entId' => $this->entId, 'tradeNo' => $tradeNo, 'nonce' => $nonce, 'thirdTradeNo' => $thirdTradeNo, 'tradeAmount' => $tradeAmount];
         $content = $meituanService->aes_encrypt($data, $this->secretKey);
         $postData = ['accessKey' => $this->accessKey, 'content' => $content];
         $result = $meituanService->loginFree2Post($url, $postData);
