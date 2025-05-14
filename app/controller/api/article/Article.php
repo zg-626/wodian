@@ -24,6 +24,7 @@ use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\user\UserVisitRepository;
+use app\common\repositories\WaimaiRepositories;
 use crmeb\jobs\OrderOfflineProfitsharingJob;
 use crmeb\jobs\SendSmsJob;
 use crmeb\services\OfflineMiniProgramService;
@@ -332,12 +333,18 @@ class Article extends BaseController
             //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
             //$storeOrderOfflineRepository->computeds($order,$user);
             //$storeOrderOfflineRepository->red($order);
-            $info=$storeOrderOfflineRepository->paySuccess($order);
-            print_r($info);
+            //$info=$storeOrderOfflineRepository->paySuccess($order);
             //$storeOrderOfflineRepository->virtualDelivery($order);
+            /** @var WaimaiRepositories $repository */
+            $params = $this->request->params([
+                'accessKey',
+                'content',
+            ]);
+            $repository = app()->make(WaimaiRepositories::class);
+            $result = $repository->create($params);
 
         } catch (Exception $e) {
-            print_r($e->getMessage());
+            print_r($e->getMessage().$e->getLine());
         }
         return app('json')->success('测试成功');
     }

@@ -596,7 +596,7 @@ Route::group('api/', function () {
             Route::get('/lst/:cid', 'Article/lst');
             Route::get('/list', 'Article/list');
             Route::get('detail/:id', 'Article/detail');
-            Route::get('test', 'Article/test');
+            Route::any('test', 'Article/test');
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 

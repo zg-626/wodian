@@ -65,24 +65,39 @@ class WaimaiRepositories extends BaseRepository
         if ($content_res['status'] != 0) {
             return $content_res;
         }
-        $content = $content_res['data'];
+        //$content = $content_res['data'];
+        $content = json_decode($content_res['data'], true);
 
         if (!isset($content['staffInfo']) || !$content['staffInfo']) {
             return $this->response(self::$ERROR_402, '员工信息参数缺失');
         }
+
         $tradeNo = $content['tradeNo'];
         $order = MeituanOrder::where('trade_no', $tradeNo)->find();
         if ($order && $order['pay_status'] != self::$PAY_STATUS_0) {
             return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
         }
 
-        $data['phone'] = $content['staffInfo']['staffPhone'];
+        $phone= $content['staffInfo']['staffPhone'];
+        // 如果staffPhone为空，则使用staffNum
+        if($phone===''){
+            $phone=$content['staffInfo']['staffNum'];
+        }
+
+        $data['phone'] = $phone;
         $data['trade_no'] = $tradeNo;
         $data['trade_amount'] = $content['tradeAmount'];
+        $data['service_fee_amount'] = $content['serviceFeeAmount'];
+        $data['business_discount_pay_amount'] = $content['businessDiscountPayAmount']??0;
         $data['pay_status'] = self::$PAY_STATUS_0;
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
+        //
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团订单数据: ' . $data['create_content'], 'meituan_order_create');
-        $user = User::where('phone', $data['phone'])->field('uid,nickname,phone')->find();
+        $user = User::where('phone', $phone)->field('uid,nickname,phone')->findOrEmpty()->toArray();
+        $data['uid'] = $user['uid']?? 0;
+        if(!$user){
+            return $this->response(self::$ERROR_510, self::errorStatusList()[self::$ERROR_510]);
+        }
         $groupOrder = [
             'uid' => $user['uid'] ?? 0,
             'group_order_sn' => 'wxo' . $tradeNo,
@@ -92,10 +107,10 @@ class WaimaiRepositories extends BaseRepository
             'real_name' => $user['nickname'] ?? '',
             'user_phone' => $user['phone'] ?? '',
             'user_address' => '',
-            'pay_price' => $content['tradeAmount'],
-            'coupon_price' => $content['businessDiscountPayAmount']?: 0,
+            'pay_price' => $content['tradeAmount']?: 0,
+            'coupon_price' => $content['businessDiscountPayAmount']??0,
             'pay_postage' => 0,
-            'cost' => $content['tradeAmount'],
+            'cost' => $content['tradeAmount']?: 0,
             'coupon_id' => '',
             'pay_type' => 0,
             'give_coupon_ids' => '',
@@ -127,7 +142,7 @@ class WaimaiRepositories extends BaseRepository
             'cart_id' => '',
             'total_num' => $groupOrder['total_num'],
             'total_price' => $groupOrder['total_price'],
-            'total_postage' => $groupOrder['postage_price'],
+            'total_postage' => 0,
             'pay_postage' => $groupOrder['pay_postage'],
             'svip_discount' => 0,
             'pay_price' => $groupOrder['pay_price'],
@@ -148,7 +163,7 @@ class WaimaiRepositories extends BaseRepository
 
             'is_meituan' => $groupOrder['is_meituan'],
             'trade_no' => $groupOrder['trade_no'],
-            'create_content' => $order['create_content'],
+            'create_content' => $data['create_content'],
         ];
         try {
             $group_order = StoreGroupOrder::create($groupOrder);
@@ -198,7 +213,7 @@ class WaimaiRepositories extends BaseRepository
         $tradeTime = $order['create_time'];
         $tradeAmount = $create_content['tradeAmount'];
         $entPayAmount = $create_content['entPayAmount'];
-        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount'];
+        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount']?: 0;
         $serviceFeeAmount = $create_content['serviceFeeAmount'];
         $paymentDetails = $order['paymentDetails'];
         $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
