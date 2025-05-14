@@ -14,6 +14,7 @@ namespace app\common\repositories\store\order;
 use app\common\dao\store\order\StoreOrderDao;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\system\merchant\MerchantDao;
+use app\common\model\meituan\MeituanOrder;
 use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\store\order\StoreOrderOffline;
@@ -196,6 +197,10 @@ class StoreOrderRepository extends BaseRepository
     public function paySuccess(StoreGroupOrder $groupOrder, $is_combine = 0, $subOrders = [])
     {
         $groupOrder->append(['user']);
+        // 判断美团订单
+        if ($groupOrder->is_meituan === 1) {
+            $this->paySuccessMeituan($groupOrder);
+        }
         //修改订单状态
         Db::transaction(function () use ($subOrders, $is_combine, $groupOrder) {
             $time = date('Y-m-d H:i:s');
@@ -456,6 +461,29 @@ class StoreOrderRepository extends BaseRepository
         event('order.paySuccess', compact('groupOrder'));
         event('data.screen.send', []);
     }
+
+    // 美团支付成功后
+    public function paySuccessMeituan(StoreGroupOrder $groupOrder)
+    {
+        // 支付成功后，更新订单状态为已支付
+        $groupOrder->paid = 1;
+        $groupOrder->pay_time = date('Y-m-d H:i:s');
+        $groupOrder->save();
+        $tradeNo = $groupOrder->trade_no;
+        // 同步修改美团订单表
+        $order = (new \app\common\model\meituan\MeituanOrder)->where('trade_no', $tradeNo)->find();
+        if (!$order) {
+            Log::error('美团订单不存在：' . $tradeNo);
+        }
+        $order->pay_status = self::$PAY_STATUS_1;
+        $order->save();
+
+    }
+
+    public static $PAY_STATUS_0 = 0; // 0 未支付
+    public static $PAY_STATUS_1 = 1; // 1 支付成功
+    public static $PAY_STATUS_2 = 2; // 2 支付失败
+    public static $PAY_STATUS_10 = 10;// 支付超时关单
 
     // 用户分组常量定义
     public const USER_GROUP = [

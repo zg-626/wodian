@@ -35,6 +35,8 @@ class OrderPaySuccessListen implements ListenerInterface
             }
         }
         Log::info('微信支付成功回调执行队列' . var_export([$data,$groupOrder], 1));
-        app()->make(StoreOrderRepository::class)->paySuccess($groupOrder, $is_combine, $orders);
+        /** @var StoreOrderRepository $toreOrderRepository */
+        $toreOrderRepository=app()->make(StoreOrderRepository::class);
+        $toreOrderRepository->paySuccess($groupOrder, $is_combine, $orders);
     }
 }
