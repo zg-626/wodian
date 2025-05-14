@@ -316,7 +316,7 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1731]]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1693]]);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){
 //                /** @var MerchantRepository $merchantRepository */
@@ -331,7 +331,9 @@ class Article extends BaseController
             //$storeOrderRepository = app()->make(StoreOrderRepository::class);
             //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
             //$storeOrderOfflineRepository->computeds($order,$user);
-            $storeOrderOfflineRepository->red($order);
+            //$storeOrderOfflineRepository->red($order);
+            $info=$storeOrderOfflineRepository->paySuccess($order);
+            print_r($info);
             //$storeOrderOfflineRepository->virtualDelivery($order);
 
         } catch (Exception $e) {

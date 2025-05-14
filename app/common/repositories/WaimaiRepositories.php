@@ -81,7 +81,7 @@ class WaimaiRepositories extends BaseRepository
         $data['trade_amount'] = $content['tradeAmount'];
         $data['pay_status'] = self::$PAY_STATUS_0;
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团订单数据: ' . $data['create_content'], 'meituan_order_create');
         $user = User::where('phone', $data['phone'])->field('uid,nickname,phone')->find();
         $groupOrder = [
             'uid' => $user['uid'] ?? 0,
@@ -93,7 +93,7 @@ class WaimaiRepositories extends BaseRepository
             'user_phone' => $user['phone'] ?? '',
             'user_address' => '',
             'pay_price' => $content['tradeAmount'],
-            'coupon_price' => $content['businessDiscountPayAmount'],
+            'coupon_price' => $content['businessDiscountPayAmount']?: 0,
             'pay_postage' => 0,
             'cost' => $content['tradeAmount'],
             'coupon_id' => '',
