@@ -16,7 +16,7 @@ class Meituan extends BaseController
             'msg'=>'成功',
             'data'=>'123456']
         ;
-        return  json($info);
+        return json_encode($info,JSON_UNESCAPED_UNICODE);
     }
 
     // 交易标准三方收银台支付查询外部接口
@@ -27,7 +27,7 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->query($params);
-        return json($result);
+        return json_encode($result,JSON_UNESCAPED_UNICODE);
     }
 
     // 交易标准三方收银台下单外部接口
@@ -41,7 +41,7 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->create($params);
-        return json($result);
+        return json_encode($result,JSON_UNESCAPED_UNICODE);
     }
 
     //交易标准三方收银台关单外部接口
@@ -55,7 +55,7 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->close($params);
-        return json($result);
+        return json_encode($result,JSON_UNESCAPED_UNICODE);
     }
 
     // 交易标准三方收银台退款外部接口
@@ -69,7 +69,7 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->refund($params);
-        return json($result);
+        return json_encode($result,JSON_UNESCAPED_UNICODE);
     }
 
 }
