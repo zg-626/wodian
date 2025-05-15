@@ -76,8 +76,24 @@ class WaimaiRepositories extends BaseRepository
         $tradeNo = $content['tradeNo'];
         $order = MeituanOrder::where('trade_no', $tradeNo)->find();
         if ($order) {
-            return false;
+            // 如果订单支付状态不是未支付，则返回对应状态
+            if ($order['pay_status'] != self::$PAY_STATUS_0) {
+                return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
+            }
+            
+            // 获取用户信息
+            $phone = $order['phone'];
+            $user = User::where('phone', $phone)->field('uid')->find();
+            
+            // 构建返回相同的支付URL和流水号
+            $thirdTradeNo = $tradeNo;
+            $groupOrderId = $order['group_order_id'];
+            $thirdPayUrl = request()->domain() . '/pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId;
+            $data = compact('thirdTradeNo', 'thirdPayUrl');
+            $meituanService = new MeituanService();
+            return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
         }
+
         if ($order && $order['pay_status'] != self::$PAY_STATUS_0) {
             return $this->response(self::$ERROR_412, self::payStatusList()[$order['pay_status']]);
         }
@@ -170,10 +186,10 @@ class WaimaiRepositories extends BaseRepository
         ];
         try {
             $group_order = StoreGroupOrder::create($groupOrder);
-            $group_order_id = $group_order['group_order_id'];
-            $data['group_order_id'] = $group_order_id;
+            $groupOrderId = $group_order['group_order_id'];
+            $data['group_order_id'] = $groupOrderId;
             MeituanOrder::create($data);
-            $_order['group_order_id'] = $group_order_id;
+            $_order['group_order_id'] = $groupOrderId;
             StoreOrder::create($_order);
         } catch (Exception $e) {
             return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
@@ -182,7 +198,7 @@ class WaimaiRepositories extends BaseRepository
         $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         //$thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&phone=18511111111";
-        $thirdPayUrl = request()->domain() . '/pay?tradeNo=$thirdTradeNo&phone=$phone&group_order_id=$group_order_id';
+        $thirdPayUrl = request()->domain() . '/pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId;
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
