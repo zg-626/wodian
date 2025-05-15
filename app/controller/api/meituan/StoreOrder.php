@@ -73,9 +73,9 @@ class StoreOrder extends BaseController
         $groupOrder = $groupOrderRepository->getOrderByTradeNo($userInfo->uid, $trade_no);
         if (!$groupOrder)
             return app('json')->fail('订单不存在');
-        $tradeNo = $groupOrder->order_sn;
+        //$tradeNo = $groupOrder->trade_no;
         // 同步修改美团订单表
-        $order = (new \app\common\model\meituan\MeituanOrder)->where('trade_no', $tradeNo)->find();
+        $order = (new \app\common\model\meituan\MeituanOrder)->where('trade_no', $trade_no)->find();
         if (!$order) {
             return app('json')->fail('美团订单不存在');
         }
@@ -92,7 +92,7 @@ class StoreOrder extends BaseController
             }
             return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
         } catch (\Exception $e) {
-            return app('json')->status('error', $e->getMessage(), ['order_id' => $groupOrder->group_order_id]);
+            return app('json')->status('error', $e->getMessage().$e->getLine(), ['order_id' => $groupOrder->group_order_id]);
         }
     }
 

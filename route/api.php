@@ -68,6 +68,7 @@ Route::group('api/', function () {
             Route::post('cancel/:id', '/cancelGroupOrder');
             Route::get('list', '/lst');
             Route::get('detail/:id', '/detail');
+            Route::get('mtdetail/:id', '/mtdetail');
             Route::get('number', '/number');
             Route::post('pay/:id', '/groupOrderPay');
             Route::post('points/pay/:id', '/groupOrderPay')->append(['is_points' => 1]);

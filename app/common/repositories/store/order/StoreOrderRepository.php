@@ -1219,6 +1219,51 @@ class StoreOrderRepository extends BaseRepository
         return $order;
     }
 
+    /**
+     * @param $id
+     * @param null $uid
+     * @return array|Model|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020/6/10
+     */
+    public function getmetDetail($id, $uid = null)
+    {
+        $where = [];
+        $with = [
+            /*'orderProduct',
+            'merchant' => function ($query) {
+                return $query->field('mer_id,mer_name,service_phone')->append(['services_type']);
+            },
+            'receipt' => function ($query) {
+                return $query->field('order_id,order_receipt_id');
+            },
+            'takeOrderList.orderProduct'*/
+        ];
+        if ($uid) {
+            $where['uid'] = $uid;
+        } else if (!$uid) {
+            $with['user'] = function ($query) {
+                return $query->field('uid,nickname');
+            };
+        }
+        $order = $this->dao->getWhere($where)->where('order_id', $id)->find();
+        if (!$order) {
+            return null;
+        }
+        if ($order->activity_type == 2) {
+            if ($order->presellOrder) {
+                $order->presellOrder->append(['activeStatus']);
+                $order->presell_price = bcadd($order->pay_price, $order->presellOrder->pay_price, 2);
+            } else {
+                $order->presell_price = $order->pay_price;
+            }
+        }
+        return $order;
+    }
+
     public function codeByDetail($code, $uid = null)
     {
         $where = [];

@@ -162,6 +162,23 @@ class StoreOrder extends BaseController
     }
 
     /**
+     * @param $id
+     * @return mixed
+     * @author xaboy
+     * @day 2020/6/10
+     */
+    public function mtdetail($id)
+    {
+        $order = $this->repository->getmetDetail((int)$id, $this->request->uid());
+        if (!$order)
+            return app('json')->fail('订单不存在');
+        if ($order->order_type == 1) {
+            $order->append(['take', 'refund_status']);
+        }
+        return app('json')->success($order->toArray());
+    }
+
+    /**
      * @return mixed
      * @author xaboy
      * @day 2020/6/10
