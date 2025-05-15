@@ -14,6 +14,7 @@ namespace app\common\repositories\user;
 
 
 use app\common\dao\BaseDao;
+use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\user\UserDao;
 use app\common\model\user\User;
 use app\common\model\wechat\WechatUser;
@@ -1187,6 +1188,20 @@ class UserRepository extends BaseRepository
                 continue;
             }
             $item['phone'] = substr_replace($item['phone'], '****', 3, 4);
+            //线下订单数量统计
+            //$offlineOrderCount = (new \app\common\model\store\order\StoreOrderOffline)->where(['uid' => $item->uid, 'paid' => 1])->count();
+            // 线上订单数量统计
+            //$orderCount = (new \app\common\model\store\order\StoreOrder)->where(['uid' => $uid, 'paid' => 1])->count();
+            //$item['pay_count'] = $orderCount + $offlineOrderCount;
+            // 邀请的商户数
+            $item['merchant_count'] = (new \app\common\model\system\merchant\Merchant)->where(['salesman_id' => $item->uid])->count();
+        }
+        // $list根据merchant_count字段进行降序排序
+        if ($list) {
+            $merchantCounts = array_column($list->toArray(), 'merchant_count');
+            $listArray = $list->toArray();
+            array_multisort($merchantCounts, SORT_DESC, $listArray);
+            $list = collect($listArray);
         }
 
         return compact('list', 'count');
@@ -1242,6 +1257,14 @@ class UserRepository extends BaseRepository
         $query = $this->search($where);
         $count = $query->count();
         $list = $query->setOption('field', [])->field('uid,avatar,nickname,is_promoter,pay_count,pay_price,spread_count,create_time,spread_time,spread_limit,phone')->page($page, $limit)->select();
+        // 统计订单数
+        foreach ($list as &$item) {
+            //线下订单数量统计
+            $offlineOrderCount = (new \app\common\model\store\order\StoreOrderOffline)->where(['uid' => $item->uid, 'paid' => 1])->count();
+            // 线上订单数量统计
+            $orderCount = (new \app\common\model\store\order\StoreOrder)->where(['uid' => $uid, 'paid' => 1])->count();
+            $item['pay_count'] = $orderCount + $offlineOrderCount;
+        }
         return compact('list', 'count');
     }
 

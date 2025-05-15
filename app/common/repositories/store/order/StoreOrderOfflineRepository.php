@@ -1160,7 +1160,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             }
         ]);
         $count = $query->count();
-        $list = $query->page($page, $limit)->select();
+        $list = $query->page($page, $limit)->order('order_id desc')->select();
         // 手机号脱敏
         foreach ($list as $k => $v) {
             $list[$k]['user']['phone'] = substr_replace($v['user']['phone'], '****', 3, 4);

@@ -250,8 +250,8 @@ class StoreOrderOfflineDao extends BaseDao
         })->when($date, function ($query, $date) {
             getModelTime($query, $date, 'pay_time');
         })->sum('handling_fee');
-        // 实际到账
-        $actualPrice =$pay_price-$handling_fee;
+        // 实际到账，精确两位数
+        $actualPrice =bcsub($pay_price,$handling_fee,2);
         // 获取商家信息
         $MerchantDao = app()->make(MerchantDao::class);
         $merchant = $MerchantDao->search(['mer_id' => $merId])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();

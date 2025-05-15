@@ -124,7 +124,8 @@ class StoreOrderOffline extends BaseController
         $where['status'] = $this->request->param('status');
         $where['order_sn'] = $this->request->param('order_sn');
         $where['mer_id'] = $merId;
-        //$where['is_del'] = 0;
+        $where['is_del'] = 0;
+        $where['paid'] = 1;
         $data= $repository->merchantGetList($where, $page, $limit,$start . '-' . $stop);
         return app('json')->success(compact('order', 'data'));
     }
