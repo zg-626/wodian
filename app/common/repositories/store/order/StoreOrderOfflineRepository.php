@@ -148,7 +148,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         $rate=0;
         // 根据总金额计算平台手续费，不根据实际支付金额
-        if(($money > 0) && $commission_rate > 2) {
+        if(($money > 0) && $commission_rate >= 3) {
             $rate = $commission_rate /100;
             $handling_fee = bcmul($money,$rate, 2);
         }
@@ -176,7 +176,12 @@ class StoreOrderOfflineRepository extends BaseRepository
             $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);
             $user->coupon_amount = $deduction_money;
             $user->save();
+            // 如果使用了抵用券，计算手续费
             $total_price=$params['user_deduction']+$money;
+            $rate = $commission_rate /100;
+            $handling_fee = bcmul($total_price,$rate, 2);
+            // 如果使用了抵用券，计算积分
+            $total_give_integral = bcmul($total_price, $rate, 2);
 
         }
 
@@ -991,7 +996,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $orderStatus = [];
 
             //退回积分
-            if ($offlineOrder->integral > 0) {
+            /*if ($offlineOrder->integral > 0) {
                 $make = app()->make(UserRepository::class);
                 $make->update($offlineOrder->uid, ['integral' => Db::raw('integral+' . $offlineOrder->integral)]);
                 app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'cancel', [
@@ -1004,7 +1009,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 ]);
                 // 退回商家积分
                 app()->make(MerchantRepository::class)->subMerIntegral($offlineOrder->mer_id, 'mer_integral', $offlineOrder->order_id, $offlineOrder->integral);
-            }
+            }*/
 
             // 退回抵用券
             if($offlineOrder->deduction > 0){

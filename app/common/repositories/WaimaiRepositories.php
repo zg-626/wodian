@@ -184,17 +184,13 @@ class WaimaiRepositories extends BaseRepository
             'trade_no' => $groupOrder['trade_no'],
             'create_content' => $data['create_content'],
         ];
-        try {
-            $group_order = StoreGroupOrder::create($groupOrder);
-            $groupOrderId = $group_order['group_order_id'];
-            $data['group_order_id'] = $groupOrderId;
-            MeituanOrder::create($data);
-            $_order['group_order_id'] = $groupOrderId;
-            $store_order=StoreOrder::create($_order);
-            $OrderId = $store_order['order_id'];
-        } catch (Exception $e) {
-            return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-        }
+        $group_order = StoreGroupOrder::create($groupOrder);
+        $groupOrderId = $group_order['group_order_id'];
+        $data['group_order_id'] = $groupOrderId;
+        MeituanOrder::create($data);
+        $_order['group_order_id'] = $groupOrderId;
+        $store_order=StoreOrder::create($_order);
+        $OrderId = $store_order['order_id'];
 
         $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
@@ -223,6 +219,10 @@ class WaimaiRepositories extends BaseRepository
         if (!$order) {
             return $this->response(self::$ERROR_410, '支付单不存在');
         }
+        // 如果订单支付状态不是未支付，则返回对应状态
+        if ($order['pay_status'] === self::$PAY_STATUS_10) {
+            return $this->response(self::$ERROR_410, self::payStatusList()[$order['pay_status']]);
+        }
         $create_content = json_decode($order['create_content'], true);
 
         $thirdTradeNo = $tradeNo;
@@ -234,7 +234,6 @@ class WaimaiRepositories extends BaseRepository
         $serviceFeeAmount = $create_content['serviceFeeAmount']??'';
         $paymentDetails = $order['paymentDetails'];
         $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团查询订单返回数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
@@ -395,7 +394,9 @@ class WaimaiRepositories extends BaseRepository
 
     public function response($status, $msg, $data = array())
     {
-        return array('status' => $status, 'msg' => $msg, 'data' => $data);
+        $data=array('status' => $status, 'msg' => $msg, 'data' => $data);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团返回数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
+        return $data;
     }
 
     public static $ERROR_401 = 401;
