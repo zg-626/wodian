@@ -229,11 +229,12 @@ class WaimaiRepositories extends BaseRepository
         $payStatus = $order['pay_status'];
         $tradeTime = $order['create_time'];
         $tradeAmount = $create_content['tradeAmount'];
-        $entPayAmount = $create_content['entPayAmount'];
-        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount']?: 0;
-        $serviceFeeAmount = $create_content['serviceFeeAmount'];
+        $entPayAmount = $create_content['entPayAmount']??null;
+        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount']??null;
+        $serviceFeeAmount = $create_content['serviceFeeAmount']??'';
         $paymentDetails = $order['paymentDetails'];
         $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团查询订单返回数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }

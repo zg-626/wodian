@@ -15,6 +15,7 @@ namespace app\common\repositories\store\order;
 
 
 use app\common\dao\store\order\StoreGroupOrderDao;
+use app\common\model\meituan\MeituanOrder;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\coupon\StoreCouponRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
@@ -134,6 +135,15 @@ class StoreGroupOrderRepository extends BaseRepository
         Db::transaction(function () use ($groupOrder, $id, $uid) {
             $groupOrder->is_del = 1;
             $orderStatus = [];
+
+            // 同步关闭美团订单
+            if($groupOrder->is_meituan===1){
+                $order = MeituanOrder::where('trade_no', $groupOrder->trade_no)->find();
+                if ($order->pay_status===0) {
+                    $order->pay_status = 10;
+                    $order->save();
+                }
+            }
 
             //退回积分
             if ($groupOrder->integral > 0) {
