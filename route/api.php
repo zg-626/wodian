@@ -615,6 +615,8 @@ Route::group('api/', function () {
             Route::any('/pay', 'Meituan/pay');
             // 美团免登外卖地址
             Route::any('/mt_waimai', 'Waimai/mtWaimai');
+            // 订单详情查询接口
+            Route::any('/order_detail', 'Waimai/orderDetail');
             //美团外卖支付接口
             Route::post('meituan_pay', 'StoreOrder/pay');
         })->prefix('api.meituan.');

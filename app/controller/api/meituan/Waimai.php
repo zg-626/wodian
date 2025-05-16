@@ -31,4 +31,18 @@ class Waimai extends BaseController
         return app('json')->success($info);
     }
 
+    // 订单详情查询接口
+    public function orderDetail()
+    {
+        $params = $this->request->params([
+            'sqtBizOrderId'
+        ]);
+        /*$user = $this->user;
+        if (!$user->phone) return app('json')->fail('请绑定手机号');
+        $params['mobile'] = $user->phone;*/
+        //$params['mobile'] = 13051579900;
+        $info = $this->repository->orderDetail($params);
+        return app('json')->success($info);
+    }
+
 }

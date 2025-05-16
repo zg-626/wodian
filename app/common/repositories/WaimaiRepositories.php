@@ -52,6 +52,40 @@ class WaimaiRepositories extends BaseRepository
         return $result;
     }
 
+    /**
+     * 订单详情查询接口
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/orderDetailQuery#
+     * 通过【订单详情查询】接口，客户平台可根据订单号查询订单详情。该文档仅展示订单基础信息，各品类业务信息请跳转订单详情业务字段说明进行查看。
+     * @param array $params
+     ***/
+    public function orderDetail($params)
+    {
+        $meituanService = new MeituanService();
+        $url = $this->url . '/api/sqt/open/order/queryDetail';
+        //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
+        $sqtBizOrderId = isset($params['sqtBizOrderId']) ? $params['sqtBizOrderId'] : ''; //美团企业版订单ID
+        $ts = $meituanService->getMillisecond();
+        $data = ['ts' => $ts, 'entId' => $this->entId,'sqtBizOrderId' => $sqtBizOrderId];
+        $content = $meituanService->aes_encrypt($data, $this->secretKey);
+        $postData = ['accessKey' => $this->accessKey, 'content' => $content];
+        $result = $meituanService->loginFree2PostNew($url, $postData);
+        if (!$result['success']) {
+            // 处理请求失败的情况
+            record_log('请求失败: ' . ($result['error'] ?? '未知错误'), 'meituan_error');
+            return $this->response(self::$ERROR_501, '请求失败');
+        }
+
+        if (isset($result['body']['status']) && $result['body']['status'] != 0) {
+            // 处理业务逻辑错误
+            record_log('业务错误: ' . ($result['body']['msg'] ?? '未知错误'), 'meituan_error');
+            return $this->response($result['body']['status'], $result['body']['msg']);
+        }
+
+        // 处理成功响应
+        $data = $result['body']['data'] ?? null;
+        return $this->response(0, '成功', $data);
+    }
+
 
     /**
      * 下单接口
