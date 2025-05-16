@@ -234,6 +234,8 @@ class WaimaiRepositories extends BaseRepository
         $serviceFeeAmount = $create_content['serviceFeeAmount']??'';
         $paymentDetails = $order['paymentDetails'];
         $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
+        // data 字段被定义为 String 类型
+        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
@@ -270,6 +272,8 @@ class WaimaiRepositories extends BaseRepository
 
         $thirdTradeNo = $tradeNo;
         $data = compact('tradeNo', 'thirdTradeNo');
+        // data 字段被定义为 String 类型
+        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
 
@@ -345,6 +349,8 @@ class WaimaiRepositories extends BaseRepository
         $thirdRefundNo = $third_refund_no;
         $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
         $data = compact('thirdRefundNo', 'refundDetails');
+        // data 字段被定义为 String 类型
+        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
