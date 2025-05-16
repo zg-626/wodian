@@ -42,6 +42,7 @@ use app\common\repositories\user\UserBrokerageRepository;
 use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRepository;
+use app\common\repositories\WaimaiRepositories;
 use crmeb\jobs\PayGiveCouponJob;
 use crmeb\jobs\SendSmsJob;
 use crmeb\jobs\UserBrokerageLevelJob;
@@ -477,6 +478,16 @@ class StoreOrderRepository extends BaseRepository
         }
         $order->pay_status = self::$PAY_STATUS_1;
         $order->save();
+        // 给美团发通知
+        /** @var WaimaiRepositories $waimai */
+        $waimai = app()->make(WaimaiRepositories::class);
+        $data = [
+            'tradeNo' => $tradeNo,
+            'thirdTradeNo' => $groupOrder->order_sn,
+            'serviceFeeAmount' => $order->service_fee_amount,
+            'tradeAmount' => $groupOrder->pay_price,
+        ];
+        $waimai->payCallback($data);
 
     }
 

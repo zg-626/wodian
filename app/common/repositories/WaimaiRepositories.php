@@ -311,14 +311,14 @@ class WaimaiRepositories extends BaseRepository
             return $this->response(self::$ERROR_410, '支付单不存在');
         }
         if ($order['refund_status'] == self::$PAY_STATUS_1) {
-            return $this->response(self::$ERROR_411, '退款超额');
+            return $this->error(self::$ERROR_411, '退款超额');
         }
         $be_refund_amount = $order['refund_amount']; // 已退款金额
         $refundAmount = $content['refundAmount']; // 本次退款金额
         $total_refund_amount = $be_refund_amount + $refundAmount; // 已退款金额 + 本次退款金额 = 总退款金额
         $trade_amount = $order['trade_amount']; // 支付金额
         if ($total_refund_amount > $trade_amount) {
-            return $this->response(self::$ERROR_411, '退款超额');
+            return $this->error(self::$ERROR_411, '退款超额');
         }
 
         $refund = MeituanOrderRefund::where('trade_no', $tradeNo)->where('trade_refund_no', $content['tradeRefundNo'])->find();
@@ -359,7 +359,7 @@ class WaimaiRepositories extends BaseRepository
 
         $thirdRefundNo = $third_refund_no;
         $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
-        $data = compact('thirdRefundNo', 'refundDetails');
+        $data = compact('thirdRefundNo');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
@@ -432,6 +432,13 @@ class WaimaiRepositories extends BaseRepository
     public function response($status, $msg, $data = array())
     {
         $data=array('status' => $status, 'msg' => $msg, 'data' => $data);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团请求数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
+        return $data;
+    }
+
+    public function error($status, $msg)
+    {
+        $data=array('status' => $status, 'msg' => $msg, 'data' =>'');
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团请求数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
         return $data;
     }
