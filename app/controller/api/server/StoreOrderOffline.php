@@ -54,7 +54,9 @@ class StoreOrderOffline extends BaseController
         $integral = $billRepository->allIntegralCount($merId,'mer_integral');
         // 所有抵扣金
         $deduction = $billRepository->allCouponCount($merId,'coupon_amount');
-        return app('json')->success(compact('order','integral', 'deduction', 'data'));
+        // 商家余额
+        $mer_money = MerchantModel::where('mer_id', $merId)->value('mer_money');
+        return app('json')->success(compact('order','integral', 'deduction','mer_money', 'data'));
     }
 
     public function orderDetail($merId, StoreOrderOfflineRepository $repository)

@@ -27,7 +27,14 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->query($params);
-        return json_encode($result,JSON_UNESCAPED_UNICODE);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团返回数据: ' . json_encode($result,JSON_UNESCAPED_UNICODE), 'meituan_order_create');
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        // 否则进行JSON编码
+        return json($result);
     }
 
     // 交易标准三方收银台下单外部接口
@@ -41,7 +48,13 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->create($params);
-        return json_encode($result,JSON_UNESCAPED_UNICODE);
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        // 否则进行JSON编码
+        return json($result);
     }
 
     //交易标准三方收银台关单外部接口
@@ -55,7 +68,13 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->close($params);
-        return json_encode($result,JSON_UNESCAPED_UNICODE);
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        // 否则进行JSON编码
+        return json($result);
     }
 
     // 交易标准三方收银台退款外部接口
@@ -69,7 +88,13 @@ class Meituan extends BaseController
             'content',
         ]);
         $result = $repository->refund($params);
-        return json_encode($result,JSON_UNESCAPED_UNICODE);
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        // 否则进行JSON编码
+        return json($result);
     }
 
 }

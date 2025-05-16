@@ -395,7 +395,7 @@ class WaimaiRepositories extends BaseRepository
     public function response($status, $msg, $data = array())
     {
         $data=array('status' => $status, 'msg' => $msg, 'data' => $data);
-        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团返回数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 美团请求数据: ' . json_encode($data, JSON_UNESCAPED_UNICODE), 'meituan_order_create');
         return $data;
     }
 

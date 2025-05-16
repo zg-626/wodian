@@ -197,6 +197,13 @@ class StoreOrderOfflineDao extends BaseDao
         }), $day, 'pay_time')->sum('pay_price');
     }
 
+    public function dayOrderTotalPrice($day, $merId = null)
+    {
+        return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        }), $day, 'pay_time')->sum('total_price');
+    }
+
     public function dayOrderSettlementPrice($day, $merId = null)
     {
         return getModelTime(StoreOrderOffline::getDB()->where('paid', 1)->where('origin_log_no','<>','')->when($merId, function ($query, $merId) {
@@ -244,6 +251,13 @@ class StoreOrderOfflineDao extends BaseDao
         })->when($date, function ($query, $date) {
             getModelTime($query, $date, 'pay_time');
         })->sum('pay_price');
+
+        $total_price = StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
+            $query->where('mer_id', $merId);
+        })->when($date, function ($query, $date) {
+            getModelTime($query, $date, 'pay_time');
+        })->sum('total_price');
+
         // 手续费
         $handling_fee =StoreOrderOffline::getDB()->where('paid', 1)->when($merId, function ($query, $merId) {
             $query->where('mer_id', $merId);
@@ -251,12 +265,12 @@ class StoreOrderOfflineDao extends BaseDao
             getModelTime($query, $date, 'pay_time');
         })->sum('handling_fee');
         // 实际到账，精确两位数
-        $actualPrice =bcsub($pay_price,$handling_fee,2);
+        $actualPrice =bcsub($total_price,$handling_fee,2);
         // 获取商家信息
         $MerchantDao = app()->make(MerchantDao::class);
         $merchant = $MerchantDao->search(['mer_id' => $merId])->field('mer_id,integral,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
         $integral=$merchant['integral'];
-        return ['pay_price' => $pay_price, 'handling_fee' => $handling_fee, 'actualPrice' => $actualPrice, 'integral' => $integral];
+        return ['pay_price' => $pay_price,'total_price'=>$total_price, 'handling_fee' => $handling_fee, 'actualPrice' => $actualPrice, 'integral' => $integral];
     }
 
     public function dateOrderNum($date, $merId = null)
