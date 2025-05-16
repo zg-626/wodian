@@ -317,7 +317,7 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1693]]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1793]]);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){
 //                /** @var MerchantRepository $merchantRepository */
@@ -331,17 +331,24 @@ class Article extends BaseController
             /** @var StoreOrderRepository $storeOrderRepository */
             //$storeOrderRepository = app()->make(StoreOrderRepository::class);
             //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository=app()->make(MerchantRepository::class);
+            // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
+            if($order->deduction > 0){
+
+                $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction_money);
+            }
             //$storeOrderOfflineRepository->computeds($order,$user);
             //$storeOrderOfflineRepository->red($order);
             //$info=$storeOrderOfflineRepository->paySuccess($order);
             //$storeOrderOfflineRepository->virtualDelivery($order);
             /** @var WaimaiRepositories $repository */
-            $params = $this->request->params([
+            /*$params = $this->request->params([
                 'accessKey',
                 'content',
             ]);
             $repository = app()->make(WaimaiRepositories::class);
-            $result = $repository->create($params);
+            $result = $repository->create($params);*/
 
         } catch (Exception $e) {
             print_r($e->getMessage().$e->getLine());

@@ -209,7 +209,7 @@ class WaimaiRepositories extends BaseRepository
     public function query($params)
     {
         $content_res = $this->validateParams($params);
-        if ($content_res['status'] != 200) {
+        if ($content_res['status'] != 0) {
             return $content_res;
         }
         $content = $content_res['data'];
@@ -225,17 +225,30 @@ class WaimaiRepositories extends BaseRepository
         }
         $create_content = json_decode($order['create_content'], true);
 
-        $thirdTradeNo = $tradeNo;
-        $payStatus = $order['pay_status'];
-        $tradeTime = $order['create_time'];
-        $tradeAmount = $create_content['tradeAmount'];
-        $entPayAmount = $create_content['entPayAmount']??null;
-        $businessDiscountPayAmount = $create_content['businessDiscountPayAmount']??null;
-        $serviceFeeAmount = $create_content['serviceFeeAmount']??'';
-        $paymentDetails = $order['paymentDetails'];
-        $data = compact('tradeNo', 'thirdTradeNo', 'payStatus', 'tradeTime', 'tradeAmount', 'entPayAmount', 'businessDiscountPayAmount', 'serviceFeeAmount', 'paymentDetails');
-        // data 字段被定义为 String 类型
-        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
+        // 初始化必须返回的字段
+        $data = [
+            'tradeNo' => $tradeNo,
+            'thirdTradeNo' => $tradeNo,
+            'payStatus' => $order['pay_status'],
+            'tradeTime' => $order['create_time'],
+            'tradeAmount' => $create_content['tradeAmount']
+        ];
+
+        // 可选字段列表及其来源
+        $optionalFields = [
+            'entPayAmount' => $create_content['entPayAmount'] ?? null,
+            'businessDiscountPayAmount' => $create_content['businessDiscountPayAmount'] ?? null,
+            'serviceFeeAmount' => $create_content['serviceFeeAmount'] ?? null,
+            'paymentDetails' => $order['paymentDetails'] ?? null
+        ];
+
+        // 遍历可选字段，只添加非空值
+        foreach ($optionalFields as $key => $value) {
+            if ($value !== null && $value !== '') {
+                $data[$key] = $value;
+            }
+        }
+
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
@@ -250,7 +263,7 @@ class WaimaiRepositories extends BaseRepository
     public function close($params)
     {
         $content_res = $this->validateParams($params);
-        if ($content_res['status'] != 200) {
+        if ($content_res['status'] != 0) {
             return $content_res;
         }
         $content = $content_res['data'];
@@ -272,8 +285,6 @@ class WaimaiRepositories extends BaseRepository
 
         $thirdTradeNo = $tradeNo;
         $data = compact('tradeNo', 'thirdTradeNo');
-        // data 字段被定义为 String 类型
-        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
 
@@ -289,7 +300,7 @@ class WaimaiRepositories extends BaseRepository
     public function refund($params)
     {
         $content_res = $this->validateParams($params);
-        if ($content_res['status'] != 200) {
+        if ($content_res['status'] != 0) {
             return $content_res;
         }
         $content = $content_res['data'];
@@ -349,8 +360,6 @@ class WaimaiRepositories extends BaseRepository
         $thirdRefundNo = $third_refund_no;
         $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
         $data = compact('thirdRefundNo', 'refundDetails');
-        // data 字段被定义为 String 类型
-        $data['data'] = json_encode($data, JSON_UNESCAPED_UNICODE);
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
     }
@@ -371,12 +380,33 @@ class WaimaiRepositories extends BaseRepository
         $tradeNo = $params['tradeNo'];// 交易号，每笔支付的唯一标识，需要以此字段做幂等处理
         $thirdTradeNo = $params['thirdTradeNo'];// 客户平台交易号
         $tradeAmount = $params['tradeAmount'];// 支付金额(不包含服务费)，单位元，支持小数点后两位
+        $serviceFeeAmount = $params['serviceFeeAmount']?? '';// 服务费金额，单位元，支持小数点后两位
+        //$businessDiscountPayAmount = $params['businessDiscountPayAmount']?? 0;// 商家优惠金额，单位元，支持小数点后两位
+        //$entPayAmount = $params['entPayAmount']?? 0;// 企业支付金额，单位元，支持小数点后两位
         $nonce = $meituanService->randstr(32);
 
-        $data = ['ts' => $ts, 'entId' => $this->entId, 'tradeNo' => $tradeNo, 'nonce' => $nonce, 'thirdTradeNo' => $thirdTradeNo, 'tradeAmount' => $tradeAmount];
+        $data = ['ts' => $ts, 'entId' => $this->entId, 'tradeNo' => $tradeNo, 'thirdTradeNo' => $thirdTradeNo, 'tradeAmount' => $tradeAmount,'serviceFeeAmount' => $serviceFeeAmount];
         $content = $meituanService->aes_encrypt($data, $this->secretKey);
         $postData = ['accessKey' => $this->accessKey, 'content' => $content];
-        $result = $meituanService->loginFree2Post($url, $postData);
+        record_log('美团支付传参: ' . (json_encode($data)), 'meituan_payCallback');
+        record_log('美团支付请求: ' . (json_encode($postData)), 'meituan_payCallback');
+        $result = $meituanService->loginFree2PostNew($url, $postData);
+
+        /*if (!$result['success']) {
+            // 处理请求失败的情况
+            record_log('请求失败: ' . ($result['error'] ?? '未知错误'), 'meituan_error');
+            return $this->response(self::$ERROR_501, '请求失败');
+        }
+
+        if (isset($result['body']['status']) && $result['body']['status'] != 0) {
+            // 处理业务逻辑错误
+            record_log('业务错误: ' . ($result['body']['msg'] ?? '未知错误'), 'meituan_error');
+            return $this->response($result['body']['status'], $result['body']['msg']);
+        }
+
+        // 处理成功响应
+        $data = $result['body']['data'] ?? null;
+        return $this->response(0, '成功', $data);*/
         return $result;
 
     }
@@ -392,6 +422,7 @@ class WaimaiRepositories extends BaseRepository
         }
         $meituanService = new MeituanService();
         $content = $meituanService->aes_decrypt($content, $this->secretKey);
+        //var_dump($content);exit();
         if (!$content) {
             return $this->response(self::$ERROR_403, '解密验签失败');
         }

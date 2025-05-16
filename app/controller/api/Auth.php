@@ -16,12 +16,14 @@ namespace app\controller\api;
 
 use app\common\dao\store\order\StoreOrderDao;
 use app\common\dao\store\order\StoreOrderOfflineDao;
+use app\common\model\user\UserExtract;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\system\merchant\MerchantAdminRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use app\common\repositories\system\notice\SystemNoticeConfigRepository;
+use app\common\repositories\user\UserExtractRepository;
 use app\common\repositories\user\UserInfoRepository;
 use app\common\repositories\user\UserOrderRepository;
 use app\common\repositories\user\UserRechargeRepository;
@@ -579,7 +581,10 @@ class Auth extends BaseController
         $data = $user->toArray();
         /** @var MerchantRepository $merchantRepository */
         $merchantRepository = app()->make(MerchantRepository::class);
-        $data['merchant_count'] = $merchantRepository->getMerchantCount($user->uid);
+        //$data['merchant_count'] = $merchantRepository->getMerchantCount($user->uid);
+        $data['merchant_count'] = (new \app\common\model\system\merchant\Merchant)->where(['salesman_id' => $user->uid])->count();;
+        // 累计提现金额
+        $data['total_extract'] = UserExtract::where(['uid' => $user->uid, 'status' => 1])->sum('extract_price');
         return app('json')->success($data);
     }
 

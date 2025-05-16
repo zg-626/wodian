@@ -4,7 +4,10 @@ namespace crmeb\services;
 
 class MeituanService
 {
-    public function aes_encrypt(array $data, $secretKey)
+    /**
+     * @param array|string $data
+     **/
+    public function aes_encrypt($data, $secretKey)
     {
         // echo json_encode($data,JSON_UNESCAPED_UNICODE);
         $data = openssl_encrypt(json_encode($data,JSON_UNESCAPED_UNICODE), 'AES-128-ECB', base64_decode($secretKey));
@@ -47,6 +50,57 @@ class MeituanService
         }
 
         return $response;
+    }
+
+    public function loginFree2PostNew($url, $data)
+    {
+        // $data=json_encode($data,JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_HEADER, TRUE);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 1000);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_POST, TRUE);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/x-www-form-urlencoded;charset=UTF-8',
+            'Accept: application/json',
+        ));//重点
+        curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+        $response = curl_exec($curl);
+        
+        if (curl_errno($curl)) {
+            return ['success' => false, 'error' => curl_error($curl)];
+        }
+        
+        // 获取头信息大小
+        $headerSize = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        
+        // 分离头信息和响应体
+        $header = substr($response, 0, $headerSize);
+        $body = substr($response, $headerSize);
+        
+        // 解析头信息
+        $headers = [];
+        foreach (explode("\r\n", $header) as $line) {
+            if (preg_match('/^(.*?):\s*(.*)/', $line, $matches)) {
+                $headers[trim($matches[1])] = trim($matches[2]);
+            }
+        }
+        
+        // 尝试解析JSON响应体
+        $jsonBody = json_decode($body, true);
+        
+        curl_close($curl);
+        
+        return [
+            'success' => $httpCode >= 200 && $httpCode < 300,
+            'http_code' => $httpCode,
+            'headers' => $headers,
+            'body' => $jsonBody ?: $body,
+            'trace_id' => $headers['M-TraceId'] ?? null
+        ];
     }
 
     public function getMillisecond() {

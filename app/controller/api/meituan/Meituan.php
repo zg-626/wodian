@@ -9,14 +9,22 @@ use think\response\Json;
 class Meituan extends BaseController
 {
     // 交易标准三方收银台支付回调接口
-    public function callback()
+    public function callback(WaimaiRepositories $repository)
     {
-        $info=[
-            'status'=>0,
-            'msg'=>'成功',
-            'data'=>'123456']
-        ;
-        return json_encode($info,JSON_UNESCAPED_UNICODE);
+        $params = $this->request->params([
+            'tradeNo',
+            'thirdTradeNo',
+            'serviceFeeAmount',
+            'tradeAmount'
+        ]);
+        $result = $repository->payCallback($params);
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        // 否则进行JSON编码
+        return json($result);
     }
 
     // 交易标准三方收银台支付查询外部接口

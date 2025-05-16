@@ -1239,6 +1239,9 @@ class MerchantRepository extends BaseRepository
                 $mer_ids = merchantModel::where('salesman_id',$user['uid'])->column('mer_id');
                 break;
             case 4:
+                /*if($user['district_id']===''){
+                    throw new ValidateException('请选择区域');
+                }*/
                 $mer_ids = merchantModel::where('district_id',$user['district_id'])->column('mer_id');
                 break;
             case 5:
@@ -1254,7 +1257,7 @@ class MerchantRepository extends BaseRepository
         }
         $mer_count = count($mer_ids);
         if($mer_count > 0){
-            $order_count = offModel::where('paid',1)->where('mer_id','in',$mer_ids)->count('order_id');
+            $order_count = offModel::where('paid',1)->where('mer_id','in',$mer_ids)->whereDay('create_time')->count('order_id');
         }
         return compact('mer_count','order_count');
     }

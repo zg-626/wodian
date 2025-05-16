@@ -60,6 +60,7 @@ class StoreOrderOffline extends BaseController
         $user = $this->request->userInfo();
         $where['uid'] = $user->uid;
         $where['is_del'] = 0;
+        $where['paid'] = 1;
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
 
