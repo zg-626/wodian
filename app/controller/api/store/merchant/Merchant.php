@@ -12,7 +12,9 @@
 
 namespace app\controller\api\store\merchant;
 
+use app\common\model\system\merchant\MerchantAdmin;
 use app\common\repositories\store\service\StoreServiceRepository;
+use app\common\repositories\system\financial\FinancialRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use think\App;
 use crmeb\basic\BaseController;
@@ -178,6 +180,35 @@ class Merchant extends BaseController
         $where = $this->request->params(['keyword', 'order', 'is_best', 'location', 'category_id', 'type_id']);
         $where['delivery_way'] = 1;
         return app('json')->success($this->repository->getList($where, $page, $limit, $this->userInfo));
+    }
+
+    /**
+     * TODO 申请转账保存
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function withdraw()
+    {
+        $data = $this->request->param(['extract_money','financial_type','mark','mer_id','account','financial_type','name','bank','bank_code','wechat','wechat_code','alipay','alipay_code']);
+        if(!$data['extract_money']){
+            return app('json')->fail('请输入提现金额');
+        }
+        if(!$data['financial_type']){
+            return app('json')->fail('请选择提现方式');
+        }
+        if(!$data['mer_id'])
+            return app('json')->fail('请选择商户');
+        $data['mer_admin_id'] = MerchantAdmin::where('mer_id',$data['mer_id'])->value('merchant_admin_id');
+
+        /** @var FinancialRepository $financialRepository **/
+        $financialRepository = app()->make(FinancialRepository::class);
+        try {
+            $financialRepository->saveApplys($data['mer_id'],$data);
+        }catch (\Exception $e){
+            return app('json')->fail($e->getMessage());
+        }
+        return app('json')->success('保存成功');
     }
 
 }

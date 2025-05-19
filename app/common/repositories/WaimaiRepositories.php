@@ -10,6 +10,7 @@ use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use crmeb\services\MeituanService;
 use think\Exception;
+use think\facade\Db;
 
 class WaimaiRepositories extends BaseRepository
 {
@@ -339,71 +340,110 @@ class WaimaiRepositories extends BaseRepository
         }
         $content = $content_res['data'];
 
-        $tradeNo = $content['tradeNo'];
-        $order = MeituanOrder::where('trade_no', $tradeNo)->find();
-        if (!$order) {
-            return $this->response(self::$ERROR_410, '支付单不存在');
-        }
-        $refund = MeituanOrderRefund::where('trade_no', $tradeNo)->where('trade_refund_no', $content['tradeRefundNo'])->find();
-        // 如果退款流水号不匹配，返回411错误
-        if ($refund && $refund['trade_refund_no']!= $content['tradeRefundNo']) {
-            return $this->error(self::$ERROR_411, '退款流水号不匹配');
-        }
+        // 记录退款请求日志
+        record_log('美团退款请求: ' . json_encode($content, JSON_UNESCAPED_UNICODE), 'meituan_refund');
 
-        if ($order['refund_status'] == self::$PAY_STATUS_1 && $refund) {
+        $tradeNo = $content['tradeNo'];
+        $tradeRefundNo = $content['tradeRefundNo'];
+
+        // 先查询是否存在相同的退款记录（幂等性检查）
+        $refund = MeituanOrderRefund::where('trade_no', $tradeNo)
+            ->where('trade_refund_no', $tradeRefundNo)
+            ->find();
+
+        // 如果已存在相同的退款记录，直接返回成功（确保幂等性）
+        if ($refund) {
+            record_log('退款请求重复: tradeNo=' . $tradeNo . ', tradeRefundNo=' . $tradeRefundNo, 'meituan_refund');
             $thirdRefundNo = $refund['third_refund_no'];
-            $refundAmount = $content['refundAmount']; // 本次退款金额
-            $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
             $data = compact('thirdRefundNo');
             $meituanService = new MeituanService();
             return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
-            //return $this->error(self::$ERROR_411, '订单已全额退款，不能再次退款');
         }
+
+        // 查询订单信息
+        $order = MeituanOrder::where('trade_no', $tradeNo)->find();
+        if (!$order) {
+            record_log('支付单不存在: ' . $tradeNo, 'meituan_refund_error');
+            return $this->response(self::$ERROR_410, '支付单不存在');
+        }
+
+        // 检查订单是否已全额退款
+        if ($order['refund_status'] == self::$PAY_STATUS_1) {
+            record_log('订单已全额退款: ' . $tradeNo, 'meituan_refund_error');
+            $refundOld = MeituanOrderRefund::where('trade_no', $tradeNo)
+                ->find();
+            $thirdRefundNo = $refundOld['third_refund_no'];
+            $data = compact('thirdRefundNo');
+            $meituanService = new MeituanService();
+            return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
+            //return $this->response(self::$ERROR_411, '订单已全额退款，不能再次退款');
+        }
+
+        // 计算退款金额
         $be_refund_amount = $order['refund_amount']; // 已退款金额
         $refundAmount = $content['refundAmount']; // 本次退款金额
-        $total_refund_amount = $be_refund_amount + $refundAmount; // 已退款金额 + 本次退款金额 = 总退款金额
+        $total_refund_amount = $be_refund_amount + $refundAmount; // 总退款金额
         $trade_amount = $order['trade_amount']; // 支付金额
+
+        // 检查退款金额是否超过支付金额
         if ($total_refund_amount > $trade_amount) {
-            return $this->error(self::$ERROR_411, '退款超额');
+            record_log('退款超额: 已退款=' . $be_refund_amount . ', 本次退款=' . $refundAmount . ', 总金额=' . $trade_amount, 'meituan_refund_error');
+            return $this->error(self::$ERROR_411, '退款超额，当前已退款'.$be_refund_amount.'元，本次申请退款'.$refundAmount.'元，超过支付金额'.$trade_amount.'元');
         }
 
-        if (!$refund) {
-            $third_refund_no = $tradeNo . date('Ymd') . time();
-            $data['trade_no'] = $tradeNo;
-            $data['trade_refund_no'] = $content['tradeRefundNo'];
-            $data['third_refund_no'] = $third_refund_no;
-            $data['refund_amount'] = $refundAmount;
-            $data['refund_status'] = self::$PAY_STATUS_0;
-            $data['refund_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
-            // TODO 退款操作 start
+        // 生成第三方退款流水号（确保唯一性）
+        $third_refund_no = $tradeNo . '_' . $tradeRefundNo;
 
-            // TODO 退款操作 end
-            if ($total_refund_amount == $trade_amount) {
-                $order_data['refund_amount'] = $trade_amount;
-                $order_data['refund_time'] = date('Y-m-d H:i:s');
-                $order_data['refund_status'] = self::$PAY_STATUS_1;
-                $data['refund_time'] = date('Y-m-d H:i:s');
-                $data['refund_status'] = self::$PAY_STATUS_1;
-            } else {
-                $order_data['refund_amount'] = $order['refund_amount'] + $refundAmount;
-                $order_data['refund_time'] = date('Y-m-d H:i:s');
-                $order_data['refund_status'] = self::$PAY_STATUS_2;
-                $data['refund_time'] = date('Y-m-d H:i:s');
-                $data['refund_status'] = self::$PAY_STATUS_2;
-            }
-            try {
-                MeituanOrderRefund::create($data);
-                $order->save($order_data);
-            } catch (Exception $e) {
-                return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
-            }
+        // 创建退款记录
+        $data = [
+            'trade_no' => $tradeNo,
+            'trade_refund_no' => $tradeRefundNo,
+            'third_refund_no' => $third_refund_no,
+            'refund_amount' => $refundAmount,
+            'refund_status' => self::$PAY_STATUS_0,
+            'refund_content' => json_encode($content, JSON_UNESCAPED_UNICODE),
+            'refund_time' => date('Y-m-d H:i:s')
+        ];
+
+        // 更新订单退款状态
+        $order_data = [
+            'refund_time' => date('Y-m-d H:i:s')
+        ];
+
+        // 判断是全额退款还是部分退款
+        if ($total_refund_amount == $trade_amount) {
+            // 全额退款
+            $order_data['refund_amount'] = $trade_amount;
+            $order_data['refund_status'] = self::$PAY_STATUS_1;
+            $data['refund_status'] = self::$PAY_STATUS_1;
         } else {
-            $third_refund_no = $refund['third_refund_no'];
-            $refundAmount = $refund['refund_amount'];
+            // 部分退款
+            $order_data['refund_amount'] = $total_refund_amount;
+            $order_data['refund_status'] = self::$PAY_STATUS_2;
+            $data['refund_status'] = self::$PAY_STATUS_2;
         }
 
+        try {
+            // 使用事务确保数据一致性
+            Db::startTrans();
+
+            // 创建退款记录
+            MeituanOrderRefund::create($data);
+
+            // 更新订单状态
+            $order->save($order_data);
+
+            Db::commit();
+
+            record_log('退款成功: tradeNo=' . $tradeNo . ', tradeRefundNo=' . $tradeRefundNo . ', amount=' . $refundAmount, 'meituan_refund');
+        } catch (Exception $e) {
+            Db::rollback();
+            record_log('退款异常: ' . $e->getMessage(), 'meituan_refund_error');
+            return $this->response(self::$ERROR_501, 'File：' . $e->getFile() . " ，Line：" . $e->getLine() . '，Message：' . $e->getMessage());
+        }
+
+        // 返回退款结果
         $thirdRefundNo = $third_refund_no;
-        $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
         $data = compact('thirdRefundNo');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));

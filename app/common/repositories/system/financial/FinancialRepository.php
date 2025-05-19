@@ -316,6 +316,75 @@ class FinancialRepository extends BaseRepository
         });
     }
 
+    /**
+     * TODO 保存申请
+     * @param int $merId
+     * @param array $data
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function saveApplys(int $merId,array $data)
+    {
+        // 先保存转账申请
+        $this->saveAccount($merId,$data);
+        $make = app()->make(MerchantRepository::class);
+        $merchant = $make->search(['mer_id' => $merId])->field('mer_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay')->find();
+
+        if($merchant['mer_money'] <= 0) throw new ValidateException('余额不足');
+
+        if($data['financial_type'] == 1){
+            $financial_account = $merchant->financial_bank;
+        }elseif ($data['financial_type'] == 2){
+            $financial_account = $merchant->financial_wechat;
+        }elseif ($data['financial_type'] == 3){
+            $financial_account = $merchant->financial_alipay;
+        }
+        if(empty($financial_account)) throw new ValidateException('未填写转账信息');
+
+        $extract_maxmum_num = systemConfig('extract_maxmum_num');
+        if($extract_maxmum_num > 0 && $data['extract_money'] > $extract_maxmum_num) throw new ValidateException('单次申请金额不得大于'.$extract_maxmum_num.'元');
+        //最低提现额度
+        $extract_minimum_line = systemConfig('extract_minimum_line') ? systemConfig('extract_minimum_line') : 0;
+        $_line = bcsub($merchant->mer_money,$extract_minimum_line,2);
+        if($_line < $extract_minimum_line) throw new ValidateException('余额大于'.$extract_minimum_line.'才可提现');
+        if($data['extract_money'] > $_line) throw new ValidateException('提现金额大于可提现金额');
+
+        //最低提现金额
+        $extract_minimum_num = systemConfig('extract_minimum_num');
+        if($data['extract_money'] < $extract_minimum_num) throw new ValidateException('最低提现金额'.$extract_minimum_num);
+
+        //可提现金额
+        $_line = bcsub($merchant->mer_money,$extract_minimum_line,2);
+        if($_line < 0) throw new ValidateException('余额大于'.$extract_minimum_line.'才可提现');
+
+        //最低提现金额
+        if($data['extract_money'] < $extract_minimum_num) throw new ValidateException('最低提现金额'.$extract_minimum_num);
+
+        //不足提现最低金额
+        if($_line < $extract_minimum_num) throw new ValidateException('提现金额不足');
+
+        $_money = bcsub($merchant['mer_money'],$data['extract_money'],2);
+
+        $sn = date('YmdHis'.$merId);
+        $ret = [
+            'status' => 0,
+            'mer_id' => $merId,
+            'mer_money' => $_money,
+            'financial_sn' => $sn,
+            'extract_money' => $data['extract_money'],
+            'financial_type' => $data['financial_type'],
+            'financial_account' => json_encode($financial_account,JSON_UNESCAPED_UNICODE),
+            'financial_status' => 0,
+            'mer_admin_id' => $data['mer_admin_id'],
+            'mark'  => $datap['mark']??'',
+            'refusal' => '',
+        ];
+        Db::transaction(function()use($merId,$ret,$data,$make){
+            $this->dao->create($ret);
+            $make->subMoney($merId,(float)$data['extract_money']);
+        });
+    }
+
 
     /**
      * TODO 申请退保证金

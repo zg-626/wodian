@@ -588,6 +588,8 @@ Route::group('api/', function () {
             Route::post('/close_pay_code', 'Merchant/closePayCode');
             // 付付码列表
             Route::get('/pay_code_lst/:id', 'Merchant/payCodeLst');
+            // 申请提现
+            Route::post('/withdraw', 'Merchant/withdraw');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');
