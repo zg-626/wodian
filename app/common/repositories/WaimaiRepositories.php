@@ -15,9 +15,9 @@ use think\facade\Db;
 
 class WaimaiRepositories extends BaseRepository
 {
-    public $entId = '104984';
-    public $accessKey = 'EI69RLOYPPMP-TK';
-    public $secretKey = 'FOAd7WvvJb+lDSHSaAeUnQ==';
+    public $entId = '82034';
+    public $accessKey = 'EMC3VS59D3IA-TK';
+    public $secretKey = 'V6fhAjqTZOKf9Rv5gC4yAQ==';
     // 美团免登录测试环境地址
     public $url = 'https://waimai-openapi.apigw.test.meituan.com';
     // 美团免登录线上环境地址
@@ -27,7 +27,7 @@ class WaimaiRepositories extends BaseRepository
     public function mt_waimai($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url . '/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
+        $url = $this->onlineUrl . '/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
         //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
         $staffPhone = isset($params['mobile']) ? $params['mobile'] : ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
         $staffEmail = isset($params['staffEmail']) ? $params['staffEmail'] : ''; //员工邮箱
@@ -63,7 +63,7 @@ class WaimaiRepositories extends BaseRepository
     public function orderDetail($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url . '/api/sqt/open/order/queryDetail';
+        $url = $this->onlineUrl . '/api/sqt/open/order/queryDetail';
         //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
         $sqtBizOrderId = isset($params['sqtBizOrderId']) ? $params['sqtBizOrderId'] : ''; //美团企业版订单ID
         $ts = $meituanService->getMillisecond();
@@ -488,7 +488,7 @@ class WaimaiRepositories extends BaseRepository
     public function payCallback($params)
     {
         $meituanService = new MeituanService();
-        $url = $this->url . '/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
+        $url = $this->onlineUrl . '/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
         //$url = $this->onlineUrl.'/api/sqt/open/standardThird/v2/pay/callback?tradeModel=FLOW';
 
         $ts = $meituanService->getMillisecond();// 13位时间戳。若请求发起时间与平台接受请求时间相差大于10分钟，平台将直接拒绝本次请求
@@ -607,7 +607,7 @@ class WaimaiRepositories extends BaseRepository
      */
     public function extracted($thirdTradeNo, $phone, $groupOrderId, $orderId): array
     {
-        $thirdPayUrl = request()->domain() . '/pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId;
+        $thirdPayUrl = systemConfig('site_url') . '/pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId;
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));

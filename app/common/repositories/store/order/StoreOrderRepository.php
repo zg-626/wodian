@@ -478,6 +478,9 @@ class StoreOrderRepository extends BaseRepository
         }
         $order->pay_status = self::$PAY_STATUS_1;
         $order->save();
+        // 发放推广抵用券
+        $user = app()->make(UserRepository::class)->get($order['uid']);
+        $this->computed($order,$user);
         // 给美团发通知
         /** @var WaimaiRepositories $waimai */
         $waimai = app()->make(WaimaiRepositories::class);

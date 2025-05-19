@@ -88,6 +88,7 @@ class StoreOrder extends BaseController
         if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
         try {
+            $trade_amount = $order->trade_amount;
             // 同步美团传过来的支付价格
             if ($pay_price) {
                 $groupOrder->pay_price = $pay_price;
@@ -101,13 +102,13 @@ class StoreOrder extends BaseController
 
             $params = [
                 'order_no' => $order_sn,
-                'total_amount' => $pay_price,
+                'total_amount' => $trade_amount,
                 'remark' => 'offline_order',
                 'merchant_no' => '822584053112XE1',
                 'term_nos' => 'L8394421',
                 'openid' => $openId,
                 'trans_type' => 51,
-                'goods_id' => '1',
+                'goods_id' => '2',
             ];
             $api = new \Lakala\LklApi();
             $result = $api::lklPreorder($params);
