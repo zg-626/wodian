@@ -345,7 +345,8 @@ class WaimaiRepositories extends BaseRepository
             return $this->response(self::$ERROR_410, '支付单不存在');
         }
         if ($order['refund_status'] == self::$PAY_STATUS_1) {
-            return $this->error(self::$ERROR_411, '退款超额');
+            return false;
+            //return $this->error(self::$ERROR_411, '订单已全额退款，不能再次退款');
         }
         $be_refund_amount = $order['refund_amount']; // 已退款金额
         $refundAmount = $content['refundAmount']; // 本次退款金额
@@ -356,6 +357,10 @@ class WaimaiRepositories extends BaseRepository
         }
 
         $refund = MeituanOrderRefund::where('trade_no', $tradeNo)->where('trade_refund_no', $content['tradeRefundNo'])->find();
+        // 如果退款流水号不匹配，返回411错误
+        if ($refund && $refund['trade_refund_no']!= $content['tradeRefundNo']) {
+            return $this->error(self::$ERROR_411, '退款流水号不匹配');
+        }
         if (!$refund) {
             $third_refund_no = $tradeNo . date('Ymd') . time();
             $data['trade_no'] = $tradeNo;
