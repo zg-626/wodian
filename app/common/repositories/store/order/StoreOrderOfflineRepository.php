@@ -274,6 +274,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'merchant_no' => $merchant['merchant_no'],
             'term_nos' => $merchant['term_nos'],
             'openid' => $openId,
+            'trans_type' => 71,
             'goods_id' => '1',
         ];
 

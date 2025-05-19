@@ -345,14 +345,13 @@ class WaimaiRepositories extends BaseRepository
             return $this->response(self::$ERROR_410, '支付单不存在');
         }
         $refund = MeituanOrderRefund::where('trade_no', $tradeNo)->where('trade_refund_no', $content['tradeRefundNo'])->find();
-
         // 如果退款流水号不匹配，返回411错误
         if ($refund && $refund['trade_refund_no']!= $content['tradeRefundNo']) {
             return $this->error(self::$ERROR_411, '退款流水号不匹配');
         }
 
-        if ($order['refund_status'] == self::$PAY_STATUS_1) {
-            $thirdRefundNo = $content['tradeRefundNo'];
+        if ($order['refund_status'] == self::$PAY_STATUS_1 && $refund) {
+            $thirdRefundNo = $refund['third_refund_no'];
             $refundAmount = $content['refundAmount']; // 本次退款金额
             $refundDetails = "[{\"fundBearer\":\"cust\",\"detailAmount\":$refundAmount}]";
             $data = compact('thirdRefundNo');

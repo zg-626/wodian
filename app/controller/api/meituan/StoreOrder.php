@@ -10,6 +10,7 @@ use app\common\repositories\store\order\StoreOrderReceiptRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\WaimaiRepositories;
+use app\common\repositories\wechat\WechatUserRepository;
 use app\validate\api\UserReceiptValidate;
 use crmeb\basic\BaseController;
 use crmeb\services\LockService;
@@ -55,7 +56,7 @@ class StoreOrder extends BaseController
 
     public function pay()
     {
-        $payType = $this->request->param('pay_type');
+        $payType = 'h5';
         $key = (string)$this->request->param('key');
         $pay_price = $this->request->param('pay_price');
         $phone = $this->request->param('phone');
@@ -79,6 +80,10 @@ class StoreOrder extends BaseController
         if (!$order) {
             return app('json')->fail('美团订单不存在');
         }
+        $wechatUserRepository = app()->make(WechatUserRepository::class);
+        $openId = $wechatUserRepository->idByRoutineId($userInfo['wechat_user_id']);
+        if (!$openId)
+            throw new ValidateException('请关联微信小程序!');
 
         if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
@@ -90,7 +95,32 @@ class StoreOrder extends BaseController
                 $order->pay_price = $pay_price;
                 $order->save();
             }
-            return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
+            //return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
+            // 拉卡拉支付参数
+            $order_sn = $groupOrder->trade_no;
+
+            $params = [
+                'order_no' => $order_sn,
+                'total_amount' => $pay_price,
+                'remark' => 'offline_order',
+                'merchant_no' => '822584053112XE1',
+                'term_nos' => 'L8394421',
+                'openid' => $openId,
+                'trans_type' => 51,
+                'goods_id' => '1',
+            ];
+            $api = new \Lakala\LklApi();
+            $result = $api::lklPreorder($params);
+            if (!$result) {
+                return app('json')->fail($api->getErrorInfo());
+            }
+            $config=[
+                'config' => $result
+            ];
+            $config=[
+                'config' => $result
+            ];
+            return app('json')->status($payType, $config);
         } catch (\Exception $e) {
             return app('json')->status('error', $e->getMessage().$e->getLine(), ['order_id' => $groupOrder->group_order_id]);
         }
