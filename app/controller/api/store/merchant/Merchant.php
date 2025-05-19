@@ -211,4 +211,15 @@ class Merchant extends BaseController
         return app('json')->success('保存成功');
     }
 
+    public function withdrawLst()
+    {
+        [$page, $limit] = $this->getPage();
+        $where = $this->request->params(['date', 'status', 'financial_type', 'financial_status', 'keyword', 'is_trader', 'mer_id']);
+        $where['type'] = 0;
+        /** @var FinancialRepository $financialRepository **/
+        $financialRepository = app()->make(FinancialRepository::class);
+        $data = $financialRepository->getAdminList($where, $page, $limit);
+        return app('json')->success($data);
+    }
+
 }

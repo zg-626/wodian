@@ -590,6 +590,8 @@ Route::group('api/', function () {
             Route::get('/pay_code_lst/:id', 'Merchant/payCodeLst');
             // 申请提现
             Route::post('/withdraw', 'Merchant/withdraw');
+            // 提现记录
+            Route::get('/withdraw_lst', 'Merchant/withdrawLst');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');

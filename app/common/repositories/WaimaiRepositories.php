@@ -8,6 +8,7 @@ use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
+use app\common\repositories\user\UserRepository;
 use crmeb\services\MeituanService;
 use think\Exception;
 use think\facade\Db;
@@ -148,6 +149,35 @@ class WaimaiRepositories extends BaseRepository
         $data['create_content'] = json_encode($content, JSON_UNESCAPED_UNICODE);
 
         $user = User::where('phone', $phone)->field('uid,nickname,phone')->findOrEmpty()->toArray();
+        if (!$user) {
+            return $this->response(self::$ERROR_402, '员工信息参数缺失');
+        }
+        $userInfo = app()->make(UserRepository::class)->get($user['uid']);
+        // 推广员信息
+        $isSelfBuy = $userInfo->is_promoter && systemConfig('extension_self') ? 1 : 0;
+        if ($isSelfBuy) {
+            $spreadUser = $user;
+            $topUser = $userInfo->valid_spread;
+        } else {
+            $spreadUser = $userInfo->valid_spread;
+            $topUser = $userInfo->valid_top;
+        }
+
+        $spreadUid = $spreadUser->uid ?? 0;
+        $topUid = $topUser->uid ?? 0;
+        $extension_one=0;
+        $extension_two=0;
+
+        // 推广比例
+        $extension_one_rate = systemConfig('extension_one_rate')?:0.03;
+        $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
+
+        if ($spreadUid) {
+            $extension_one = $content['tradeAmount'] > 0 ? bcmul($content['tradeAmount'], $extension_one_rate, 4) : 0;
+        }
+        if ($topUid) {
+            $extension_two = $content['tradeAmount'] > 0 ? bcmul($content['tradeAmount'], $extension_two_rate, 4) : 0;
+        }
         $data['uid'] = $user['uid']?? 0;
         if(!$user){
             return $this->response(self::$ERROR_510, self::errorStatusList()[self::$ERROR_510]);
@@ -183,13 +213,13 @@ class WaimaiRepositories extends BaseRepository
             'commission_rate' => 0,
             'order_type' => 0,
             'is_virtual' => 0,
-            'extension_one' => 0,
-            'extension_two' => 0,
+            'spread_uid' => $spreadUid,
+            'top_uid' => $topUid,
+            'is_selfbuy' => $isSelfBuy,
+            'extension_one' => $extension_one,
+            'extension_two' => $extension_two,
             'order_sn' => $groupOrder['group_order_sn'],
             'uid' => $user['uid'] ?? 0,
-            'spread_uid' => 0,
-            'top_uid' => 0,
-            'is_selfbuy' => 1,
             'real_name' => $user['nickname'] ?? '',
             'user_phone' => $user['phone'] ?? '',
             'user_address' => '',
