@@ -277,7 +277,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'goods_id' => '1',
         ];
 
-        if ($money){
+        if ($money>0){
 //            try {
 //                //$service = new PayService($type,$body, 'offline_order');
 //
@@ -462,7 +462,11 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $merchantRepository=app()->make(MerchantRepository::class);
                 // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
                 if($order->deduction > 0){
-                    $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction);
+                    // 如果不使用抵用券，商家原来应该得到的金额
+                    $old_money=$order->total_price*0.8;
+                    // 计算商家应该得到的平台补贴金额
+                    $mer_money=bcsub($old_money,$order->pay_price,2);
+                    $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $mer_money);
                 }
 
                 // 赠送积分
