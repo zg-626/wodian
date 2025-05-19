@@ -55,7 +55,7 @@ class StoreOrder extends BaseController
 
     public function pay()
     {
-        $payType = 'h5';
+        $payType = $this->request->param('pay_type');
         $key = (string)$this->request->param('key');
         $pay_price = $this->request->param('pay_price');
         $phone = $this->request->param('phone');
