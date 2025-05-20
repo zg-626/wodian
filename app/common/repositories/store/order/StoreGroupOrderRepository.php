@@ -145,6 +145,12 @@ class StoreGroupOrderRepository extends BaseRepository
                 }
             }
 
+            // 退回抵用券
+            if($groupOrder->deduction > 0){
+                $make = app()->make(UserRepository::class);
+                $make->update($groupOrder->uid, ['coupon_amount' => Db::raw('coupon_amount+' . $groupOrder->deduction)]);
+            }
+
             //退回积分
             if ($groupOrder->integral > 0) {
                 $make = app()->make(UserRepository::class);

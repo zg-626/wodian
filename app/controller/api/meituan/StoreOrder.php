@@ -91,12 +91,22 @@ class StoreOrder extends BaseController
             $trade_amount = $order->trade_amount;
             $pay_price = $trade_amount;
             // 同步美团传过来的抵用券
-            if ($user_deduction) {
+            if ($user_deduction>0) {
                 $pay_price = $trade_amount-$user_deduction;
                 $groupOrder->pay_price = $pay_price;
+                $groupOrder->deduction = $user_deduction;
+                $groupOrder->deduction_money = $user_deduction;
                 $groupOrder->save();
                 $order->pay_price = $pay_price;
                 $order->save();
+
+                // 更新主订单状态
+                $store_order = \app\common\model\store\order\StoreOrder::where('trade_no', $groupOrder->trade_no)->find();
+                if ($store_order) {
+                    $store_order->deduction = $user_deduction;
+                    $store_order->deduction_money = $user_deduction;
+                    $store_order->save();
+                }
 
                 if($pay_price > 0){
                     // 拉卡拉支付参数
