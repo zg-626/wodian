@@ -22,16 +22,6 @@ use think\facade\Route;
 Route::group('api/', function () {
     Route::any('test', 'api.Auth/test');
     //强制登录
-    // 用户实名认证
-    Route::group('user/real_auth', function () {
-        // 获取实名认证信息
-        Route::get('info', 'api.user.RealAuth/getAuthInfo');
-        // 提交实名认证
-        Route::post('apply', 'api.user.RealAuth/applyAuth');
-    })->middleware([
-        AllowOriginMiddleware::class,
-        UserTokenMiddleware::class
-    ]);
     Route::group(function () {
         Route::group('v2', function () {
             //新的下单接口,支持分账
@@ -51,6 +41,11 @@ Route::group('api/', function () {
 
         //绑定推荐人
         Route::post('user/spread', 'api.Auth/spread');
+
+        // 获取实名认证信息
+        Route::get('user/real_auth/info', 'api.user.RealAuth/getAuthInfo');
+        // 提交实名认证
+        Route::post('user/real_auth/apply', 'api.user.RealAuth/applyAuth');
 
         //优惠券
         Route::group('coupon', function () {
