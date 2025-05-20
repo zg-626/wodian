@@ -28,7 +28,7 @@ class UserRealAuthDao extends BaseDao
      * 设置模型
      * @return string
      */
-    protected function setModel(): string
+    protected function getModel(): string
     {
         return UserRealAuth::class;
     }
