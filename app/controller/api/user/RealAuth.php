@@ -80,7 +80,6 @@ class RealAuth extends BaseController
             return app('json')->success('实名认证成功');
         }
 
-
         return app('json')->fail($result['message'] ?? '实名认证失败');
     }
 }
