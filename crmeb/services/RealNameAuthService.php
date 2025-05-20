@@ -74,7 +74,9 @@ class RealNameAuthService
                                 'message' => $response->body->message ?? 'success'
                             ]
                         ];
-                    } else {
+                    }
+
+                    if ($bizCode == "2") {
                         return [
                             'status' => false,
                             'message' => '身份信息不匹配',
@@ -85,21 +87,31 @@ class RealNameAuthService
                             ]
                         ];
                     }
-                } else {
+
                     return [
-                        'status' => false,
-                        'message' => '认证结果异常',
-                        'data' => isset($response->body) ? json_decode(json_encode($response->body), true) : []
+                       'status' => false,
+                       'message' => '查⽆记录',
+                        'data' => [
+                            'bizCode' => $bizCode,
+                           'requestId' => $response->body->requestId?? '',
+                           'message' => $response->body->message?? 'fail'
+                        ]
                     ];
                 }
-            } else {
-                $message = isset($response->body->message) ? $response->body->message : '认证失败';
+
                 return [
                     'status' => false,
-                    'message' => $message,
-                    'data' => []
+                    'message' => '认证结果异常',
+                    'data' => isset($response->body) ? json_decode(json_encode($response->body), true) : []
                 ];
             }
+
+            $message = isset($response->body->message) ? $response->body->message : '认证失败';
+            return [
+                'status' => false,
+                'message' => $message,
+                'data' => []
+            ];
         } catch (Exception $error) {
             // 处理异常
             if (!($error instanceof TeaError)) {
