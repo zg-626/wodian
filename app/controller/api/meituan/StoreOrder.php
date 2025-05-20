@@ -105,7 +105,7 @@ class StoreOrder extends BaseController
                     $params = [
                         'order_no' => $order_sn,
                         'total_amount' => $pay_price,
-                        'remark' => 'offline_order',
+                        'remark' => 'meituan',
                         'merchant_no' => '822584053112XE1',
                         'term_nos' => 'L8394421',
                         'openid' => $openId,
