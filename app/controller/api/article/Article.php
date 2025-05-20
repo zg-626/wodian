@@ -317,7 +317,13 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1793]]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1768]]);
+            //print_r($order);exit();
+            // 测试美团退款
+            /** @var WaimaiRepositories $repository */
+            $repository = app()->make(WaimaiRepositories::class);
+            $result = $repository->refundLogic($order->order_sn, $order->pay_price,$order->origin_log_no);
+            print_r($result);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){
 //                /** @var MerchantRepository $merchantRepository */
@@ -334,10 +340,10 @@ class Article extends BaseController
             /** @var MerchantRepository $merchantRepository */
             $merchantRepository=app()->make(MerchantRepository::class);
             // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
-            if($order->deduction > 0){
+            /*if($order->deduction > 0){
 
                 $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction_money);
-            }
+            }*/
             //$storeOrderOfflineRepository->computeds($order,$user);
             //$storeOrderOfflineRepository->red($order);
             //$info=$storeOrderOfflineRepository->paySuccess($order);

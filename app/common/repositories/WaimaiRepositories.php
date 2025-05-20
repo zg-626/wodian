@@ -607,10 +607,30 @@ class WaimaiRepositories extends BaseRepository
      */
     public function extracted($thirdTradeNo, $phone, $groupOrderId, $orderId): array
     {
-        $thirdPayUrl = systemConfig('site_url') . '/pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId;
+        $thirdPayUrl = systemConfig('site_url') . 'pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId;
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
+    }
+
+    // 退款逻辑
+    public function refundLogic($order_sn, $refund_amount,$origin_log_no)
+    {
+        // 拉卡拉退款参数
+        $params = [
+            'order_sn' => $order_sn,
+            'refund_amount' => $refund_amount,
+            'origin_log_no' => $origin_log_no,
+            'merchant_no' => '822584053112XE1',
+            'term_nos' => 'L8394421',
+            'trans_type' => 51,
+        ];
+        $api = new \Lakala\LklApi();
+        $result = $api::lklRefund($params);
+        if (!$result) {
+            return app('json')->fail($api->getErrorInfo());
+        }
+
     }
 
 }

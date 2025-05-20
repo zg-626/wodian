@@ -770,6 +770,50 @@ class LklApi
     }
 
     /**
+     * 扫码-退款交易
+     */
+    public static function lklRefund($param)
+    {
+        $sepParam = [
+            'merchant_no' => $param['merchant_no'], //TODO： $param['lkl_mer_cup_no']
+            'term_no' => $param['term_nos'], //TODO： $param['lkl_mer_term_no']
+            'out_trade_no' => $param['order_sn'],
+            'origin_out_trade_no' => $param['origin_log_no'],
+            'account_type' => 'WECHAT', //钱包类型 微信：WECHAT 支付宝：ALIPAY 银联：UQRCODEPAY 翼支付: BESTPAY 苏宁易付宝: SUNING 拉卡拉支付账户：LKLACC 网联小钱包：NUCSPAY 京东钱包：JD
+            'trans_type' => $param['trans_type']??71, //接入方式 41:NATIVE（（ALIPAY，云闪付支持，京东白条分期），51:JSAPI（微信公众号支付，支付宝服务窗支付，银联JS支付，翼支付JS支付、拉卡拉钱包支付），71:微信小程序支付，61:APP支付（微信APP支付）
+            'refund_amount' => bcmul($param['refund_amount'], 100, 0), //退款金额 单位：分
+            'location_info' => [
+                'request_ip' => self::$config['request_ip'], //请求方的IP地址
+            ], //地址位置信息
+            'refund_reason' => '不想要了', //退款原因
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 退款请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lklRefund');
+
+        $config = new Configuration();
+        $api = new LakalaApi($config);
+        $request = new ModelRequest();
+        $request->setReqData($sepParam);
+        try {
+            $response = $api->tradeApi('/api/v3/labs/relation/refund', $request);
+            if (!empty($response)) {
+                $res = $response->getOriginalText();
+                record_log('时间: ' . date('Y-m-d H:i:s') . ', 退款请求结果: ' . $res, 'lklRefund');
+                $resdata = json_decode($res, true);
+                if (!empty($resdata['code']) && $resdata['code'] == 'BBS00000') {
+                    return $resdata['resp_data'];
+                }
+
+                return self::setErrorInfo('lklRefund' . $resdata['msg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 退款请求异常: ' . $e->getMessage(), 'lklRefund');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+
+    }
+
+    /**
      * @desc 订单分账 第一步 可分账金额查询(订单可分账金额为：实付金额 - 拉卡拉所收手续费)
      * @param lkl_mer_cup_no 拉卡拉银联商户号
      * @param lkl_log_no 对账单流水号
