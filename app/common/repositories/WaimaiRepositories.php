@@ -110,6 +110,7 @@ class WaimaiRepositories extends BaseRepository
         }
 
         $tradeNo = $content['tradeNo'];
+        $returnUrl = $content['returnUrl'];
         $order = MeituanOrder::where('trade_no', $tradeNo)->find();
         if ($order) {
             // 如果订单支付状态不是未支付，则返回对应状态
@@ -127,7 +128,7 @@ class WaimaiRepositories extends BaseRepository
             // 构建返回相同的支付URL和流水号
             $thirdTradeNo = $tradeNo;
             $groupOrderId = $order['group_order_id'];
-            return $this->extracted($thirdTradeNo, $phone, $groupOrderId, $orderId);
+            return $this->extracted($thirdTradeNo, $phone, $groupOrderId, $orderId,$returnUrl);
         }
 
         if ($order && $order['pay_status'] != self::$PAY_STATUS_0) {
@@ -260,7 +261,7 @@ class WaimaiRepositories extends BaseRepository
         $thirdTradeNo = $tradeNo;
         // TODO 客户平台支付页面 URL，美团企业版以 GET 方式重定向到该地址，必须是 HTTPS 协议，否则 IOS 系统不能访问。
         //$thirdPayUrl = "https://cashier.example.com/pay?tradeNo=1625341310296658007&thirdPayOrderId=757206679686983682&phone=18511111111";
-        return $this->extracted($thirdTradeNo, $phone, $groupOrderId, $OrderId);
+        return $this->extracted($thirdTradeNo, $phone, $groupOrderId, $OrderId,$returnUrl);
     }
 
     /**
@@ -471,7 +472,7 @@ class WaimaiRepositories extends BaseRepository
             }
 
             // 调用拉卡拉退款
-            //$this->refundLogic($third_refund_no, $refundAmount, $third_refund_no);
+            $this->refundLogic($third_refund_no, $refundAmount, $store_order->lkl_log_no);
 
             Db::commit();
 
@@ -615,9 +616,9 @@ class WaimaiRepositories extends BaseRepository
      * @param $orderId
      * @return array
      */
-    public function extracted($thirdTradeNo, $phone, $groupOrderId, $orderId): array
+    public function extracted($thirdTradeNo, $phone, $groupOrderId, $orderId,$returnUrl): array
     {
-        $thirdPayUrl = systemConfig('site_url') . 'pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId;
+        $thirdPayUrl = systemConfig('site_url') . 'pages/store/meituan/index?tradeNo=' . $thirdTradeNo . '&phone=' . $phone . '&groupOrderId=' . $groupOrderId . '&orderId=' . $orderId . '&returnUrl='. $returnUrl;
         $data = compact('thirdTradeNo', 'thirdPayUrl');
         $meituanService = new MeituanService();
         return $this->response(0, '成功', $meituanService->aes_encrypt($data, $this->secretKey));
