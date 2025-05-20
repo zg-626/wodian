@@ -42,11 +42,6 @@ Route::group('api/', function () {
         //绑定推荐人
         Route::post('user/spread', 'api.Auth/spread');
 
-        // 获取实名认证信息
-        Route::get('user/real_auth/info', 'api.user.RealAuth/getAuthInfo');
-        // 提交实名认证
-        Route::post('user/real_auth/apply', 'api.user.RealAuth/applyAuth');
-
         //优惠券
         Route::group('coupon', function () {
             Route::post('receive/:id', 'api.store.product.StoreCoupon/receiveCoupon');
@@ -234,6 +229,11 @@ Route::group('api/', function () {
             Route::get('fields/info', 'UserFields/info');
             Route::post('fields/save', 'UserFields/save');
             Route::delete('fields/delete', 'UserFields/delete');
+
+            // 获取实名认证信息
+            Route::get('real_auth/info', 'RealAuth/getAuthInfo');
+            // 提交实名认证
+            Route::post('real_auth/apply', 'RealAuth/applyAuth');
 
         })->prefix('api.user.');
 
