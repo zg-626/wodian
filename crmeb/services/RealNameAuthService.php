@@ -56,14 +56,42 @@ class RealNameAuthService
             
             // 记录响应日志
             Log::info('实名认证响应: ' . json_encode($response, JSON_UNESCAPED_UNICODE));
-            
+
             // 解析结果
             if (isset($response->body) && isset($response->body->code) && $response->body->code == "200") {
-                return [
-                    'status' => true,
-                    'message' => '认证成功',
-                    'data' => isset($response->body) ? json_decode(json_encode($response->body), true) : []
-                ];
+                // 检查业务结果码
+                if (isset($response->body->resultObject) && isset($response->body->resultObject->bizCode)) {
+                    $bizCode = $response->body->resultObject->bizCode;
+
+                    // bizCode为1表示认证通过，2表示认证不通过
+                    if ($bizCode == "1") {
+                        return [
+                            'status' => true,
+                            'message' => '认证成功',
+                            'data' => [
+                                'bizCode' => $bizCode,
+                                'requestId' => $response->body->requestId ?? '',
+                                'message' => $response->body->message ?? 'success'
+                            ]
+                        ];
+                    } else {
+                        return [
+                            'status' => false,
+                            'message' => '身份信息不匹配',
+                            'data' => [
+                                'bizCode' => $bizCode,
+                                'requestId' => $response->body->requestId ?? '',
+                                'message' => $response->body->message ?? 'fail'
+                            ]
+                        ];
+                    }
+                } else {
+                    return [
+                        'status' => false,
+                        'message' => '认证结果异常',
+                        'data' => isset($response->body) ? json_decode(json_encode($response->body), true) : []
+                    ];
+                }
             } else {
                 $message = isset($response->body->message) ? $response->body->message : '认证失败';
                 return [
@@ -98,10 +126,10 @@ class RealNameAuthService
     private static function createClient(){
         // 方式一：使用AccessKey（如果您已配置环境变量或实例RAM角色，可以使用方式二）
         $config = new OpenApiConfig([
-            // 您的AccessKey ID
-            "accessKeyId" => 'LTAI5tAQ5Xk5CTzMJr5kHxUC',
-            // 您的AccessKey Secret
-            "accessKeySecret" => 'zKMZ2MQI1smvFXqqdlqF0ycCG4pqqI',
+            // 您的 AccessKey ID
+            "accessKeyId" => systemConfig('aliyun_AccessKeyId'),
+            // 您的 AccessKey Secret
+            "accessKeySecret" => systemConfig('aliyun_AccessKeySecret'),
             // 访问的端点
             "endpoint" => "cloudauth.aliyuncs.com"
         ]);
