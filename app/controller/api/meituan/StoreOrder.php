@@ -90,13 +90,17 @@ class StoreOrder extends BaseController
         try {
             $trade_amount = $order->trade_amount;
             $pay_price = $trade_amount;
-            // 同步美团传过来的抵用券
-            if ($user_deduction>0) {
-                $pay_price = $trade_amount-$user_deduction;
+
+            // 计算抵扣后的实际支付金额
+            if ($user_deduction > 0) {
+                $pay_price = $trade_amount - $user_deduction;
+
+                // 更新订单信息
                 $groupOrder->pay_price = $pay_price;
                 $groupOrder->deduction = $user_deduction;
                 $groupOrder->deduction_money = $user_deduction;
                 $groupOrder->save();
+
                 $order->pay_price = $pay_price;
                 $order->save();
 
@@ -107,38 +111,39 @@ class StoreOrder extends BaseController
                     $store_order->deduction_money = $user_deduction;
                     $store_order->save();
                 }
-
-                if($pay_price > 0){
-                    // 拉卡拉支付参数
-                    $order_sn = $groupOrder->trade_no;
-
-                    $params = [
-                        'order_no' => $order_sn,
-                        'total_amount' => $pay_price,
-                        'remark' => 'meituan',
-                        'merchant_no' => '822584053112XE1',
-                        'term_nos' => 'L8394421',
-                        'openid' => $openId,
-                        'trans_type' => 51,
-                        'goods_id' => '2',
-                    ];
-                    $api = new \Lakala\LklApi();
-                    $result = $api::lklPreorder($params);
-                    if (!$result) {
-                        return app('json')->fail($api->getErrorInfo());
-                    }
-
-                    $config=[
-                        'config' => $result
-                    ];
-                    return app('json')->status($payType, $config);
-                }
-
-                $this->repository->paySuccess($groupOrder);
-                return app('json')->status('success', '支付成功', ['order_id' => $groupOrder['group_order_id']]);
             }
 
+            // 判断实际支付金额是否为0
+            if ($pay_price <= 0) {
+                // 实际支付金额为0，直接标记为支付成功
+                $this->repository->paySuccess($groupOrder);
+                return app('json')->status('success', '支付成功', ['order_id' => $groupOrder['group_order_id']]);
+            } else {
+                // 实际支付金额大于0，走第三方支付流程
+                // 拉卡拉支付参数
+                $order_sn = $groupOrder->order_sn;
 
+                $params = [
+                    'order_no' => $order_sn,
+                    'total_amount' => $pay_price,
+                    'remark' => 'meituan',
+                    'merchant_no' => '822584053112XE1',
+                    'term_nos' => 'L8394421',
+                    'openid' => $openId,
+                    'trans_type' => 71,
+                    'goods_id' => '2',
+                ];
+                $api = new \Lakala\LklApi();
+                $result = $api::lklPreorder($params);
+                if (!$result) {
+                    return app('json')->fail($api->getErrorInfo());
+                }
+
+                $config = [
+                    'config' => $result
+                ];
+                return app('json')->status($payType, $config);
+            }
         } catch (\Exception $e) {
             return app('json')->status('error', $e->getMessage().$e->getLine(), ['order_id' => $groupOrder->group_order_id]);
         }

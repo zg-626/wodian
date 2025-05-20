@@ -154,6 +154,12 @@ class WaimaiRepositories extends BaseRepository
             return $this->response(self::$ERROR_402, '员工信息参数缺失');
         }
         $userInfo = app()->make(UserRepository::class)->get($user['uid']);
+        // 根据总金额计算积分，不根据实际支付金额
+        $rate=0.03;
+        $total_give_integral=0;
+        if ($content['tradeAmount'] > 0) {
+            $total_give_integral = bcmul($content['tradeAmount'], $rate, 2);
+        }
         // 推广员信息
         $isSelfBuy = $userInfo->is_promoter && systemConfig('extension_self') ? 1 : 0;
         if ($isSelfBuy) {
@@ -203,7 +209,7 @@ class WaimaiRepositories extends BaseRepository
             'integral_price' => 0,
             'deduction' => 0,
             'deduction_price' => 0,
-            'give_integral' => 0,
+            'give_integral' => $total_give_integral,
             'activity_type' => 0,
 
             'is_meituan' => 1,
@@ -211,7 +217,7 @@ class WaimaiRepositories extends BaseRepository
         ];
         $_order = [
             'activity_type' => 0,
-            'commission_rate' => 0,
+            'commission_rate' => $rate,
             'order_type' => 0,
             'is_virtual' => 0,
             'spread_uid' => $spreadUid,

@@ -480,16 +480,20 @@ class StoreOrderRepository extends BaseRepository
         }
         $order->pay_status = self::$PAY_STATUS_1;
         $order->save();
-
+        // 赠送积分
+        $this->giveIntegral($groupOrder);
         // 发放推广抵用券
         $user = app()->make(UserRepository::class)->get($order['uid']);
        // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
         foreach ($groupOrder->orderList as $_k => $order) {
             $this->computed($order,$user);
-            $order->transaction_id = $data['data']['acc_trade_no']??'';
-            $order->lkl_log_no = $data['data']['log_no']??'';
-            $order->lkl_trade_no = $data['data']['trade_no']??'';
-            $order->lkl_log_date = $data['data']['trade_time']??'';
+            if(!empty($data)){
+                $order->transaction_id = $data['data']['acc_trade_no']??'';
+                $order->lkl_log_no = $data['data']['log_no']??'';
+                $order->lkl_trade_no = $data['data']['trade_no']??'';
+                $order->lkl_log_date = $data['data']['trade_time']??'';
+            }
+
         }
 
         // 给美团发通知
