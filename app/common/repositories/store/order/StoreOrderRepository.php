@@ -489,6 +489,7 @@ class StoreOrderRepository extends BaseRepository
         foreach ($groupOrder->orderList as $_k => $order) {
             $order->paid = 1;
             $order->pay_time = $time;
+            $order->save();
             $this->computed($order,$user);
             if(!empty($data)){
                 $order->transaction_id = $data['data']['acc_trade_no']??'';
