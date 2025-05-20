@@ -23,17 +23,15 @@ use app\common\model\BaseModel;
  */
 class UserRealAuth extends BaseModel
 {
-    /**
-     * 数据表主键
-     * @var string
-     */
-    protected $pk = 'real_auth_id';
+    public static function tablePk(): ?string
+    {
+        return 'real_auth_id';
+    }
 
-    /**
-     * 模型名称
-     * @var string
-     */
-    protected $name = 'user_real_auth';
+    public static function tableName(): string
+    {
+        return 'user_real_auth';
+    }
 
     /**
      * 状态

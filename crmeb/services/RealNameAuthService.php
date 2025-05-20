@@ -138,8 +138,10 @@ class RealNameAuthService
     private static function createClient($endpoint){
         // 直接设置AccessKey
         $credentialConfig = new Config([
-            'accessKeyId' => '您的AccessKey_ID',
-            'accessKeySecret' => '您的AccessKey_Secret'
+            // 您的 AccessKey ID
+            "accessKeyId" => systemConfig('aliyun_AccessKeyId'),
+            // 您的 AccessKey Secret
+            "accessKeySecret" => systemConfig('aliyun_AccessKeySecret')
         ]);
         $credential = new Credential($credentialConfig);
         // 创建SDK Client实例

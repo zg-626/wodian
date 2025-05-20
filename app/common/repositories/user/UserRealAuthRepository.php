@@ -94,7 +94,7 @@ class UserRealAuthRepository extends BaseRepository
      * @param int $uid 用户ID
      * @param string $realName 真实姓名
      * @param string $idCard 身份证号
-     * @return bool
+     * @return array
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
@@ -114,7 +114,7 @@ class UserRealAuthRepository extends BaseRepository
         
         // 调用阿里云实名认证服务
         $result = RealNameAuthService::verify($realName, $idCard);
-        
+
         // 开启事务
         Db::startTrans();
         try {
@@ -137,7 +137,7 @@ class UserRealAuthRepository extends BaseRepository
             
             // 提交事务
             Db::commit();
-            return $result['status'];
+            return ['status' => $result['status'], 'message' => $result['message']];
         } catch (\Exception $e) {
             // 回滚事务
             Db::rollback();

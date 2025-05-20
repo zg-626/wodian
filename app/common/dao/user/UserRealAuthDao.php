@@ -43,7 +43,7 @@ class UserRealAuthDao extends BaseDao
      */
     public function getAuthByUid(int $uid)
     {
-        return $this->getModel()->where('uid', $uid)->find();
+        return $this->getModel()::getDB()->where('uid', $uid)->find();
     }
 
     /**
@@ -53,6 +53,6 @@ class UserRealAuthDao extends BaseDao
      */
     public function getAuthStatus(int $uid)
     {
-        return $this->getModel()->where('uid', $uid)->value('status') ?: 0;
+        return $this->getModel()::getDB()->where('uid', $uid)->value('status') ?: 0;
     }
 }

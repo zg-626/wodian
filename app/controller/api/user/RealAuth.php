@@ -75,11 +75,12 @@ class RealAuth extends BaseController
         
         $uid = $this->request->uid();
         $result = $this->repository->applyAuth($uid, $data['real_name'], $data['id_card']);
-        
-        if ($result) {
+
+        if ($result['status']!= '') {
             return app('json')->success('实名认证成功');
-        } else {
-            return app('json')->fail('实名认证失败，请检查信息是否正确');
         }
+
+
+        return app('json')->fail($result['message'] ?? '实名认证失败');
     }
 }
