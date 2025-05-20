@@ -19,13 +19,13 @@ class OfflineOrderSuccessListen
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
             $storeOrderOfflineRepository->paySuccess($data);
         }else{
-            $orderSn = $data['out_trade_no'];
+            $orderSn = $data['order_sn'];
             $is_combine = 0;
             $groupOrder = app()->make(StoreGroupOrderRepository::class)->getWhere(['group_order_sn' => $orderSn]);
             if (!$groupOrder || $groupOrder->paid == 1) return;
             $orders = [];
 
-            Log::info('美团执行队列' . var_export([$data,$groupOrder], 1));
+            Log::info('美团执行队列' . var_export([$data], 1));
             /** @var StoreOrderRepository $toreOrderRepository */
             $toreOrderRepository=app()->make(StoreOrderRepository::class);
             $toreOrderRepository->paySuccess($groupOrder, $is_combine, $orders, $data);

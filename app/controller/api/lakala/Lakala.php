@@ -198,7 +198,7 @@ class Lakala extends BaseController
                 $out_trade_no = $obj['out_trade_no'];
 
                 try {
-                    event('pay_success_' . $obj['remark'], ['order_sn' => $out_trade_no, 'data' => $obj]);
+                    event('pay_success_' . 'offline_order', ['order_sn' => $out_trade_no, 'data' => $obj]);
                 } catch (\Exception $e) {
                     Log::info('拉卡拉支付回调失败:' . $e->getMessage() . $e->getFile() . $e->getLine());
                     // return false;

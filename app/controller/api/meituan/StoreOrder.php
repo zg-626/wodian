@@ -93,7 +93,8 @@ class StoreOrder extends BaseController
 
             // 计算抵扣后的实际支付金额
             if ($user_deduction > 0) {
-                $pay_price = $trade_amount - $user_deduction;
+                // 取两位数点
+                $pay_price = round($trade_amount - $user_deduction, 2);
 
                 // 更新订单信息
                 $groupOrder->pay_price = $pay_price;
@@ -119,6 +120,7 @@ class StoreOrder extends BaseController
                 $this->repository->paySuccess($groupOrder);
                 return app('json')->status('success', '支付成功', ['order_id' => $groupOrder['group_order_id']]);
             } else {
+
                 // 实际支付金额大于0，走第三方支付流程
                 // 拉卡拉支付参数
                 $order_sn = $groupOrder->group_order_sn;

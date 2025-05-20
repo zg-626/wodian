@@ -486,10 +486,9 @@ class StoreOrderRepository extends BaseRepository
         // 发放推广抵用券
         $user = app()->make(UserRepository::class)->get($order['uid']);
        // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
-        foreach ($groupOrder->orderList as $_k => $order) {
-            $order->paid = 1;
-            $order->pay_time = $time;
-            $order->save();
+        foreach ($groupOrder->orderList as $_k => $orders) {
+            $orders->paid = 1;
+            $orders->pay_time = $time;
             $this->computed($order,$user);
             if(!empty($data)){
                 $order->transaction_id = $data['data']['acc_trade_no']??'';
@@ -497,6 +496,7 @@ class StoreOrderRepository extends BaseRepository
                 $order->lkl_trade_no = $data['data']['trade_no']??'';
                 $order->lkl_log_date = $data['data']['trade_time']??'';
             }
+            $orders->save();
 
         }
 
