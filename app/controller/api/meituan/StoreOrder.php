@@ -115,9 +115,7 @@ class StoreOrder extends BaseController
             if (!$result) {
                 return app('json')->fail($api->getErrorInfo());
             }
-            $config=[
-                'config' => $result
-            ];
+
             $config=[
                 'config' => $result
             ];
