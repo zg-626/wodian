@@ -16,6 +16,7 @@ use app\common\model\system\merchant\MerchantAdmin;
 use app\common\repositories\store\service\StoreServiceRepository;
 use app\common\repositories\system\financial\FinancialRepository;
 use app\common\repositories\user\UserMerchantRepository;
+use app\common\repositories\user\UserRealAuthRepository;
 use think\App;
 use crmeb\basic\BaseController;
 use app\common\repositories\system\merchant\MerchantRepository as repository;
@@ -191,6 +192,19 @@ class Merchant extends BaseController
     public function withdraw()
     {
         $data = $this->request->param(['extract_money','financial_type','mark','mer_id','account','financial_type','name','bank','bank_code','wechat','wechat_code','alipay','alipay_code']);
+
+        $uid = $this->request->uid();
+        $open = systemConfig('real_name_open');
+        // 判断实名认证开关，只有开启才需要验证
+        if ($open) {
+            /** @var UserRealAuthRepository $userRealAuthRepository **/
+            $userRealAuthRepository = app()->make(UserRealAuthRepository::class);
+            $user = $userRealAuthRepository->getUserAuth($uid);
+            if ($user && $user['status']!==1) {
+                return app('json')->fail('请先进行实名认证');
+            }
+        }
+
         if(!$data['extract_money']){
             return app('json')->fail('请输入提现金额');
         }

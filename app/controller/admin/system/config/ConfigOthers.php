@@ -46,6 +46,7 @@ class ConfigOthers extends BaseController
             'extension_limit',
             'extension_limit_day',
             'sys_extension_type',
+            'real_name_open',
             'lock_brokerage_timer',
             'max_bag_number',
             'promoter_explain',

@@ -12,6 +12,7 @@
 
 namespace app\controller\api\user;
 
+use app\common\repositories\user\UserRealAuthRepository;
 use crmeb\basic\BaseController;
 use app\common\repositories\system\groupData\GroupDataRepository;
 use think\App;
@@ -48,6 +49,17 @@ class UserExtract extends BaseController
 
     public function create(validate $validate)
     {
+        $uid = $this->request->uid();
+        $open = systemConfig('real_name_open');
+        // 判断实名认证开关，只有开启才需要验证
+        if ($open) {
+            /** @var UserRealAuthRepository $userRealAuthRepository **/
+            $userRealAuthRepository = app()->make(UserRealAuthRepository::class);
+            $user = $userRealAuthRepository->getUserAuth($uid);
+            if ($user && $user['status']!==1) {
+                return app('json')->fail('请先进行实名认证');
+            }
+        }
         $data = $this->checkParams($validate);
         $user = $this->request->userInfo();
         if($data['extract_type'] == 3 && !systemConfig('sys_extension_type') ) return app('json')->fail('未开启付款到零钱');
