@@ -463,6 +463,16 @@ class WaimaiRepositories extends BaseRepository
             // 更新订单状态
             $order->save($order_data);
 
+            // 更新主订单状态
+            $store_order = StoreOrder::where('trade_no', $tradeNo)->find();
+            if ($store_order) {
+                $store_order->status = -1;
+                $store_order->save();
+            }
+
+            // 调用拉卡拉退款
+            //$this->refundLogic($third_refund_no, $refundAmount, $third_refund_no);
+
             Db::commit();
 
             record_log('退款成功: tradeNo=' . $tradeNo . ', tradeRefundNo=' . $tradeRefundNo . ', amount=' . $refundAmount, 'meituan_refund');
@@ -630,6 +640,7 @@ class WaimaiRepositories extends BaseRepository
         if (!$result) {
             return app('json')->fail($api->getErrorInfo());
         }
+        return true;
 
     }
 

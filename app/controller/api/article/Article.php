@@ -317,12 +317,12 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1768]]);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [2006]]);
             //print_r($order);exit();
             // 测试美团退款
             /** @var WaimaiRepositories $repository */
             $repository = app()->make(WaimaiRepositories::class);
-            $result = $repository->refundLogic($order->order_sn, $order->pay_price,$order->origin_log_no);
+            $result = $repository->refundLogic($order->order_sn.'520', $order->pay_price,$order->lkl_log_no);
             print_r($result);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){

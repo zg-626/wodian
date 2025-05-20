@@ -58,7 +58,7 @@ class StoreOrder extends BaseController
     {
         $payType = 'h5';
         $key = (string)$this->request->param('key');
-        $pay_price = $this->request->param('pay_price');
+        $user_deduction = $this->request->param('user_deduction');
         $phone = $this->request->param('phone');
         $trade_no = $this->request->param('trade_no');
         /** @var UserRepository $user*/
@@ -89,37 +89,46 @@ class StoreOrder extends BaseController
             return app('json')->fail('请选择正确的支付方式');
         try {
             $trade_amount = $order->trade_amount;
-            // 同步美团传过来的支付价格
-            if ($pay_price) {
+            $pay_price = $trade_amount;
+            // 同步美团传过来的抵用券
+            if ($user_deduction) {
+                $pay_price = $trade_amount-$user_deduction;
                 $groupOrder->pay_price = $pay_price;
                 $groupOrder->save();
                 $order->pay_price = $pay_price;
                 $order->save();
-            }
-            //return $this->repository->pay($payType, $userInfo, $groupOrder, $this->request->param('return_url'), $this->request->isApp());
-            // 拉卡拉支付参数
-            $order_sn = $groupOrder->trade_no;
 
-            $params = [
-                'order_no' => $order_sn,
-                'total_amount' => $trade_amount,
-                'remark' => 'offline_order',
-                'merchant_no' => '822584053112XE1',
-                'term_nos' => 'L8394421',
-                'openid' => $openId,
-                'trans_type' => 51,
-                'goods_id' => '2',
-            ];
-            $api = new \Lakala\LklApi();
-            $result = $api::lklPreorder($params);
-            if (!$result) {
-                return app('json')->fail($api->getErrorInfo());
+                if($pay_price > 0){
+                    // 拉卡拉支付参数
+                    $order_sn = $groupOrder->trade_no;
+
+                    $params = [
+                        'order_no' => $order_sn,
+                        'total_amount' => $pay_price,
+                        'remark' => 'offline_order',
+                        'merchant_no' => '822584053112XE1',
+                        'term_nos' => 'L8394421',
+                        'openid' => $openId,
+                        'trans_type' => 51,
+                        'goods_id' => '2',
+                    ];
+                    $api = new \Lakala\LklApi();
+                    $result = $api::lklPreorder($params);
+                    if (!$result) {
+                        return app('json')->fail($api->getErrorInfo());
+                    }
+
+                    $config=[
+                        'config' => $result
+                    ];
+                    return app('json')->status($payType, $config);
+                }
+
+                $this->repository->paySuccess($groupOrder);
+                return app('json')->status('success', '支付成功', ['order_id' => $groupOrder['group_order_id']]);
             }
 
-            $config=[
-                'config' => $result
-            ];
-            return app('json')->status($payType, $config);
+
         } catch (\Exception $e) {
             return app('json')->status('error', $e->getMessage().$e->getLine(), ['order_id' => $groupOrder->group_order_id]);
         }

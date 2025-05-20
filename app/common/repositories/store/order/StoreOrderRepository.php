@@ -201,6 +201,8 @@ class StoreOrderRepository extends BaseRepository
         // 判断美团订单
         if ($groupOrder->is_meituan === 1) {
             $this->paySuccessMeituan($groupOrder);
+            // 终止执行
+            return;
         }
         //修改订单状态
         Db::transaction(function () use ($subOrders, $is_combine, $groupOrder) {
@@ -480,7 +482,11 @@ class StoreOrderRepository extends BaseRepository
         $order->save();
         // 发放推广抵用券
         $user = app()->make(UserRepository::class)->get($order['uid']);
-        $this->computed($order,$user);
+       // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
+        foreach ($groupOrder->orderList as $_k => $order) {
+            $this->computed($order,$user);
+        }
+
         // 给美团发通知
         /** @var WaimaiRepositories $waimai */
         $waimai = app()->make(WaimaiRepositories::class);
