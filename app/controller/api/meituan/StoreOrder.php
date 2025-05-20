@@ -56,7 +56,7 @@ class StoreOrder extends BaseController
 
     public function pay()
     {
-        $payType = 'h5';
+        $payType = 'routine';
         $key = (string)$this->request->param('key');
         $user_deduction = $this->request->param('user_deduction');
         $phone = $this->request->param('phone');
@@ -121,7 +121,7 @@ class StoreOrder extends BaseController
             } else {
                 // 实际支付金额大于0，走第三方支付流程
                 // 拉卡拉支付参数
-                $order_sn = $groupOrder->order_sn;
+                $order_sn = $groupOrder->group_order_sn;
 
                 $params = [
                     'order_no' => $order_sn,

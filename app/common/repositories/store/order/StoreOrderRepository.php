@@ -469,8 +469,9 @@ class StoreOrderRepository extends BaseRepository
     public function paySuccessMeituan(StoreGroupOrder $groupOrder,$data)
     {
         // 支付成功后，更新订单状态为已支付
+        $time=date('Y-m-d H:i:s');
         $groupOrder->paid = 1;
-        $groupOrder->pay_time = date('Y-m-d H:i:s');
+        $groupOrder->pay_time = $time;
         $groupOrder->save();
         $tradeNo = $groupOrder->trade_no;
         // 同步修改美团订单表
@@ -486,6 +487,8 @@ class StoreOrderRepository extends BaseRepository
         $user = app()->make(UserRepository::class)->get($order['uid']);
        // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
         foreach ($groupOrder->orderList as $_k => $order) {
+            $order->paid = 1;
+            $order->pay_time = $time;
             $this->computed($order,$user);
             if(!empty($data)){
                 $order->transaction_id = $data['data']['acc_trade_no']??'';
