@@ -14,7 +14,7 @@ class OfflineOrderSuccessListen
         Log::info('拉卡拉支付成功回调执行队列' . var_export([$data], 1));
 
         // 从这里判断走线下支付流程，还是美团订单
-        if ($data['remark'] == 'offline_order') {
+        if ($data['data']['remark'] == 'offline_order') {
             /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
             $storeOrderOfflineRepository->paySuccess($data);

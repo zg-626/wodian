@@ -677,7 +677,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
         // 支付金額不是0
-        if ($order->pay_price > 0) {
+        /*if ($order->pay_price > 0) {
             $profitsharing= [
                 'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
                 'order_id' => $order->order_id,
@@ -691,10 +691,10 @@ class StoreOrderOfflineRepository extends BaseRepository
             $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
             // 虚拟发货
             $this->virtualDelivery($res);
-        }
+        }*/
         $user = app()->make(UserRepository::class)->get($res['uid']);
         // 发放推广抵用券
-        $this->computed($res,$user);
+        //$this->computed($res,$user);
         $handling_fee = floatval($order->handling_fee);
         $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
