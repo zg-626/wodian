@@ -57,6 +57,54 @@
             "install-path": "../adbario/php-dot-notation"
         },
         {
+            "name": "alibabacloud/cloudauth-20190307",
+            "version": "3.6.0",
+            "version_normalized": "3.6.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/cloudauth-20190307.git",
+                "reference": "6e8133c13d5c000b2cb7f6bf3ca5664104525afb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/cloudauth-20190307/zipball/6e8133c13d5c000b2cb7f6bf3ca5664104525afb",
+                "reference": "6e8133c13d5c000b2cb7f6bf3ca5664104525afb",
+                "shasum": ""
+            },
+            "require": {
+                "alibabacloud/darabonba": "^1.0.0",
+                "alibabacloud/openapi-core": "^1.0.0",
+                "alibabacloud/openplatform-20191219": "2.0.1",
+                "alibabacloud/tea-fileform": "^0.3.0",
+                "alibabacloud/tea-oss-sdk": "^0.3.1",
+                "alibabacloud/tea-oss-utils": "^0.3.1",
+                "php": ">5.5"
+            },
+            "time": "2025-04-27T02:35:46+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "AlibabaCloud\\SDK\\Cloudauth\\V20190307\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com"
+                }
+            ],
+            "description": "Alibaba Cloud ID Verification (20190307) SDK Library for PHP",
+            "support": {
+                "source": "https://github.com/alibabacloud-sdk-php/cloudauth-20190307/tree/3.6.0"
+            },
+            "install-path": "../alibabacloud/cloudauth-20190307"
+        },
+        {
             "name": "alibabacloud/credentials",
             "version": "1.2.3",
             "version_normalized": "1.2.3.0",
@@ -138,6 +186,77 @@
                 "source": "https://github.com/aliyun/credentials-php"
             },
             "install-path": "../alibabacloud/credentials"
+        },
+        {
+            "name": "alibabacloud/darabonba",
+            "version": "v1.0.0",
+            "version_normalized": "1.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/darabonba.git",
+                "reference": "36f0b4191e73f8069527af7af1436bab29188ebc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/darabonba/zipball/36f0b4191e73f8069527af7af1436bab29188ebc",
+                "reference": "36f0b4191e73f8069527af7af1436bab29188ebc",
+                "shasum": ""
+            },
+            "require": {
+                "adbario/php-dot-notation": "^2.4",
+                "alibabacloud/tea": "^3.2",
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-libxml": "*",
+                "ext-mbstring": "*",
+                "ext-openssl": "*",
+                "ext-simplexml": "*",
+                "ext-xmlwriter": "*",
+                "guzzlehttp/guzzle": "^6.3|^7.0",
+                "monolog/monolog": "^1.0|^2.1",
+                "php": ">=5.5",
+                "psr/http-message": "^0.11.0|^1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8.35|^5.4.3|^9.3",
+                "symfony/dotenv": "^3.4",
+                "symfony/var-dumper": "^3.4"
+            },
+            "suggest": {
+                "ext-sockets": "To use client-side monitoring"
+            },
+            "time": "2025-01-15T06:04:25+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "AlibabaCloud\\Dara\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com",
+                    "homepage": "http://www.alibabacloud.com"
+                }
+            ],
+            "description": "Client of Darabonba for PHP",
+            "homepage": "https://www.alibabacloud.com/",
+            "keywords": [
+                "alibabacloud",
+                "client",
+                "cloud",
+                "tea"
+            ],
+            "support": {
+                "issues": "https://github.com/aliyun/tea-php/issues",
+                "source": "https://github.com/aliyun/tea-php"
+            },
+            "install-path": "../alibabacloud/darabonba"
         },
         {
             "name": "alibabacloud/darabonba-openapi",
@@ -334,6 +453,57 @@
             "install-path": "../alibabacloud/gateway-spi"
         },
         {
+            "name": "alibabacloud/openapi-core",
+            "version": "v1.0.6",
+            "version_normalized": "1.0.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/openapi-core.git",
+                "reference": "fbc9a40279de711e9010073a8b8c6edfb97f5cff"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/openapi-core/zipball/fbc9a40279de711e9010073a8b8c6edfb97f5cff",
+                "reference": "fbc9a40279de711e9010073a8b8c6edfb97f5cff",
+                "shasum": ""
+            },
+            "require": {
+                "alibabacloud/credentials": "^1.2.2",
+                "alibabacloud/darabonba": "^1",
+                "alibabacloud/gateway-spi": "^1",
+                "php": ">5.5"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8.35|^5.4.3|^9.3",
+                "symfony/dotenv": "^3.4",
+                "symfony/var-dumper": "^3.4"
+            },
+            "time": "2025-05-06T06:06:38+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Darabonba\\OpenApi\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com"
+                }
+            ],
+            "description": "Alibaba Cloud OpenApi Client Core",
+            "support": {
+                "issues": "https://github.com/alibabacloud-sdk-php/openapi-core/issues",
+                "source": "https://github.com/alibabacloud-sdk-php/openapi-core/tree/v1.0.6"
+            },
+            "install-path": "../alibabacloud/openapi-core"
+        },
+        {
             "name": "alibabacloud/openapi-util",
             "version": "0.1.13",
             "version_normalized": "0.1.13.0",
@@ -381,6 +551,52 @@
                 "source": "https://github.com/alibabacloud-sdk-php/openapi-util/tree/0.2.0"
             },
             "install-path": "../alibabacloud/openapi-util"
+        },
+        {
+            "name": "alibabacloud/openplatform-20191219",
+            "version": "2.0.1",
+            "version_normalized": "2.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/OpenPlatform-20191219.git",
+                "reference": "02ffa72369f8649214f1cfa336b52a544735f517"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/OpenPlatform-20191219/zipball/02ffa72369f8649214f1cfa336b52a544735f517",
+                "reference": "02ffa72369f8649214f1cfa336b52a544735f517",
+                "shasum": ""
+            },
+            "require": {
+                "alibabacloud/darabonba-openapi": "^0.2.8",
+                "alibabacloud/endpoint-util": "^0.1.0",
+                "alibabacloud/openapi-util": "^0.1.10|^0.2.1",
+                "alibabacloud/tea-utils": "^0.2.17",
+                "php": ">5.5"
+            },
+            "time": "2023-02-07T06:39:39+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "AlibabaCloud\\SDK\\OpenPlatform\\V20191219\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com"
+                }
+            ],
+            "description": "Alibaba Cloud OpenPlatform (20191219) SDK Library for PHP",
+            "support": {
+                "source": "https://github.com/alibabacloud-sdk-php/OpenPlatform-20191219/tree/2.0.1"
+            },
+            "install-path": "../alibabacloud/openplatform-20191219"
         },
         {
             "name": "alibabacloud/tea",
@@ -496,6 +712,100 @@
                 "source": "https://github.com/alibabacloud-sdk-php/tea-fileform/tree/0.3.4"
             },
             "install-path": "../alibabacloud/tea-fileform"
+        },
+        {
+            "name": "alibabacloud/tea-oss-sdk",
+            "version": "0.3.7",
+            "version_normalized": "0.3.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/tea-oss-sdk.git",
+                "reference": "ebc719343c4fd8e1e2752b6294cc4d45bacea273"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/tea-oss-sdk/zipball/ebc719343c4fd8e1e2752b6294cc4d45bacea273",
+                "reference": "ebc719343c4fd8e1e2752b6294cc4d45bacea273",
+                "shasum": ""
+            },
+            "require": {
+                "alibabacloud/credentials": "^1.2.3",
+                "alibabacloud/tea-fileform": "^0.3.0",
+                "alibabacloud/tea-oss-utils": "^0.3.0",
+                "alibabacloud/tea-utils": "^0.2.21",
+                "alibabacloud/tea-xml": "^0.2",
+                "php": ">5.5"
+            },
+            "time": "2025-04-22T12:32:05+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "AlibabaCloud\\SDK\\OSS\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com"
+                }
+            ],
+            "description": "Aliyun Tea OSS SDK Library for PHP",
+            "support": {
+                "source": "https://github.com/alibabacloud-sdk-php/tea-oss-sdk/tree/0.3.7"
+            },
+            "install-path": "../alibabacloud/tea-oss-sdk"
+        },
+        {
+            "name": "alibabacloud/tea-oss-utils",
+            "version": "0.3.1",
+            "version_normalized": "0.3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/alibabacloud-sdk-php/tea-oss-utils.git",
+                "reference": "19f58fc509347f075664e377742d4f9e18465372"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/alibabacloud-sdk-php/tea-oss-utils/zipball/19f58fc509347f075664e377742d4f9e18465372",
+                "reference": "19f58fc509347f075664e377742d4f9e18465372",
+                "shasum": ""
+            },
+            "require": {
+                "alibabacloud/tea": "^3.0",
+                "guzzlehttp/psr7": "^1.0",
+                "php": ">5.5"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8.35|^5.4.3|^9.4"
+            },
+            "time": "2023-01-08T13:26:58+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "AlibabaCloud\\Tea\\OSSUtils\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alibaba Cloud SDK",
+                    "email": "sdk-team@alibabacloud.com"
+                }
+            ],
+            "description": "Alibaba Cloud Tea OSS Utils Library for PHP",
+            "support": {
+                "source": "https://github.com/alibabacloud-sdk-php/tea-oss-utils/tree/0.3.1"
+            },
+            "install-path": "../alibabacloud/tea-oss-utils"
         },
         {
             "name": "alibabacloud/tea-utils",

@@ -32,7 +32,7 @@ private static $installed = array (
     'aliases' => 
     array (
     ),
-    'reference' => '02ec0315795b453905d536b23a45c35642cf668e',
+    'reference' => 'd0ceb72119618a34d567fe0d7862eb7db52d4330',
     'name' => 'topthink/think',
   ),
   'versions' => 
@@ -46,6 +46,15 @@ private static $installed = array (
       ),
       'reference' => '081e2cca50c84bfeeea2e3ef9b2c8d206d80ccae',
     ),
+    'alibabacloud/cloudauth-20190307' => 
+    array (
+      'pretty_version' => '3.6.0',
+      'version' => '3.6.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '6e8133c13d5c000b2cb7f6bf3ca5664104525afb',
+    ),
     'alibabacloud/credentials' => 
     array (
       'pretty_version' => '1.2.3',
@@ -54,6 +63,15 @@ private static $installed = array (
       array (
       ),
       'reference' => 'f6d1986e7b7be8da781d0b99f24c92d9860ba0c1',
+    ),
+    'alibabacloud/darabonba' => 
+    array (
+      'pretty_version' => 'v1.0.0',
+      'version' => '1.0.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '36f0b4191e73f8069527af7af1436bab29188ebc',
     ),
     'alibabacloud/darabonba-openapi' => 
     array (
@@ -91,6 +109,15 @@ private static $installed = array (
       ),
       'reference' => '7440f77750c329d8ab252db1d1d967314ccd1fcb',
     ),
+    'alibabacloud/openapi-core' => 
+    array (
+      'pretty_version' => 'v1.0.6',
+      'version' => '1.0.6.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'fbc9a40279de711e9010073a8b8c6edfb97f5cff',
+    ),
     'alibabacloud/openapi-util' => 
     array (
       'pretty_version' => '0.1.13',
@@ -99,6 +126,15 @@ private static $installed = array (
       array (
       ),
       'reference' => '870e59984f05e104aa303c85b8214e339ba0a0ac',
+    ),
+    'alibabacloud/openplatform-20191219' => 
+    array (
+      'pretty_version' => '2.0.1',
+      'version' => '2.0.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '02ffa72369f8649214f1cfa336b52a544735f517',
     ),
     'alibabacloud/tea' => 
     array (
@@ -117,6 +153,24 @@ private static $installed = array (
       array (
       ),
       'reference' => '4bf0c75a045c8115aa8cb1a394bd08d8bb833181',
+    ),
+    'alibabacloud/tea-oss-sdk' => 
+    array (
+      'pretty_version' => '0.3.7',
+      'version' => '0.3.7.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'ebc719343c4fd8e1e2752b6294cc4d45bacea273',
+    ),
+    'alibabacloud/tea-oss-utils' => 
+    array (
+      'pretty_version' => '0.3.1',
+      'version' => '0.3.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '19f58fc509347f075664e377742d4f9e18465372',
     ),
     'alibabacloud/tea-utils' => 
     array (
@@ -1118,7 +1172,7 @@ private static $installed = array (
       'aliases' => 
       array (
       ),
-      'reference' => '02ec0315795b453905d536b23a45c35642cf668e',
+      'reference' => 'd0ceb72119618a34d567fe0d7862eb7db52d4330',
     ),
     'topthink/think-helper' => 
     array (

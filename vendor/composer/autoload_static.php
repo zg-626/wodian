@@ -9,15 +9,15 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
     public static $files = array (
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
+        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         'd767e4fc2dc52fe66584ab8c6684783e' => __DIR__ . '/..' . '/adbario/php-dot-notation/src/helpers.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '9b552a3cc426e3287cc811caefa3cf53' => __DIR__ . '/..' . '/topthink/think-helper/src/helper.php',
         '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
         '35fab96057f1bf5e7aba31a8a6d5fdde' => __DIR__ . '/..' . '/topthink/think-orm/stubs/load_stubs.php',
@@ -184,11 +184,16 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
             'Alipay\\EasySDK\\' => 15,
             'AlibabaCloud\\Tea\\XML\\' => 21,
             'AlibabaCloud\\Tea\\Utils\\' => 23,
+            'AlibabaCloud\\Tea\\OSSUtils\\' => 26,
             'AlibabaCloud\\Tea\\FileForm\\' => 26,
             'AlibabaCloud\\Tea\\' => 17,
+            'AlibabaCloud\\SDK\\OpenPlatform\\V20191219\\' => 40,
+            'AlibabaCloud\\SDK\\OSS\\' => 21,
             'AlibabaCloud\\SDK\\Dysmsapi\\V20170525\\' => 36,
+            'AlibabaCloud\\SDK\\Cloudauth\\V20190307\\' => 37,
             'AlibabaCloud\\OpenApiUtil\\' => 25,
             'AlibabaCloud\\Endpoint\\' => 22,
+            'AlibabaCloud\\Dara\\' => 18,
             'AlibabaCloud\\Credentials\\' => 25,
             'Adbar\\' => 6,
         ),
@@ -483,6 +488,7 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'Darabonba\\OpenApi\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/darabonba-openapi/src',
+            1 => __DIR__ . '/..' . '/alibabacloud/openapi-core/src',
         ),
         'Darabonba\\GatewaySpi\\' => 
         array (
@@ -532,6 +538,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/tea-utils/src',
         ),
+        'AlibabaCloud\\Tea\\OSSUtils\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/tea-oss-utils/src',
+        ),
         'AlibabaCloud\\Tea\\FileForm\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/tea-fileform/src',
@@ -540,9 +550,21 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/tea/src',
         ),
+        'AlibabaCloud\\SDK\\OpenPlatform\\V20191219\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/openplatform-20191219/src',
+        ),
+        'AlibabaCloud\\SDK\\OSS\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/tea-oss-sdk/src',
+        ),
         'AlibabaCloud\\SDK\\Dysmsapi\\V20170525\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/dysmsapi-20170525/src',
+        ),
+        'AlibabaCloud\\SDK\\Cloudauth\\V20190307\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/cloudauth-20190307/src',
         ),
         'AlibabaCloud\\OpenApiUtil\\' => 
         array (
@@ -551,6 +573,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'AlibabaCloud\\Endpoint\\' => 
         array (
             0 => __DIR__ . '/..' . '/alibabacloud/endpoint-util/src',
+        ),
+        'AlibabaCloud\\Dara\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/darabonba/src',
         ),
         'AlibabaCloud\\Credentials\\' => 
         array (
