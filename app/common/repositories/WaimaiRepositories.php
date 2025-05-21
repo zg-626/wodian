@@ -203,7 +203,7 @@ class WaimaiRepositories extends BaseRepository
             'pay_postage' => 0,
             'cost' => $content['tradeAmount']?: 0,
             'coupon_id' => '',
-            'pay_type' => 0,
+            'pay_type' => 2,
             'give_coupon_ids' => '',
             'integral' => 0,
             'integral_price' => 0,
@@ -249,7 +249,7 @@ class WaimaiRepositories extends BaseRepository
             'mark' => '',
             'coupon_price' => $groupOrder['coupon_price'],
             'platform_coupon_price' => 0,
-            'pay_type' => 0,
+            'pay_type' => 2,
             'refund_switch' => 1,
 
             'is_meituan' => $groupOrder['is_meituan'],
