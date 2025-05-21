@@ -477,9 +477,11 @@ class WaimaiRepositories extends BaseRepository
                 $store_order->save();
             }
 
-            // 调用拉卡拉退款
-            $this->refundLogic($third_refund_no, $refundAmount, $store_order->lkl_log_no);
-
+            // 支付金额大于0时，调用退款逻辑
+            if ($order['pay_price'] > 0) {
+                // 调用拉卡拉退款
+                $this->refundLogic($third_refund_no, $refundAmount, $store_order->lkl_log_no);
+            }
             Db::commit();
 
             record_log('退款成功: tradeNo=' . $tradeNo . ', tradeRefundNo=' . $tradeRefundNo . ', amount=' . $refundAmount, 'meituan_refund');
