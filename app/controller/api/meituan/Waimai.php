@@ -21,7 +21,7 @@ class Waimai extends BaseController
     {
         $params = $this->request->params([
             'address',
-            'product_type' => 'mt_waimai',
+            ['product_type', 'mt_waimai'],
         ]);
         $user = $this->user;
         if (!$user->phone) return app('json')->fail('请绑定手机号');

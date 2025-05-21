@@ -489,7 +489,7 @@ class StoreOrderRepository extends BaseRepository
         foreach ($groupOrder->orderList as $_k => $orders) {
             $orders->paid = 1;
             $orders->pay_time = $time;
-            $this->computed($order,$user);
+            $this->computed($orders,$user);
             if(!empty($data)){
                 $orders->transaction_id = $data['data']['acc_trade_no']??'';
                 $orders->lkl_log_no = $data['data']['log_no']??'';
@@ -537,7 +537,7 @@ class StoreOrderRepository extends BaseRepository
      */
     public function addCommission(int $merId, $order)
     {
-        if ($order['pay_price'] <= 0) {
+        if ($order['total_price'] <= 0) {
             return;
         }
 

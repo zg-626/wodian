@@ -156,7 +156,8 @@ class StoreOrderOfflineRepository extends BaseRepository
         //积分配置
         $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
 
-        $pay_price = $money;
+        // 精确到小数点后两位
+        $pay_price = round($money, 2);
 
         $total_give_integral = 0;
 
@@ -225,7 +226,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'link_id'   => 0,
             'order_sn'  => $order_sn,
             'lkl_mer_cup_no' => $merchant['merchant_no'],
-            'pay_price' => $money,
+            'pay_price' => $pay_price,
             'order_info' => 0,
             'uid'        => $user->uid,
             'order_type' => self::TYPE_SVIP,
@@ -269,7 +270,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         // 拉卡拉支付参数
         $params = [
             'order_no' => $order_sn,
-            'total_amount' => $money,
+            'total_amount' => $pay_price,
             'remark' => 'offline_order',
             'merchant_no' => $merchant['merchant_no'],
             'term_nos' => $merchant['term_nos'],
@@ -279,7 +280,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'settle_type' => '1',
         ];
 
-        if ($money>0){
+        if ($pay_price>0){
 //            try {
 //                //$service = new PayService($type,$body, 'offline_order');
 //
@@ -1185,6 +1186,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             ->where('transaction_id', '<>', '') // transaction_id
             //->where('pay_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
             ->where('pay_time', '>', '1970-01-01') // 过滤无效时间
+            ->limit(2)
             ->select();
     }
 

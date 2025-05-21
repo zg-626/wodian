@@ -645,7 +645,8 @@ class WaimaiRepositories extends BaseRepository
         $api = new \Lakala\LklApi();
         $result = $api::lklRefund($params);
         if (!$result) {
-            return app('json')->fail($api->getErrorInfo());
+            record_log('拉卡拉退款异常: ' . $api->getErrorInfo(), 'lakl_refund_error');
+            //return app('json')->fail($api->getErrorInfo());
         }
         return true;
 
