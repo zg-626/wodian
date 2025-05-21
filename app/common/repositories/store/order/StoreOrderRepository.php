@@ -2445,6 +2445,20 @@ class StoreOrderRepository extends BaseRepository
                     $order->presell_price = $order->pay_price;
                 }
             }
+            // TODO 处理美团订单数据
+            /*if($order->is_meituan===1){
+                $meituanArray = json_decode($order->create_content,true);
+                // 组装orderProduct
+                $order->orderProduct = [
+                    'cart_info'=>[
+                        'product'=>[
+                            'store_name'=>$meituanArray['goodsName'],
+                            'price'=>$meituanArray['tradeAmount'],
+                        ]
+                    ]
+                ];
+
+            }*/
             $order->takeOrderCount = count($order['takeOrderList']);
             unset($order['takeOrderList']);
         }
