@@ -574,7 +574,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
                     $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
                     // 虚拟发货
-                    $this->virtualDelivery($res);
+                    //$this->virtualDelivery($res);
                 }
 
 
