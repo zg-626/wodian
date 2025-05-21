@@ -13,7 +13,7 @@ class BonusOfflineService extends BaseRepository
     // 环比增长率
     protected $growthRate = 1.15;
     // 第一期分红的金额阈值
-    protected $initialThreshold = 10;
+    protected $initialThreshold = 7000;
     // 用户分红比例
     protected $userRatio = 0.5;
     // 商家分红比例
@@ -28,7 +28,8 @@ class BonusOfflineService extends BaseRepository
         Db::startTrans();
         try {
             // 获取分红池可用金额
-            $poolInfo = Db::name('dividend_pool')->order('id', 'desc')->find();
+            $poolInfo = Db::name('dividend_pool')->where('id',6)->order('id', 'desc')->find();
+            //print_r($poolInfo);exit;
             if (!$poolInfo || $poolInfo['available_amount'] <= 0) {
                 return false;
             }
@@ -132,7 +133,7 @@ class BonusOfflineService extends BaseRepository
                 'link_id' => 0,
                 'pm' => 1,
                 'title' => '分红收益',
-                'category' => 'brokerage_price',
+                'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
                 'balance' => $user->coupon_amount + $bonus,
@@ -159,7 +160,7 @@ class BonusOfflineService extends BaseRepository
                 'link_id' => 0,
                 'pm' => 1,
                 'title' => '分红收益',
-                'category' => 'brokerage_price',
+                'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
                 'balance' => $merchant->coupon_amount + $bonus,

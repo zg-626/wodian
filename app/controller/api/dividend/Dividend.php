@@ -51,8 +51,14 @@ class Dividend extends BaseController
         print_r($info);*/
         /** @var BonusOfflineService $bonusOfflineService **/
         $bonusOfflineService = app()->make(BonusOfflineService::class);
-        $info = $bonusOfflineService->calculateBonus();
-        echo "<pre>";
-        print_r($info);
+        try {
+            $info=$bonusOfflineService->calculateBonus();
+            echo "<pre>";
+            print_r($info);
+        }catch (\Exception $e) {
+            echo "<pre>";
+            print_r($e->getMessage());
+        }
+
     }
 }
