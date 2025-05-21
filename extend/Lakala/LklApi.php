@@ -720,7 +720,7 @@ class LklApi
             ], //地址位置信息
             'subject' => '支付', //标题
             'notify_url' => systemConfig('site_url') .'/api/lakala/lklPayNotify',
-            'settle_type' => '1', //结算类型，0或者空常规结算方式，如需接拉卡拉分账需传1
+            'settle_type' => $param['settle_type']??1, //结算类型，0或者空常规结算方式，如需接拉卡拉分账需传1
             'remark' => $param['remark'], //商户定义，原样回传
             'acc_busi_fields' => [
                 'timeout_express' => '15', //拉卡拉方预下单的订单有效时间(分钟)=>微信后台并不会依据此失效时间发起关单

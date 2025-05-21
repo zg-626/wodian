@@ -276,6 +276,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             'openid' => $openId,
             'trans_type' => 71,
             'goods_id' => '1',
+            'settle_type' => '1',
         ];
 
         if ($money>0){

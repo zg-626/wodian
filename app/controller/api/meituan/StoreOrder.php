@@ -134,6 +134,7 @@ class StoreOrder extends BaseController
                     'openid' => $openId,
                     'trans_type' => 71,
                     'goods_id' => '2',
+                    'settle_type' => '0',
                 ];
                 $api = new \Lakala\LklApi();
                 $result = $api::lklPreorder($params);

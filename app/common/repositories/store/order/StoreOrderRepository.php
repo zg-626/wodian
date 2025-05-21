@@ -491,10 +491,10 @@ class StoreOrderRepository extends BaseRepository
             $orders->pay_time = $time;
             $this->computed($order,$user);
             if(!empty($data)){
-                $order->transaction_id = $data['data']['acc_trade_no']??'';
-                $order->lkl_log_no = $data['data']['log_no']??'';
-                $order->lkl_trade_no = $data['data']['trade_no']??'';
-                $order->lkl_log_date = $data['data']['trade_time']??'';
+                $orders->transaction_id = $data['data']['acc_trade_no']??'';
+                $orders->lkl_log_no = $data['data']['log_no']??'';
+                $orders->lkl_trade_no = $data['data']['trade_no']??'';
+                $orders->lkl_log_date = $data['data']['trade_time']??'';
             }
             $orders->save();
 
