@@ -177,8 +177,6 @@ Route::group('api/', function () {
             Route::get('brokerage_list', 'User/brokerage_list');
             // 抵用卷记录
             Route::get('coupon_list', 'User/coupon_list');
-            // 商家积分记录
-            Route::get('merchant_integral', 'User/merchant_integral');
             //推广人订单
             Route::get('spread_order', 'User/spread_order');
             //推广人订单
@@ -597,6 +595,8 @@ Route::group('api/', function () {
             Route::post('/withdraw', 'Merchant/withdraw');
             // 提现记录
             Route::get('/withdraw_lst', 'Merchant/withdrawLst');
+            // 商家数据记录
+            Route::get('/merchant_data', 'Merchant/merchant_data');
             Route::get('/local', 'Merchant/localLst');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');

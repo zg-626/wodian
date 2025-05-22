@@ -122,6 +122,15 @@ class UserBillRepository extends BaseRepository
         return compact('count', 'list');
     }
 
+    public function merList($where, $mer_id, $page, $limit)
+    {
+        $where['mer_id'] = $mer_id;
+        $query = $this->dao->search($where)->order('create_time DESC');
+        $count = $query->count();
+        $list = $query->setOption('field', [])->field('bill_id,pm,title,number,balance,mark,create_time,status')->page($page, $limit)->select();
+        return compact('count', 'list');
+    }
+
     public function month(array $where)
     {
         $group = $this->dao->search($where)->field('FROM_UNIXTIME(unix_timestamp(create_time),"%Y-%m") as time')
@@ -200,6 +209,20 @@ class UserBillRepository extends BaseRepository
     public function decBill(int $uid, string $category, string $type, array $data)
     {
         return $this->bill($uid, $category, $type, 0, $data);
+    }
+
+    /**
+     * @param int $uid
+     * @param string $category
+     * @param string $type
+     * @param array $data
+     * @return BaseDao|Model
+     * @author xaboy
+     * @day 2020-05-07
+     */
+    public function decMerBill(int $mer_id, string $category, string $type, array $data)
+    {
+        return $this->bill($mer_id, $category, $type, 0, $data);
     }
 
     public function type($category)

@@ -190,16 +190,6 @@ class User extends BaseController
         return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
     }
 
-    // 商家积分记录
-    public function merchant_integral(UserBillRepository $billRepository)
-    {
-        [$page, $limit] = $this->getPage();
-        [$start,$stop]= $this->request->params(['start','stop'],true);
-        $where['date'] = $start&&$stop? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
-        $where['category'] = 'mer_integral';
-        return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
-    }
-
     /**
      * @return mixed
      * @throws DataNotFoundException

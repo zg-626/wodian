@@ -15,6 +15,7 @@ namespace app\controller\api\store\merchant;
 use app\common\model\system\merchant\MerchantAdmin;
 use app\common\repositories\store\service\StoreServiceRepository;
 use app\common\repositories\system\financial\FinancialRepository;
+use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserMerchantRepository;
 use app\common\repositories\user\UserRealAuthRepository;
 use think\App;
@@ -234,6 +235,18 @@ class Merchant extends BaseController
         $financialRepository = app()->make(FinancialRepository::class);
         $data = $financialRepository->getAdminList($where, $page, $limit);
         return app('json')->success($data);
+    }
+
+    // 商家数据记录
+    public function merchant_data(UserBillRepository $billRepository)
+    {
+        [$page, $limit] = $this->getPage();
+        [$start,$stop]= $this->request->params(['start','stop'],true);
+        $category = $this->request->param('category');
+        $mer_id = $this->request->param('mer_id');
+        $where['date'] = $start&&$stop? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
+        $where['category'] = $category;
+        return app('json')->success($billRepository->merList($where, $mer_id, $page, $limit));
     }
 
 }

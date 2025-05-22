@@ -691,7 +691,7 @@ class MerchantRepository extends BaseRepository
     {
         if ($money <= 0) return;
         $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,mer_money')->find();
-            app()->make(UserBillRepository::class)->incBill($merId, 'mer_lock_money', $orderType, [
+            app()->make(UserBillRepository::class)->incBill(0, 'mer_lock_money', $orderType, [
                 'link_id' => $orderId,
                 'mer_id' => $merId,
                 'status' => 1,
@@ -710,7 +710,7 @@ class MerchantRepository extends BaseRepository
         if ($integral <= 0) return;
         $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 
-        app()->make(UserBillRepository::class)->incBill($merId, 'mer_integral', $orderType, [
+        app()->make(UserBillRepository::class)->incBill(0, 'mer_integral', $orderType, [
             'link_id' => $orderId,
             'mer_id' => $merId,
             'status' => 1,
@@ -735,7 +735,7 @@ class MerchantRepository extends BaseRepository
         $percentage = '0.05'; // 5%
         $number = bcmul($pay_price, $percentage, 4);
 
-        app()->make(UserBillRepository::class)->incBill($merId, 'mer_brokerage', 'mer_brokerage', [
+        app()->make(UserBillRepository::class)->incBill(0, 'mer_lock_money', 'mer_brokerage', [
             'link_id' => $orderId,
             'mer_id' => $merId,
             'status' => 1,
@@ -844,10 +844,10 @@ class MerchantRepository extends BaseRepository
         $make = app()->make(UserBillRepository::class);
         $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
 
-        $bill = $make->search(['category' => 'mer_brokerage', 'type' => 'mer_brokerage', 'mer_id' => $merId, 'link_id' =>$orderId, 'status' => 1])->find();
+        $bill = $make->search(['category' => 'mer_lock_money', 'type' => 'mer_brokerage', 'mer_id' => $merId, 'link_id' =>$orderId, 'status' => 1])->find();
 
         if($bill){
-            $make->decBill($merId, 'mer_refund_brokerage', 'mer_refund_brokerage', [
+            $make->decBill(0, 'mer_refund_brokerage', 'mer_refund_brokerage', [
                 'link_id' => $orderId,
                 'mer_id' => $merId,
                 'status' => 1,
