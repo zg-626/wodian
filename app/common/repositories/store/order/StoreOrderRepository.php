@@ -568,6 +568,13 @@ class StoreOrderRepository extends BaseRepository
         // 实时获取上级分组信息及比例
         $salesmanGroup = $userGroupRepository->get(2);//默认使用商务的分组比例
 
+        // 如果上级是代理商，则根据自身的分组比例
+        if ($salesman->group_id === self::USER_GROUP['AGENT_1'] ||
+            $salesman->group_id === self::USER_GROUP['AGENT_2'] ||
+            $salesman->group_id === self::USER_GROUP['AGENT_3']) {
+            $salesmanGroup = $userGroupRepository->get($salesman->group_id);
+        }
+
         // 处理上级佣金
         $extension_one = bcmul($salesmanGroup->extension/100, $money, 4);
 
