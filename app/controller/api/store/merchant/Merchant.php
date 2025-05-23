@@ -262,7 +262,7 @@ class Merchant extends BaseController
         }catch (\Exception $e){
             return app('json')->fail($e->getMessage());
         }
-        return app('json')->success('提交成功');
+        return app('json')->success('转移成功');
     }
 
     public function withdrawLst()
