@@ -955,7 +955,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         }
     }
 
-    public function giveIntegral($offlineOrder)
+    public function giveIntegral($offlineOrder,$type='线下门店')
     {
         if ($offlineOrder->give_integral > 0) {
             $make = app()->make(UserRepository::class);
@@ -965,7 +965,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
                 'link_id' => $offlineOrder['order_id'],
                 'status' => 1,
-                'title' => '用户增加积分',
+                'title' => $type.'消费，用户增加积分',
                 'number' => $offlineOrder->give_integral,
                 'mark' => '用户成功消费,增加积分' . $offlineOrder->give_integral,
                 //'mark' => '线下消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),

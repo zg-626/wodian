@@ -434,7 +434,7 @@ class StoreOrderRepository extends BaseRepository
                 'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
             ]);
             // 赠送积分
-            $this->giveIntegral($groupOrder);
+            $this->giveIntegral($groupOrder,'线上');
             // 赠送商户积分
             //$this->giveMerIntegral($order->mer_id,$groupOrder);
             app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $groupOrder->give_integral);
@@ -1348,13 +1348,13 @@ class StoreOrderRepository extends BaseRepository
         return $data;
     }
 
-    public function giveIntegral($groupOrder)
+    public function giveIntegral($groupOrder,$type = '美团')
     {
         if ($groupOrder->give_integral > 0) {
             app()->make(UserBillRepository::class)->incBill($groupOrder->uid, 'integral', 'lock', [
                 'link_id' => $groupOrder['group_order_id'],
                 'status' => 0,
-                'title' => '下单赠送积分',
+                'title' => $type.'消费，用户增加积分',
                 'number' => $groupOrder->give_integral,
                 'mark' => '成功消费' . floatval($groupOrder['pay_price']) . '元,赠送积分' . floatval($groupOrder->give_integral),
                 'balance' => $groupOrder->user->integral
