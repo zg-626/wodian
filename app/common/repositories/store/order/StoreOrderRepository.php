@@ -642,6 +642,8 @@ class StoreOrderRepository extends BaseRepository
             $salesman = $superior;
         }
 
+        return true;
+
     }
 
     /**
