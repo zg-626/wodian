@@ -254,7 +254,7 @@ class User extends BaseModel
         return $this->hasOne(Merchant::class, 'mer_phone', 'phone')
             ->where('is_del', 0)
             ->where('status', 1)
-            ->field('mer_id,mer_name,mer_avatar');
+            ->field('mer_id,mer_name,mer_avatar,coupon_amount');
     }
 
 

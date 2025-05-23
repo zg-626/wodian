@@ -226,6 +226,45 @@ class Merchant extends BaseController
         return app('json')->success('提交成功');
     }
 
+    /**
+     * TODO 抵用券互换
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function couponExchange()
+    {
+        // 用户信息
+        $user = $this->request->userInfo()->hidden(['label_id', 'group_id', 'pwd', 'addres', 'card_id', 'last_time', 'last_ip', 'create_time', 'mark', 'status', 'spread_uid', 'spread_time', 'real_name', 'birthday', 'brokerage_price']);
+        $user->append(['merchant']);
+        //$user = $user->toArray();
+        // 用户绑定的商家信息
+        $merchant = $user['merchant'];
+
+        $uid = $user['uid'];
+        $open = systemConfig('real_name_open');
+        // 判断实名认证开关，只有开启才需要验证
+        if ($open) {
+            /** @var UserRealAuthRepository $userRealAuthRepository **/
+            $userRealAuthRepository = app()->make(UserRealAuthRepository::class);
+            $user = $userRealAuthRepository->getUserAuth($uid);
+            if ($user && $user['status']!==1) {
+                return app('json')->fail('请先进行实名认证');
+            }
+        }
+
+        if($merchant['coupon_amount']<=0){
+            return app('json')->fail('商家抵用券不足');
+        }
+
+        try {
+            $this->repository->couponExchange($user,$merchant);
+        }catch (\Exception $e){
+            return app('json')->fail($e->getMessage());
+        }
+        return app('json')->success('提交成功');
+    }
+
     public function withdrawLst()
     {
         [$page, $limit] = $this->getPage();
@@ -243,9 +282,11 @@ class Merchant extends BaseController
         [$page, $limit] = $this->getPage();
         [$start,$stop]= $this->request->params(['start','stop'],true);
         $category = $this->request->param('category');
+        $type = $this->request->param('type')??'';
         $mer_id = $this->request->param('mer_id');
         $where['date'] = $start&&$stop? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
         $where['category'] = $category;
+        $where['type'] = $type;
         return app('json')->success($billRepository->merList($where, $mer_id, $page, $limit));
     }
 

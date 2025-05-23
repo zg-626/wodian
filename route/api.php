@@ -597,7 +597,10 @@ Route::group('api/', function () {
             Route::get('/withdraw_lst', 'Merchant/withdrawLst');
             // 商家数据记录
             Route::get('/merchant_data', 'Merchant/merchant_data');
+            // 本地生活
             Route::get('/local', 'Merchant/localLst');
+            // 抵用券互换
+            Route::get('/coupon_exchange', 'Merchant/couponExchange');
         })->prefix('api.store.merchant.');
         Route::post('store/certificate/:merId', 'api.Auth/getMerCertificate');
 

@@ -1261,4 +1261,40 @@ class MerchantRepository extends BaseRepository
         }
         return compact('mer_count','order_count');
     }
+
+    public function couponExchange($user, $merchant)
+    {
+        $merchant = $this->dao->get($merchant['mer_id']);
+        if ($merchant['coupon_amount'] > 0) {
+            // 用户抵用券记录
+            $userBillRepository = app()->make(UserBillRepository::class);
+            $userBillRepository->incBill($user['uid'], 'coupon_amount', 'exchange', [
+                'link_id' => 0,
+                'status' => 1,
+                'title' => '获得转移抵用券',
+                'number' => $merchant['coupon_amount'],
+                'mark' => $merchant['mer_name'] . '转移' . (float)$merchant['coupon_amount'],
+                'balance' => $user['coupon_amount'] + $merchant['coupon_amount']
+            ]);
+            $userRepository = app()->make(UserRepository::class);
+            $userRepository->incBrokerage($user['uid'], $merchant['coupon_amount']);
+            $user->coupon_amount = $user['coupon_amount'] + $merchant['coupon_amount'];
+            $user->save();
+
+            // 商家抵用券记录
+            $userBillRepository = app()->make(UserBillRepository::class);
+            $userBillRepository->decBill(0, 'coupon_amount', 'exchange', [
+                'link_id' => 0,
+                'mer_id' => $merchant['mer_id'],
+                'status' => 1,
+                'title' => '转移抵用券',
+                'number' => $merchant['coupon_amount'],
+                'mark' => $merchant['mer_name'] . '转移' . (float)$merchant['coupon_amount'],
+                'balance' => 0
+            ]);
+            $merchant->coupon_amount = 0;
+            $merchant->save();
+
+        }
+    }
 }
