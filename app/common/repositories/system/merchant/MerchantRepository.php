@@ -39,6 +39,7 @@ use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserGroupRepository;
 use app\common\repositories\user\UserRelationRepository;
 use app\common\repositories\user\UserRepository;
+use app\common\repositories\user\UserSuperiorLogRepository;
 use app\common\repositories\user\UserVisitRepository;
 use app\common\repositories\wechat\PayQrcodeRepository;
 use app\common\repositories\wechat\RoutineQrcodeRepository;
@@ -1297,5 +1298,61 @@ class MerchantRepository extends BaseRepository
             $merchant->save();
 
         }
+    }
+
+    public function changeSalesmanForm($id)
+    {
+        $merchant = $this->dao->get($id);
+        $form = Elm::createForm(Route::buildUrl('salesmanChange', compact('id'))->build());
+        $form->setRule(
+            [
+                [
+                    'type' => 'span',
+                    'title' => '商户名称：',
+                    'native' => false,
+                    'children' => [(string) $merchant->mer_name]
+                ],
+                [
+                    'type' => 'span',
+                    'title' => '业务 Id：',
+                    'native' => false,
+                    'children' => [$merchant->user ? (string)$merchant->user->uid : '无']
+                ],
+                [
+                    'type' => 'span',
+                    'title' => '业务昵称：',
+                    'native' => false,
+                    'children' => [$merchant->user ? (string)$merchant->user->nickname : '无']
+                ],
+                Elm::frameImage('spid', '业务：', '/' . config('admin.admin_prefix') . '/setting/referrerList?field=spid')->prop('srcKey', 'src')->value($merchant->user ? [
+                    'src' => $merchant->user->avatar,
+                    'id' => $merchant->user->uid,
+                ] : [])->icon('el-icon-camera')->modal(['modal' => false])->width('1000px')->height('600px'),
+            ]);
+        return $form->setTitle('修改业务');
+    }
+
+    public function changeSalesman($id, $salesman_id, $admin = 0)
+    {
+        /** @var UserRepository $user */
+        $user = app()->make(UserRepository::class);
+        $user = $user->get($salesman_id);
+        if($user->group_id === 1 || $user->group_id === 3 || $user->group_id === 7){
+            throw new ValidateException('该用户组不能作为业务员');
+        }
+        //$superiorLogRepository = app()->make(UserSuperiorLogRepository::class);
+        $merchant = $this->dao->get($id);
+        if ($merchant->salesman_id == $salesman_id)
+            return;
+        $config = systemConfig(['extension_limit', 'extension_limit_day']);
+        Db::transaction(function () use ($config, $merchant, $salesman_id, $admin) {
+            $old = $merchant->salesman_id ?: 0;
+            //$superiorLogRepository->add($merchant->uid, $salesman_id, $old, $admin);
+            $merchant->superior_time = $salesman_id ? date('Y-m-d H:i:s') : null;
+
+            $merchant->salesman_id = $salesman_id;
+      
+            $merchant->save();
+        });
     }
 }

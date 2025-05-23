@@ -103,6 +103,14 @@ Route::group(function () {
         Route::post('create', '.Merchants/create')->name('systemMerchantsCreate')->option([
             '_alias' => '商户添加',
         ]);
+        Route::post('salesman/:id', '.Merchants/salesman')->name('salesmanChange')->option([
+            '_alias' => '修改业务员',
+        ]);
+        Route::get('salesman_form/:id', '.Merchants/salesmanForm')->name('salesmanChangeForm')->option([
+            '_alias' => '修改业务员表单',
+            '_auth' => false,
+            '_form' => 'salesmanChange',
+        ]);
         Route::get('update/form/:id', '.Merchants/updateForm')->name('systemMerchantsUpdateForm')->option([
             '_alias' => '商户编辑表单',
             '_auth' => false,

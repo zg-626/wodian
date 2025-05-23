@@ -85,6 +85,26 @@ class Merchants extends BaseController
     }
 
 
+    public function salesmanForm($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        return app('json')->success(formToData($this->repository->changeSalesmanForm($id)));
+    }
+
+
+    public function salesman($id)
+    {
+        if (!$this->repository->exists((int)$id))
+            return app('json')->fail('数据不存在');
+        $spid = $this->request->param('spid');
+        $spid = (int)($spid['id'] ?? $spid);
+
+        $this->repository->changeSalesman($id, $spid, $this->request->adminId());
+        return app('json')->success('修改成功');
+    }
+
+
     /**
      * @return mixed
      * @throws FormBuilderException
