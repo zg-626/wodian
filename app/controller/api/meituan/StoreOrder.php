@@ -8,6 +8,7 @@ use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderCreateRepository;
 use app\common\repositories\store\order\StoreOrderReceiptRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
+use app\common\repositories\user\UserBillRepository;
 use app\common\repositories\user\UserRepository;
 use app\common\repositories\WaimaiRepositories;
 use app\common\repositories\wechat\WechatUserRepository;
@@ -93,6 +94,11 @@ class StoreOrder extends BaseController
 
             // 计算抵扣后的实际支付金额
             if ($user_deduction > 0) {
+                $user_coupon_amount = $userInfo->coupon_amount;
+                // 判断用户的抵用券是否大于抵用券额
+                if($user_coupon_amount < $user_deduction){
+                    return app('json')->fail('您的抵用券不足');
+                }
                 // 取两位数点
                 $pay_price = round($trade_amount - $user_deduction, 2);
 
@@ -112,6 +118,10 @@ class StoreOrder extends BaseController
                     $store_order->deduction_money = $user_deduction;
                     $store_order->save();
                 }
+                // 更新用户抵用券
+                $deduction_money = bcsub($user_coupon_amount, $user_deduction, 2);
+                $userInfo->coupon_amount = $deduction_money;
+                $userInfo->save();
             }
 
             // 判断实际支付金额是否为0

@@ -496,6 +496,19 @@ class StoreOrderRepository extends BaseRepository
                 $orders->lkl_trade_no = $data['data']['trade_no']??'';
                 $orders->lkl_log_date = $data['data']['trade_time']??'';
             }
+            // 如果用户使用了抵扣券
+            if($orders->deduction > 0){
+                // 增加使用记录
+                $userBillRepository = app()->make(UserBillRepository::class);
+                $userBillRepository->decBill($orders->uid, 'coupon_amount', 'deduction', [
+                    'link_id' => $orders['order_id'],
+                    'status' => 1,
+                    'title' => '美团消费使用抵用券',
+                    'number' => $orders->deduction,
+                    'mark' => $user->nickname. '美团消费' . (float)$orders->total_price. '元,扣减抵用券' .$orders->deduction,
+                    'balance' => 0,
+                ]);
+            }
             $orders->save();
 
         }
@@ -509,7 +522,7 @@ class StoreOrderRepository extends BaseRepository
             'serviceFeeAmount' => $order->service_fee_amount,
             'tradeAmount' => $groupOrder->pay_price,
         ];
-        $waimai->payCallback($params);
+        //$waimai->payCallback($params);
 
     }
 
@@ -520,6 +533,7 @@ class StoreOrderRepository extends BaseRepository
 
     // 用户分组常量定义
     public const USER_GROUP = [
+        'NORMAL_USER' => 1,    // 普通会员
         'NORMAL_SALESMAN' => 2,    // 普通商务
         'SENIOR_SALESMAN' => 9,    // 高级商务
         'AGENT_1' => 4,            // 区县级代理商
@@ -562,6 +576,9 @@ class StoreOrderRepository extends BaseRepository
         // 获取商家绑定的上级信息
         $salesman = $userRepository->get($merchant->salesman_id);
 
+        // 如果商家上级是普通用户，终止
+        if ($salesman['group_id'] == self::USER_GROUP['NORMAL_USER']) return;
+
         // 如果商家上级是省级代理商，终止发放佣金
         if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
 
@@ -590,6 +607,11 @@ class StoreOrderRepository extends BaseRepository
         while ($salesman->superior_uid !== 0) {
             // 实时获取上级信息
             $superior = $userRepository->get($salesman->superior_uid);
+
+            // 如果上级分组是普通用户，终止
+            if ($superior['group_id'] == self::USER_GROUP['NORMAL_USER']) {
+                break;
+            }
 
             // 如果已经处理过该用户的佣金，跳过
             if (in_array($superior['uid'], $processedUids)) {

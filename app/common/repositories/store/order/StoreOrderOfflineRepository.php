@@ -174,7 +174,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             if($user_coupon_amount < $params['user_deduction']){
                 throw new ValidateException('您的抵用券不足');
             }
-            $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 0);
+            $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 2);
             $user->coupon_amount = $deduction_money;
             $user->save();
             // 如果使用了抵用券，计算手续费
@@ -453,13 +453,15 @@ class StoreOrderOfflineRepository extends BaseRepository
         if ($type == self::TYPE_SVIP) {
             //return Db::transaction(function () use($data, $res) {
                 $res->paid = 1;
-                $res->transaction_id = $data['data']['acc_trade_no']??'';
+                /*$res->transaction_id = $data['data']['acc_trade_no']??'';
                 $res->lkl_log_no = $data['data']['log_no']??'';
                 $res->lkl_trade_no = $data['data']['trade_no']??'';
-                $res->lkl_log_date = $data['data']['trade_time']??'';
+                $res->lkl_log_date = $data['data']['trade_time']??'';*/
                 $res->pay_time = date('y_m-d H:i:s', time());
                 $res->save();
                 $order = $res;
+
+                $user = app()->make(UserRepository::class)->get($res['uid']);
 
                 /** @var MerchantRepository $merchantRepository */
                 $merchantRepository=app()->make(MerchantRepository::class);
@@ -470,6 +472,16 @@ class StoreOrderOfflineRepository extends BaseRepository
                     // 计算商家应该得到的平台补贴金额
                     $mer_money=bcsub($old_money,$order->pay_price,2);
                     $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $mer_money);
+                    // 增加使用记录
+                    $userBillRepository = app()->make(UserBillRepository::class);
+                    $userBillRepository->decBill($order->uid, 'coupon_amount', 'deduction', [
+                        'link_id' => $order['order_id'],
+                        'status' => 1,
+                        'title' => '线下消费使用抵用券',
+                        'number' => $order->deduction,
+                        'mark' => $user->nickname. '线下消费' . (float)$order->total_price. '元,扣减抵用券' .$order->deduction,
+                        'balance' => 0,
+                    ]);
                 }
 
                 // 赠送积分
@@ -483,7 +495,6 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $storeOrderRepository = app()->make(StoreOrderRepository::class);
                 $storeOrderRepository->addCommission($order->mer_id,$order);
 
-                $user = app()->make(UserRepository::class)->get($res['uid']);
                 // 发放推广抵用券
                 $this->computed($order,$user);
 
