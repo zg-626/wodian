@@ -1061,6 +1061,9 @@ class StoreOrderRepository extends BaseRepository
      */
     private function giveBrokerage($order_id,$userBillRepository, $user, $amount, $title)
     {
+        if($amount<=0){
+            return;
+        }
         $userBillRepository->incBill($user->uid, 'brokerage', 'order_one', [
             'link_id' => $order_id,
             'status' => 1,

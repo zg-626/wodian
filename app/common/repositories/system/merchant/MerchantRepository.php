@@ -735,7 +735,11 @@ class MerchantRepository extends BaseRepository
 
         // 佣金比例
         $percentage = '0.05'; // 5%
-        $number = bcmul($pay_price, $percentage, 4);
+        $number = bcmul($pay_price, $percentage, 2);
+
+        if($number <= 0){
+            return;
+        }
 
         app()->make(UserBillRepository::class)->incBill(0, 'mer_lock_money', 'mer_brokerage', [
             'link_id' => $orderId,
