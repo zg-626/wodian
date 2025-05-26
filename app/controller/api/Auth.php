@@ -281,95 +281,25 @@ class Auth extends BaseController
         return app('json')->success($userRepository->returnToken($user[1], $tokenInfo));
     }
 
-
-    // 支付宝授权登录
-    // 支付宝授权登录
-    public function alipayAuth()
+    function getOptions()
     {
-        // 获取授权码
-        $auth_code = $this->request->param('code', '');
-        if (!$auth_code) {
-            return app('json')->fail('授权失败，缺少授权码');
-        }
+        $config = systemConfig(['site_url', 'alipay_app_id', 'alipay_public_key', 'alipay_private_key', 'alipay_open']);
+        $options = new Config();
+        $options->protocol = 'https';
+        $options->gatewayHost = 'openapi.alipay.com';
+        $options->signType = 'RSA2';
 
-        try {
-            $config = systemConfig(['site_url', 'alipay_app_id', 'alipay_public_key', 'alipay_private_key', 'alipay_open']);
-            // 初始化SDK
-            $options = [
-                'protocol' => 'https',
-                'gatewayHost' => 'openapi.alipay.com',
-                'appId' => $config['alipay_app_id'],
-                'signType' => 'RSA2',
-                'alipayPublicKey' => $config['alipay_public_key'],
-                'merchantPrivateKey' => $config['alipay_private_key']
-            ];
+        $options->appId = $config['alipay_app_id'];
+        // 为避免私钥随源码泄露，推荐从文件中读取私钥字符串而不是写入源码中
+        $options->merchantPrivateKey = $config['alipay_private_key'];
 
-            // 使用授权码获取访问令牌
-            Factory::setOptions($options);
-            $result = Factory::base()->oauth()->getToken($auth_code);
+        //注：如果采用非证书模式，则无需赋值上面的三个证书路径，改为赋值如下的支付宝公钥字符串即可
+         $options->alipayPublicKey = $config['alipay_public_key'];
 
-            if (!isset($result->accessToken)) {
-                return app('json')->fail('获取access_token失败');
-            }
+        //可设置异步通知接收服务地址（可选）
+        $options->notifyUrl = "";
 
-            $accessToken= $result->accessToken;
-
-            $textParams = [
-                'auth_token' => $accessToken // 注意：此处的 auth_token 是系统参数，不是业务参数
-            ];
-            // 业务参数
-            $bizParams = [];
-
-            // 获取用户信息
-            $result = Factory::util()->generic()->execute(
-                'alipay.user.info.share',
-                $textParams,  // 系统参数
-                $bizParams    // 业务参数（必须传，即使为空）
-            );
-            // 获取用户信息
-            if ($result->code === '10000') {
-                echo "用户昵称: " . $result->nick_name;
-            } else {
-                echo "错误信息: " . $result->sub_msg;
-            }
-
-            $userInfo = $result->nick_name; // 用户昵称、头像等
-            // 同步用户信息到数据库
-            /** @var UserRepository $userRepository */
-            $userRepository = app()->make(UserRepository::class);
-
-            // 查找是否已存在该支付宝用户
-            $user = $userRepository->getWhere(['alipay_user_id' => $result->userId]);
-
-            if (!$user) {
-                // 创建新用户
-                $userData = [
-                    'nickname' => $result->userId . '_alipay', // 支付宝基础授权只能获取userId，无法获取昵称等信息
-                    'avatar' => '',
-                    'alipay_user_id' => $result->userId,
-                    'user_type' => 'alipay',
-                    'sex' => 0,
-                ];
-
-                $user = $userRepository->registr($result->userId . '@alipay.com', null, 'alipay', $userData);
-            }
-
-            // 处理主用户信息
-            $user = $userRepository->mainUser($user);
-
-            // 绑定推广关系
-            $pid = $this->request->param('spread', 0);
-            $userRepository->bindSpread($user, intval($pid));
-
-            // 创建token
-            $tokenInfo = $userRepository->createToken($user);
-            $userRepository->loginAfter($user);
-
-            return app('json')->success($userRepository->returnToken($user, $tokenInfo));
-
-        } catch (\Exception $e) {
-            return app('json')->fail('授权失败：' . $e->getMessage());
-        }
+        return $options;
     }
 
     public function getCaptcha()
@@ -669,9 +599,20 @@ class Auth extends BaseController
         return app('json')->status(200, $userRepository->returnToken($user, $tokenInfo));
     }
 
+    // 支付宝授权登录
+    public function alipayAuth()
+    {
+        $auth = $this->request->param('auth');
+        $users = $this->authInfo($auth, systemConfig('is_phone_login') !== '1');
+        if (!$users)
+            return app('json')->fail('授权失败');
+
+
+    }
+
     private function authInfo($auth, $createUser = false)
     {
-        if (!in_array($auth['type'] ?? '', ['wechat', 'routine', 'apple', 'app_wechat']) || !isset($auth['auth']))
+        if (!in_array($auth['type'] ?? '', ['wechat', 'alipay','routine', 'apple', 'app_wechat']) || !isset($auth['auth']))
             throw new ValidateException('授权信息类型有误');
         $data = $auth['auth'];
         if ($auth['type'] === 'routine') {
@@ -756,6 +697,75 @@ class Auth extends BaseController
             if (!$user)
                 throw new ValidateException('授权失败');
             return $user;
+        }else if ($auth['type'] === 'alipay'){
+            $code = $data['code'] ?? '';
+            // 使用授权码获取访问令牌
+            Factory::setOptions($this->getOptions());
+            $result = Factory::base()->oauth()->getToken($code);
+
+            if (!isset($result->accessToken)) {
+                throw new ValidateException('获取access_token失败');
+            }
+
+
+            //var_dump($result);exit();
+            try {
+                $accessToken= $result->accessToken;
+
+                $textParams = [
+                    'auth_token' => $accessToken // 注意：此处的 auth_token 是系统参数，不是业务参数
+                ];
+                // 业务参数
+                $bizParams = [];
+
+                // 获取用户信息
+                $result = Factory::util()->generic()->execute(
+                    'alipay.user.info.share',
+                    $textParams,  // 系统参数
+                    $bizParams    // 业务参数（必须传，即使为空）
+                );
+                // 获取用户信息
+                if ($result->code === '10000') {
+                    $userInfo = $result->nick_name; // 用户昵称、头像等
+                    // 同步用户信息到数据库
+                    /** @var UserRepository $userRepository */
+                    $userRepository = app()->make(UserRepository::class);
+
+                    // 查找是否已存在该支付宝用户
+                    $user = $userRepository->getWhere(['alipay_user_id' => $result->userId]);
+
+                    if (!$user) {
+                        // 创建新用户
+                        $userData = [
+                            'nickname' => $result->userId . '_alipay', // 支付宝基础授权只能获取userId，无法获取昵称等信息
+                            'avatar' => '',
+                            'alipay_user_id' => $result->userId,
+                            'user_type' => 'alipay',
+                            'sex' => 0,
+                        ];
+
+                        $user = $userRepository->registr($result->userId . '@alipay.com', null, 'alipay', $userData);
+                    }
+
+                    // 处理主用户信息
+                    $user = $userRepository->mainUser($user);
+
+                    // 绑定推广关系
+                    $pid = $this->request->param('spread', 0);
+                    $userRepository->bindSpread($user, intval($pid));
+
+                    // 创建token
+                    $tokenInfo = $userRepository->createToken($user);
+                    $userRepository->loginAfter($user);
+
+                    return app('json')->success($userRepository->returnToken($user, $tokenInfo));
+                }
+
+                //return app('json')->fail($result->subMsg);
+
+            } catch (\Exception $e) {
+                return app('json')->fail('授权失败：' . $e->getMessage());
+            }
         }
     }
 

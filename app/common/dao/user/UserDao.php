@@ -211,6 +211,20 @@ class UserDao extends BaseDao
     }
 
     /**
+     * @param int $id
+     * @return array|Model|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020-04-28
+     */
+    public function alipayUserIdBytUser(int $id)
+    {
+        return User::getDB()->where('alipay_user_id', $id)->find();
+    }
+
+    /**
      * @param $id
      * @return mixed
      * @author xaboy
