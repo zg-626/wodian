@@ -522,10 +522,7 @@ class MerchantRepository extends BaseRepository
 
     public function getPayCode($id)
     {
-        $merchant = $this->dao->apiGetOne($id)->hidden([
-            "real_name", "mer_phone", "reg_admin_id", "sort", "is_del", "is_audit", "is_best", "mer_state", "bank", "bank_number", "bank_name", 'update_time',
-            'financial_alipay', 'financial_bank', 'financial_wechat', 'financial_type','mer_take_phone'
-        ]);
+        $merchant = $this->dao->get($id);
         if (!$merchant) throw new ValidateException('商户不存在');
         $shopId=$id;
         $mer_avatar=$merchant['mer_avatar'];
