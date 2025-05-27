@@ -100,7 +100,6 @@ class Dividend extends BaseController
             if ($this->shouldExecuteDividend($lastExecuteDay)) {
                 $info = $bonusOfflineService->calculateBonus();
                 if ($info!==false) {
-                    $this->updateLastExecuteDay($info['bonus_amount']); // 更新执行时间
                     $this->recordExecuteLog(2, $info['bonus_amount'] ?? 0); // 记录5天分红
                 }
                 record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
@@ -151,17 +150,6 @@ class Dividend extends BaseController
             ->value('execute_date');
         
         return $lastRecord ? date('d', strtotime($lastRecord)) : '0';
-    }
-
-    private function updateLastExecuteDay($bonusAmount): void
-    {
-        Db::name('dividend_execute_log')->insert([
-            'execute_date' => date('Y-m-d'),
-            'execute_type' => 2, // 5天分红
-            'status' => 1,
-            'bonus_amount' => $bonusAmount ?? 0,
-            'create_time' => date('Y-m-d H:i:s')
-        ]);
     }
 
     /**
