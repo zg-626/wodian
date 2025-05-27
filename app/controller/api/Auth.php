@@ -935,6 +935,69 @@ class Auth extends BaseController
         return app('json')->success($userRepository->returnToken($user, $tokenInfo));
     }
 
+
+    /**
+     * 支付宝获取手机号
+     */
+    public function alipayPhone()
+    {
+        $response = $this->request->param('response');
+        
+        if (!$response) {
+            return app('json')->fail('参数错误');
+        }
+
+        try {
+            $encrys = json_decode($response, true);
+            $encryptedData = $encrys['response'];
+            // 从配置中获取 AES 密钥
+            $aesKey = 'T9g1Y6hNZPYRA6I0vcLPlw==';
+            //$aesKey = systemConfig('ali_aes_key')?? 'T9g1Y6hNZPYRA6I0vcLPlw==';
+            if (!$aesKey) {
+                return app('json')->fail('请先配置支付宝 AES 密钥');
+            }
+
+            // 解密手机号
+            $result = openssl_decrypt(
+                base64_decode($encryptedData),
+                'AES-128-CBC',
+                base64_decode($aesKey),
+                OPENSSL_RAW_DATA,
+                str_repeat(chr(0), 16)  // 添加初始化向量（IV），使用 16 个空字节
+            );
+
+            if (!$result) {
+                return app('json')->fail('解密失败');
+            }
+            
+            $data = json_decode($result, true);
+            if (!isset($data['mobile'])) {
+                return app('json')->fail('获取手机号失败');
+            }
+
+            $phone=$data['mobile'];
+            // 根据手机号查找用户
+            /** @var UserRepository $userRepository */
+            $userRepository = app()->make(UserRepository::class);
+            $user = $userRepository->accountByUser($phone);
+
+            if (!$user) {
+                $user = $userRepository->registr($phone, 123456, 'alipay');
+
+                //$user = $userRepository->mainUser($user);
+
+            }
+            $tokenInfo = $userRepository->createToken($user);
+            $userRepository->loginAfter($user);
+            return app('json')->success($userRepository->returnToken($user, $tokenInfo));
+            
+        } catch (\Exception $e) {
+            return app('json')->fail($e->getMessage());
+        }
+    }
+
+
+
     /**
      * @return mixed
      */
