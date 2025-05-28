@@ -75,6 +75,8 @@ class Dividend extends BaseController
         $lockKey = 'dividend_task_lock';
         $lockValue = uniqid(mt_rand(), true);
 
+        Db::startTrans();
+
         try {
             // 获取锁，5分钟超时
             if (!Cache::store('redis')->set($lockKey, $lockValue, 300, 'NX')) {
@@ -82,29 +84,45 @@ class Dividend extends BaseController
             }
 
             $currentDay = date('d');
-            $lastExecuteDay = $this->getLastExecuteDay();
 
-            // 检查今天是否已执行过
-            if ($this->isExecutedToday()) {
-                return json(['code' => 0, 'msg' => '今日已执行过分红任务']);
-            }
 
-            // 月初分红
-            if ($currentDay === '01') {
-                $bonusOfflineService->distributeBaseAmount();
-                $this->recordExecuteLog(1); // 记录月初分红
-                Log::info('月初基础金额分红执行完成: ' . date('Y-m-d H:i:s'));
-            }
+            // 获取所有城市分红池
+            $poolInfo = Db::name('dividend_pool')
+                ->where('city_id', '<>', 0)
+                ->select()
+                ->toArray();
 
-            // 5天分红
-            if ($this->shouldExecuteDividend($lastExecuteDay)) {
-                $info = $bonusOfflineService->calculateBonus();
-                if ($info!==false) {
-                    $this->recordExecuteLog(2, $info['bonus_amount'] ?? 0); // 记录5天分红
+            foreach ($poolInfo as $pool) {
+
+                // 检查今天是否已执行过
+                if ($this->isExecutedToday($pool['id'])) {
+                    continue;
                 }
-                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
-            }
 
+                // 月初分红
+                if ($currentDay === '01') {
+                    $info = $bonusOfflineService->distributeBaseAmount();
+
+                    $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
+                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 月初基础金额分红执行完成: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
+                }
+
+                $lastExecuteDay = $this->getLastExecuteDay($pool['id']);
+
+                // 5天分红
+                if ($this->shouldExecuteDividend($lastExecuteDay)) {
+                    $info = $bonusOfflineService->calculateBonus();
+                    if ($info!==null) {
+                        $this->recordExecuteLog(2, $info['bonus_amount'],$pool['id']); // 记录5天分红
+                    }else{
+                        $this->recordExecuteLog(2, 0.00,$pool['id']); // 记录5天分红
+                    }
+
+                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统5天分红分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
+                }
+
+            }
+            Db::commit();
             return json(['code' => 1, 'msg' => '分红任务执行成功']);
 
         } catch (\Exception $e) {
@@ -118,20 +136,22 @@ class Dividend extends BaseController
         }
     }
 
-    private function isExecutedToday(): bool
+    private function isExecutedToday($poolId): bool
     {
         return Db::name('dividend_execute_log')
             ->where('execute_date', date('Y-m-d'))
             ->where('status', 1)
+            ->where('dp_id', $poolId)
             ->count() > 0;
     }
 
-    private function recordExecuteLog(int $type, float $amount = 0): void
+    private function recordExecuteLog(int $type, float $amount,$poolId): void
     {
         Db::name('dividend_execute_log')->insert([
             'execute_date' => date('Y-m-d'),
             'execute_type' => $type,
             'status' => 1,
+            'dp_id' => $poolId,
             'bonus_amount' => $amount,
             'create_time' => date('Y-m-d H:i:s')
         ]);
@@ -140,12 +160,13 @@ class Dividend extends BaseController
     /**
      * 获取上次执行日期
      */
-    private function getLastExecuteDay(): string
+    private function getLastExecuteDay($poolId): string
     {
         // 查询最近一次5天分红记录
         $lastRecord = Db::name('dividend_execute_log')
             ->where('execute_type', 2)
             ->where('status', 1)
+            ->where('dp_id', $poolId)
             ->order('execute_date desc')
             ->value('execute_date');
         

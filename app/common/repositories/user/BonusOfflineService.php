@@ -8,6 +8,7 @@ use app\common\model\system\merchant\Merchant;
 use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use think\facade\Db;
+use think\facade\Log;
 
 class BonusOfflineService extends BaseRepository
 {
@@ -15,11 +16,25 @@ class BonusOfflineService extends BaseRepository
     protected $growthRate = 1.15;// 增长率
     // 第一期分红的金额阈值
     protected $initialThreshold = 20000;
-    protected $baseAmount = 20000; // 基础金额
     // 用户分红比例
     protected $userRatio = 0.5;
     // 商家分红比例
     protected $merchantRatio = 0.5;
+
+    /**
+     * 获取当前的基础金额
+     * @param int $poolId 分红池ID
+     * @return float
+     */
+    protected function getCurrentBaseAmount($poolId)
+    {
+        $threshold = Db::name('dividend_pool')
+            ->where('id', $poolId)
+            ->value('initial_threshold');
+
+        // 如果initial_threshold为null或0或0.00，返回默认基础金额
+        return (!$threshold) ? $this->initialThreshold : $threshold;
+    }
 
     /**
      * 计算并执行分红
@@ -27,14 +42,13 @@ class BonusOfflineService extends BaseRepository
      */
     public function calculateBonus()
     {
-        Db::startTrans();
         try {
             // 获取城市分红池可用金额
             $poolInfo = Db::name('dividend_pool')->where('city_id','<>',0)->order('id', 'desc')->select()->toArray();
 
             foreach ($poolInfo as $key => $value) {
                 if (!$value || $value['available_amount'] <= 0) {
-                    return false;
+                    continue;
                 }
                 // 保留两位小数
                 $totalAmount = round($value['available_amount'], 2);
@@ -42,16 +56,22 @@ class BonusOfflineService extends BaseRepository
                 // 获取上一次分红记录
                 $lastBonusRecord = Db::name('dividend_period_log')->where('dp_id',$value['id'])->order('id', 'desc')->find();
                 $bonusAmount = 0;
+                // 获取当前周期的初始阈值
+                $currentThreshold = Db::name('dividend_pool')
+                ->where('id', $value['id'])
+                ->value('initial_threshold') ?? $this->initialThreshold;
                 // 计算本次可分红金额
                 if (!$lastBonusRecord) {
-                    // 首次分红，判断是否达到初始阈值
-                    if ($totalAmount >= $this->initialThreshold) {
-                        $bonusAmount = round($totalAmount - $this->baseAmount, 2);
+                    // 首次分红，判断是否达到初始阈值且满足增长率
+                    $shouldAmount = round($currentThreshold * $this->growthRate, 2);
+                    if ($totalAmount >= $shouldAmount && $totalAmount >= $this->initialThreshold) {
+                        $bonusAmount = round($totalAmount - $currentThreshold, 2);
                     }
                 } else {
-                    // 非首次分红，使用total_amount计算增长率
-                    if ($totalAmount >= $lastBonusRecord['total_amount'] * $this->growthRate) {
-                        $bonusAmount = round($totalAmount - $this->baseAmount, 2);
+                    // 非首次分红，判断是否达到上期阈值且满足增长率
+                    $shouldAmount = round($lastBonusRecord['total_amount'] * $this->growthRate, 2);
+                    if ($totalAmount >= $shouldAmount) {
+                        $bonusAmount = round($totalAmount - $currentThreshold, 2);
                     }
                 }
 
@@ -73,30 +93,31 @@ class BonusOfflineService extends BaseRepository
                 $merchantBonusAmounts = $this->distributeMerchantBonus($merchants, $merchantBonus);
 
                 // 记录分红日志
-                $poolId = $this->recordDividendPeriod($bonusAmount, $value,$totalAmount);
+                $poolId = $this->recordDividendPeriod($bonusAmount, $value,$totalAmount,$shouldAmount,2);
                 $this->recordDividendLog($poolId, $users, $merchants, $userBonusAmounts, $merchantBonusAmounts);
+
+                // 获取当前基础金额
+                $currentBaseAmount = $this->getCurrentBaseAmount($value['id']);
 
                 // 更新分红池，保留基础金额
                 Db::name('dividend_pool')->where('id', $value['id'])->update([
-                    'available_amount' => $this->baseAmount,
-                    'grand_amount' => $this->baseAmount,// 累计未发放的分红金额,用于月底发放
+                    'available_amount' => $currentBaseAmount,
+                    'grand_amount' => $currentBaseAmount,// 累计未发放的分红金额,用于月底发放
                     'distributed_amount' => Db::raw('distributed_amount + ' . $bonusAmount),
                     'update_time' => date('Y-m-d H:i:s')
                 ]);
 
-                Db::commit();
                 return [
                     'total_amount' => $totalAmount?? '',
                     'bonus_amount' => $bonusAmount?? '',
                     'user_bonus' => $userBonus?? '',
                     'merchant_bonus' => $merchantBonus?? '',
-                    'base_amount' => $this->baseAmount?? '',
+                    'base_amount' => $this->initialThreshold?? '',
                 ];
             }
 
         } catch (\Exception $e) {
-            Db::rollback();
-            throw $e;
+            Log::error($e);
         }
     }
 
@@ -202,21 +223,23 @@ class BonusOfflineService extends BaseRepository
     /**
      * 记录分红池日志
      */
-    protected function recordDividendPeriod($bonusAmount, $poolInfo,$totalAmount)
+    protected function recordDividendPeriod($bonusAmount, $poolInfo, $totalAmount, $shouldAmount, $type)
     {
         $period = 1;
         if ($lastLog = Db::name('dividend_period_log')->where('dp_id',$poolInfo['id'])->order('id', 'desc')->find()) {
             $period = $lastLog['period'] + 1;
         }
-        
+
         return Db::name('dividend_period_log')->insertGetId([
             'period' => $period,
             'dp_id' => $poolInfo['id'],
             'city_id' => $poolInfo['city_id'],
             'city' => $poolInfo['city'],
-            'total_amount' => $totalAmount,
-            'actual_amout' => $bonusAmount,
-            'growth_rate' => $lastLog ? $totalAmount / $lastLog['total_amount'] : 0,
+            'execute_type' => $type,
+            'total_amount' => $totalAmount,// 分红总金额
+            'actual_amout' => $bonusAmount,// 实际分红金额
+            'should_amount' => $shouldAmount,// 应该要达到分红金额
+            'growth_rate' => $type === 1 ? 0 : ($lastLog ? $totalAmount / $lastLog['total_amount'] : 0),// 月初分红不记录增长率
             'create_time' => date('Y-m-d H:i:s')
         ]);
     }
@@ -270,7 +293,7 @@ class BonusOfflineService extends BaseRepository
             // 获取所有城市分红池
             $poolInfo = Db::name('dividend_pool')
                 ->where('city_id', '<>', 0)
-                ->where('grand_amount', '>=', $this->baseAmount)
+                ->where('grand_amount', '>=', $this->initialThreshold)
                 ->select()
                 ->toArray();
 
@@ -279,17 +302,27 @@ class BonusOfflineService extends BaseRepository
                 $users = $this->getValidUsers($pool);
                 $merchants = $this->getValidMerchants($pool);
 
+                $grand_amount=$pool['grand_amount'];
                 // 计算分红金额
-                $userBonus = $this->baseAmount * $this->userRatio;
-                $merchantBonus = $this->baseAmount * $this->merchantRatio;
+                $userBonus = $grand_amount * $this->userRatio;
+                $merchantBonus = $grand_amount * $this->merchantRatio;
 
                 // 执行分红
                 $userBonusAmounts = $this->distributeUserBonus($users, $userBonus);
                 $merchantBonusAmounts = $this->distributeMerchantBonus($merchants, $merchantBonus);
 
+                // 获取当前基础金额
+                $currentBaseAmount = $this->getCurrentBaseAmount($pool['id']);
+
                 // 记录分红日志
-                $poolId = $this->recordDividendPeriod($this->baseAmount, $pool);
+                $poolId = $this->recordDividendPeriod($currentBaseAmount, $pool, $grand_amount, $grand_amount,1);
                 $this->recordDividendLog($poolId, $users, $merchants, $userBonusAmounts, $merchantBonusAmounts);
+
+                // 更新分红池时需要保存最后一次的总金额作为新的基准
+                $lastTotalAmount = Db::name('dividend_period_log')
+                    ->where('dp_id', $pool['id'])
+                    ->order('id', 'desc')
+                    ->value('total_amount') ?? $this->initialThreshold;
 
                 // 更新分红池
                 Db::name('dividend_pool')
@@ -297,13 +330,19 @@ class BonusOfflineService extends BaseRepository
                     ->update([
                         'available_amount' => 0,
                         'grand_amount' => 0,
-                        'distributed_amount' => Db::raw('distributed_amount + ' . $this->baseAmount),
+                        'initial_threshold' => $lastTotalAmount, // 新增字段，记录当前周期的初始阈值
+                        'distributed_amount' => Db::raw('distributed_amount + ' . $currentBaseAmount),
                         'update_time' => date('Y-m-d H:i:s')
-                    ]);
+                ]);
+
+                return [
+                    'base_amount' => $currentBaseAmount,
+                ];
+
             }
 
             Db::commit();
-            return true;
+
         } catch (\Exception $e) {
             Db::rollback();
             throw $e;
