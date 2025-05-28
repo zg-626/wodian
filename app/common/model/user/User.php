@@ -199,6 +199,11 @@ class User extends BaseModel
         return $this->hasOne(User::class, 'uid', 'superior_uid');
     }
 
+    public function auth()
+    {
+        return $this->hasOne(UserRealAuth::class, 'uid', 'uid');
+    }
+
     public function brokerage()
     {
         return $this->hasOne(UserBrokerage::class, 'brokerage_level', 'brokerage_level')->where('type', 0);

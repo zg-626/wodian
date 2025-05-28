@@ -195,6 +195,9 @@ class UserRepository extends BaseRepository
             'member' => function ($query) {
                 $query->field('user_brokerage_id,brokerage_level,brokerage_name,brokerage_icon');
             },
+            'auth' => function ($query) {
+                $query->field('uid,real_name,id_card,status,message');
+            },
             'group']);
         $make = app()->make(UserLabelRepository::class);
         $count = $query->count('User.' . $this->dao->getPk());
