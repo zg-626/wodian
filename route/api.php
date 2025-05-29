@@ -797,6 +797,8 @@ Route::group('api/', function () {
     Route::get('user/find_friends', 'api.Auth/findFriends');
     //验证码
     Route::post('auth/verify', 'api.Auth/verify');
+    // 检测商务流水
+    Route::any('auth/check_merchant', 'api.Auth/checkMerchant');
     //微信配置
     Route::get('wechat/config', 'api.Wechat/jsConfig');
     //图片验证码

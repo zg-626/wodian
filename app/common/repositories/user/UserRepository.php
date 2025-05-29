@@ -1210,6 +1210,71 @@ class UserRepository extends BaseRepository
         return compact('list', 'count');
     }
 
+    // 邀请的商家信息
+    public function getMerchantInfo(): bool
+    {
+        $userGroupRepository = app()->make(UserGroupRepository::class);
+        // 获取商务分组信息及比例
+        $salesmanGroup = $userGroupRepository->get(2);
+        // 获取所有商务员id
+        $salesmanIds = (new \app\common\model\user\User)->whereIn('group_id',[2, 9])->column('uid');
+        foreach ($salesmanIds as $uid) {
+
+            //  获取商务员关联的商户
+            $merIds = (new \app\common\model\system\merchant\Merchant)->where(['salesman_id' => $uid])->column('mer_id');
+
+            // 线上订单手续费
+            //$orderCountHandlingFee = (new \app\common\model\store\order\StoreOrder)->whereMonth('create_time', 'last month')->where(['mer_id' => $merIds, 'paid' => 1])->sum('total_price');
+
+            // 线下订单手续费
+            $offlineOrderCountHandlingFee = (new \app\common\model\store\order\StoreOrderOffline)->whereMonth('create_time', 'last month')->where(['mer_id' => $merIds, 'paid' => 1])->sum('handling_fee');
+
+            // 所有手续费
+            $handlingFee = bcadd(0, $offlineOrderCountHandlingFee, 2);
+            $handlingInfo=Db::name('user_handling_fee')->where('uid', $uid)->whereMonth('create_time', 'last month')->find();
+
+            if($handlingInfo && $handlingInfo['total_amount'] < $handlingFee){
+                // 更新
+                Db::name('user_handling_fee')->where('id',$handlingInfo['id'])->update([
+                    'total_amount'=>Db::raw('total_amount + ' . $handlingFee)
+                ]);
+            }
+
+            Db::name('user_handling_fee')->insert([
+                'uid' => $uid,
+                'total_amount' => $handlingFee,
+                'execute_date' => date('Y-m',strtotime('-1 month')),
+                'create_time' => date('Y-m-d H:i:s')
+            ]);
+
+            // 如果$handlingFee>$salesmanGroup['money']，发放积分奖励
+            if ($handlingFee > $salesmanGroup['money']) {
+                $bill = Db::name('user_bill')->where('uid', $uid)->where('link_id', date('Y-m',strtotime('-1 month')))->where('type','salesman')->find();
+                if(!$bill){
+                    $integral = $salesmanGroup['integral'];
+                    // 积分记录
+                    app()->make(UserBillRepository::class)->incBill($uid, 'integral','salesman', [  // 发放积分
+                        'link_id' => date('Y-m',strtotime('-1 month')),
+                        'status' => 1,
+                        'title' => '高级商务员奖励',
+                        'number' => $integral,
+                        'mark' => '流水金额'. $handlingFee. '元',
+                        'balance' => (new \app\common\model\user\User)->where('uid', $uid)->value('integral') + $integral
+                    ]);
+
+                    // 给用户增加积分,升级高级商务
+                    Db::name('user')->where('uid', $uid)->update([
+                        'group_id' => 9,
+                        'integral' => Db::raw('integral + '. $integral)
+                    ]);
+                }
+            }
+        }
+
+        return true;
+
+    }
+
     /**
      * @param $uid
      * @param $nickname

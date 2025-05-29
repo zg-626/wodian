@@ -996,6 +996,19 @@ class Auth extends BaseController
         }
     }
 
+    // 检测商务流水
+    public function checkMerchant()
+    {
+        /** @var UserRepository $userRepository */
+        $userRepository = app()->make(UserRepository::class);
+        try {
+            $info = $userRepository->getMerchantInfo();
+            return app('json')->success();
+        }catch (Exception $e) {
+            Log::error('月初检测商务流水失败：'. $e->getMessage());
+        }
+    }
+
 
 
     /**
