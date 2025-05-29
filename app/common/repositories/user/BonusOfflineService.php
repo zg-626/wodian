@@ -288,7 +288,6 @@ class BonusOfflineService extends BaseRepository
      */
     public function distributeBaseAmount($pool)
     {
-        Db::startTrans();
         try {
             // 获取所有城市分红池
             /*$poolInfo = Db::name('dividend_pool')
@@ -321,14 +320,14 @@ class BonusOfflineService extends BaseRepository
             $currentBaseAmount = $this->getCurrentBaseAmount($pool['id']);
 
             // 记录分红日志
-            $poolId = $this->recordDividendPeriod($currentBaseAmount, $pool, $grand_amount, $grand_amount,1);
+            $poolId = $this->recordDividendPeriod($grand_amount, $pool, $pool['grand_amount'], $pool['grand_amount'],1);
             $this->recordDividendLog($poolId, $users, $merchants, $userBonusAmounts, $merchantBonusAmounts);
 
             // 更新分红池时需要保存最后一次的总金额作为新的基准
-            $lastTotalAmount = Db::name('dividend_period_log')
+            /*$lastTotalAmount = Db::name('dividend_period_log')
                 ->where('dp_id', $pool['id'])
                 ->order('id', 'desc')
-                ->value('total_amount') ?? $this->initialThreshold;
+                ->value('total_amount') ?? $this->initialThreshold;*/
 
             // 更新分红池
             Db::name('dividend_pool')
@@ -336,7 +335,7 @@ class BonusOfflineService extends BaseRepository
                 ->update([
                     'available_amount' => $available_amount,
                     'grand_amount' => 0,
-                    'initial_threshold' => $lastTotalAmount, // 新增字段，记录当前周期的初始阈值
+                    'initial_threshold' => $pool['total_amount'], // 新增字段，记录当前周期的初始阈值
                     'distributed_amount' => Db::raw('distributed_amount + ' . $currentBaseAmount),
                     'update_time' => date('Y-m-d H:i:s')
             ]);
@@ -345,11 +344,7 @@ class BonusOfflineService extends BaseRepository
                 'base_amount' => $currentBaseAmount,
             ];
 
-
-            Db::commit();
-
         } catch (\Exception $e) {
-            Db::rollback();
             throw $e;
         }
     }
