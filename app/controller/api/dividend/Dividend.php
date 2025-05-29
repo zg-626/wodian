@@ -101,7 +101,7 @@ class Dividend extends BaseController
 
                 // 月初分红
                 if ($currentDay === '01') {
-                    $info = $bonusOfflineService->distributeBaseAmount();
+                    $info = $bonusOfflineService->distributeBaseAmount($pool);
 
                     $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
                     record_log('时间: ' . date('Y-m-d H:i:s') . ', 月初基础金额分红执行完成: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
@@ -111,12 +111,9 @@ class Dividend extends BaseController
 
                 // 5天分红
                 if ($this->shouldExecuteDividend($lastExecuteDay)) {
-                    $info = $bonusOfflineService->calculateBonus();
-                    if ($info!==null) {
-                        $this->recordExecuteLog(2, $info['bonus_amount'],$pool['id']); // 记录5天分红
-                    }else{
-                        $this->recordExecuteLog(2, 0.00,$pool['id']); // 记录5天分红
-                    }
+                    $info = $bonusOfflineService->calculateBonus($pool);
+
+                    $this->recordExecuteLog(2, $info['bonus_amount']??0,$pool['id']); // 记录5天分红
 
                     record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统5天分红分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
                 }
@@ -126,7 +123,7 @@ class Dividend extends BaseController
             return json(['code' => 1, 'msg' => '分红任务执行成功']);
 
         } catch (\Exception $e) {
-            Log::info('分红任务执行失败：' . $e->getMessage());
+            Log::info('分红任务执行失败：' . $e->getMessage().$e->getFile());
             return json(['code' => 0, 'msg' => '分红任务执行失败：' . $e->getMessage().$e->getLine()]);
         } finally {
             // 释放锁（确保是自己的锁）
