@@ -622,13 +622,20 @@ class StoreOrderRepository extends BaseRepository
             // 实时获取上级分组信息及比例
             $superiorGroup = $userGroupRepository->get($superior['group_id']);
 
-            // 如果上级是高级商务，且下级是普通商务，给予额外2%奖励，终止循环
+            // 如果上级是高级商务，且下级是普通商务，给予额外2%奖励
             if ($superior['group_id'] == self::USER_GROUP['SENIOR_SALESMAN'] &&
                 $salesman['group_id'] == self::USER_GROUP['NORMAL_SALESMAN']) {
                 $extra_bonus = bcmul(0.02, $money, 2);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $extra_bonus, $this->getSuperiorTitle($superior['group_id']));
                 // 记录已处理的用户ID
                 $processedUids[] = $superior['uid'];
+                //break;
+            }
+
+            // 如果上级是普通商务，且下级也是普通商务，终止循环
+            if ($superior['group_id'] == self::USER_GROUP['NORMAL_SALESMAN'] &&
+                $salesman['group_id'] == self::USER_GROUP['NORMAL_SALESMAN']) {
+                Log::info("终止普通商务链: 上级UID={$superior['uid']}, 当前UID={$salesman['uid']}");
                 break;
             }
 
