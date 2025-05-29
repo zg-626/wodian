@@ -44,7 +44,7 @@ return [
             \crmeb\listens\AutoSendPayOrderSmsListen::class,
             \crmeb\listens\SyncSmsResultCodeListen::class,
 //            \crmeb\listens\SyncBroadcastStatusListen::class, //直播间同步监听，未开启可删除次行
-            \crmeb\listens\RefundOrderAgreeListen::class,
+            //\crmeb\listens\RefundOrderAgreeListen::class,// 自动退款
             \crmeb\listens\SeckillTImeCheckListen::class,
             \crmeb\listens\AutoOrderReplyListen::class,
             \crmeb\listens\ProductPresellStatusListen::class,
