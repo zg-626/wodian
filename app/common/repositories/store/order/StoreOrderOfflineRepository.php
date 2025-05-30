@@ -458,6 +458,9 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $res->lkl_trade_no = $data['data']['trade_no']??'';
                 $res->lkl_log_date = $data['data']['trade_time']??'';
                 $res->pay_time = date('y_m-d H:i:s', time());
+                if ($res->pay_price == 0) {
+                    $res->pay_type = 'coupon';
+                }
                 $res->save();
                 $order = $res;
 
