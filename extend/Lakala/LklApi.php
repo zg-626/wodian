@@ -821,6 +821,10 @@ class LklApi
         $reqData=[
             'tranDate' => $param['tranDate'],
             'tranTime' => $param['tranTime'],
+            'logNo' => $param['lkl_log_no'],
+            'logdat' => $param['logdat'],
+            'sendMerId' => $param['sendMerId'],
+            'sendTermId' => $param['sendTermId'],
             'ledgerType' => '01',
             'instId' => self::$config['org_code'],
             'ledgerTranSid' => date('YmdHis', time()) . Random::generate(8),

@@ -36,6 +36,7 @@ use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
 use think\exception\ValidateException;
+use think\facade\Log;
 use think\facade\Queue;
 
 class Article extends BaseController
@@ -286,7 +287,7 @@ class Article extends BaseController
 //        $order = $storeOrderOfflineRepository->get(1256);
 //        $merchantRepository = app()->make(MerchantRepository::class);
 //        $merchant = $merchantRepository->get(469);
-//        $userRepository = app()->make(UserRepository::class);
+        $userRepository = app()->make(UserRepository::class);
 //        $userGroupRepository = app()->make(UserGroupRepository::class);
 //        $userBillRepository = app()->make(UserBillRepository::class);
 //
@@ -300,7 +301,12 @@ class Article extends BaseController
 //        $money = bcmul(0.6, $commission_money, 2);
 //
 //        // 获取商家绑定的上级信息
-//        $salesman = $userRepository->get($merchant->salesman_id);
+
+        try {
+            $info = $userRepository->getMerchantInfo();
+        }catch (Exception $e) {
+            print_r($e->getMessage().$e->getLine());
+        }
 //
 //        // 如果商家上级是省级代理商，终止发放佣金
 //        //if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
@@ -317,13 +323,31 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [2006]]);
-            //print_r($order);exit();
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1814]]);
+            $date = substr($order['lkl_log_date'], 0, 8);
+            $time = substr($order['lkl_log_date'], 8, 6);
+            $param['tranDate'] = date('Ymd');
+            $param['tranTime'] = date('his');
+            $param['txnAmt'] = $order['pay_price'];
+            $param['lkl_log_no'] = $order['lkl_log_no'];
+            $param['logdat'] = $date;
+            $param['sendMerId'] = '822473052110FF4';
+            $param['sendTermId'] = 'L9242635';
+            $param['revcData'] = [
+                [
+                    'revcMerId' => '822473052110FF4',
+                    'revcTermId' => 'L9242635',
+                    'ledgerPercent' => 100
+                ]
+            ];
+            $api = new \Lakala\LklApi();
+            $result = $api::orderSettle($param);
+            print_r($result);exit();
             // 测试美团退款
             /** @var WaimaiRepositories $repository */
             $repository = app()->make(WaimaiRepositories::class);
-            $result = $repository->refundLogic($order->order_sn.'520', $order->pay_price,$order->lkl_log_no);
-            print_r($result);
+            //$result = $repository->refundLogic($order->order_sn.'520', $order->pay_price,$order->lkl_log_no);
+            //print_r($result);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){
 //                /** @var MerchantRepository $merchantRepository */
@@ -335,16 +359,16 @@ class Article extends BaseController
             //$userMerchantRepository = app()->make(UserMerchantRepository::class);
             //$userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->handling_fee,true,$order->order_id);
             /** @var StoreOrderRepository $storeOrderRepository */
-            //$storeOrderRepository = app()->make(StoreOrderRepository::class);
-            //$storeOrderRepository->addCommissionTwo($order->mer_id,$order);
+            $storeOrderRepository = app()->make(StoreOrderRepository::class);
+            //$storeOrderRepository->addCommission($order->mer_id,$order);
             /** @var MerchantRepository $merchantRepository */
-            $merchantRepository=app()->make(MerchantRepository::class);
+            //$merchantRepository=app()->make(MerchantRepository::class);
             // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
             /*if($order->deduction > 0){
 
                 $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction_money);
             }*/
-            //$storeOrderOfflineRepository->computeds($order,$user);
+            //$storeOrderOfflineRepository->computeds($order);
             //$storeOrderOfflineRepository->red($order);
             //$info=$storeOrderOfflineRepository->paySuccess($order);
             //$storeOrderOfflineRepository->virtualDelivery($order);
@@ -360,5 +384,37 @@ class Article extends BaseController
             print_r($e->getMessage().$e->getLine());
         }
         return app('json')->success('测试成功');
+    }
+
+    // 订单结算
+    public function orderSettle()
+    {
+        try {
+            $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1814]]);
+            $date = substr($order['lkl_log_date'], 0, 8);
+            $time = substr($order['lkl_log_date'], 8, 6);
+            $param['tranDate'] = date('Ymd');
+            $param['tranTime'] = date('his');
+            $param['txnAmt'] = $order['pay_price'];
+            $param['lkl_log_no'] = $order['lkl_log_no'];
+            $param['logdat'] = $date;
+            $param['sendMerId'] = '822473052110FF4';
+            $param['sendTermId'] = 'L9242635';
+            $param['revcData'] = [
+                [
+                    'revcMerId' => '822473052110FF4',
+                    'revcTermId' => 'L9242635',
+                    'ledgerPercent' => 100
+                ]
+            ];
+            $api = new \Lakala\LklApi();
+            $result = $api::orderSettle($param);
+            return app('json')->success($result);
+
+
+        } catch (Exception $e) {
+            return app('json')->fail($e->getMessage());
+        }
     }
 }
