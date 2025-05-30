@@ -214,6 +214,8 @@ class StoreOrderOfflineRepository extends BaseRepository
         // 关联商家市区信息
         $city = $merchant['city'];
         $city_id = $merchant['city_id'];
+        $province = $merchant['province'];
+        $province_id = $merchant['province_id'];
         // 判断是否是直辖市
         if($merchant['city']=='市辖区'){
             $city = $merchant['province'];
@@ -247,6 +249,8 @@ class StoreOrderOfflineRepository extends BaseRepository
             'deduction_money' => $params['user_deduction']?: 0,
             'city' => $city,
             'city_id' => $city_id,
+            'province' => $province,
+            'province_id' => $province_id,
             'to_uid'=>$params['to_uid']?:0
         ];
 
