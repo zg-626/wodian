@@ -637,6 +637,7 @@ Route::group('api/', function () {
         Route::group('lakala', function () {
             // 支付回调
             Route::any('/lklSeparateNotify', 'Lakala/lklSeparateNotify');//订单分账回调
+            Route::any('/orderSettleNotify', 'Lakala/orderSettleNotify');//订单结账回调
             Route::any('/lklEcApplyNotify', 'Lakala/lklEcApplyNotify');//电子合同签约结果回调通知
             Route::any('/lklMerchantApplyNotify', 'Lakala/lklMerchantApplyNotify');//商户进件回调通知
             Route::any('/lklApplyBindNotify', 'Lakala/lklApplyBindNotify');//分账关系绑定回调

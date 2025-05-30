@@ -814,6 +814,53 @@ class LklApi
     }
 
     /**
+     * 订单结算
+     */
+    public static function orderSettle($param)
+    {
+        $reqData=[
+            'tranDate' => $param['tranDate'],
+            'tranTime' => $param['tranTime'],
+            'ledgerType' => '01',
+            'instId' => self::$config['org_code'],
+            'ledgerTranSid' => date('YmdHis', time()) . Random::generate(8),
+            'busyType' => '0',// 0：完成到本身，1：完成到多个人
+            'ruleType' => '1',// 0：按照指定金额完成 1：按照比例完成
+            'notifyUrl' => systemConfig('site_url').'/api/lakala/orderSettleNotify',
+            'txnAmt' => bcmul($param['txnAmt'], 100, 0),
+            'revcData'=>$param['revcData']
+        ];
+        $sepParam = [
+            'ver'=>"1.0.0",
+            'timestamp' => date('YmdHis', time()),
+            'reqId'=>date('YmdHis', time()). Random::generate(8),
+            'reqData' => $reqData
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算请求参数: ' . json_encode($reqData, JSON_UNESCAPED_UNICODE), 'orderSettle');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($reqData);
+        try {
+            $response = $api->tradeApi('/api/v2/mrss/ledger/settle', $request);
+            $res = $response->getOriginalText();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算请求结果: ' . $res, 'orderSettle');
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return true;
+            } else {
+                return self::setErrorInfo('订单结算失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算请求异常: ' . $e->getMessage(), 'orderSettle');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+
+    }
+
+    /**
      * @desc 订单分账 第一步 可分账金额查询(订单可分账金额为：实付金额 - 拉卡拉所收手续费)
      * @param lkl_mer_cup_no 拉卡拉银联商户号
      * @param lkl_log_no 对账单流水号
