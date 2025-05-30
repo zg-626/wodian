@@ -1201,4 +1201,32 @@ class StoreOrderOfflineRepository extends BaseRepository
             ->select();
     }
 
+
+
+
+    /**
+     * TODO 平台总的订单列表
+     * @param array $where
+     * @param $page
+     * @param $limit
+     * @return array
+     */
+    public function adminGetList(array $where, $page, $limit)
+    {
+        $status = $where['status'];
+        unset($where['status']);
+        $query = $this->dao->search($where, null)->where($this->getOrderType($status))
+            ->with([
+                'merchant' => function ($query) {
+                    return $query->field('mer_id,mer_name,is_trader');
+                },
+                'user' => function ($query) {
+                    $query->field('uid,nickname,avatar');
+                },
+            ]);
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        return compact('count', 'list');
+    }
+
 }
