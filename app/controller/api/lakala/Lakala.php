@@ -311,4 +311,26 @@ class Lakala extends BaseController
             $api->fail($e->getMessage());
         }
     }
+
+    /**
+     * @desc 拉卡拉 - 订单结算 回调
+     * @author ZhouTing
+     * @date 2025-04-23 16:11
+     */
+    public function orderSettleNotify()
+    {
+        $param = input('');
+        $param = json_encode($param, JSON_UNESCAPED_UNICODE);
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉订单结算回调: ' . json_encode($param, JSON_UNESCAPED_UNICODE), 'orderSettle');
+        $config = new V2Configuration();
+        $api = new V2LakalaNotifyApi($config);
+        try {
+
+            //通知拉卡拉，业务处理成功
+            $api->success();
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 拉卡拉订单结算回调异常: ' . $e->getMessage(), 'orderSettle');
+            $api->fail($e->getMessage());
+        }
+    }
 }
