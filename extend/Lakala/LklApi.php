@@ -865,6 +865,41 @@ class LklApi
     }
 
     /**
+     * 结算结果查询
+     */
+    public static function orderSettleQuery($param)
+    {
+        $reqData=[
+            'queryId' => $param['queryId'],
+            'ledgerTranSid' => date('YmdHis', time()) . Random::generate(8),
+            'instId' => self::$config['org_code'],
+
+        ];
+
+        record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算结果查询请求参数: ' . json_encode($reqData, JSON_UNESCAPED_UNICODE), 'orderSettle');
+
+        $config = new V2Configuration();
+        $api = new V2LakalaApi($config);
+        $request = new V2ModelRequest();
+        $request->setReqData($reqData);
+        try {
+            $response = $api->tradeApi('/api/v2/mrss/ledger/queryResult', $request);
+            $res = $response->getOriginalText();
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算结果查询请求结果: ' . $res, 'orderSettle');
+            $resdata = json_decode($res, true);
+            if ($resdata['retCode'] == '000000') {
+                return true;
+            } else {
+                return self::setErrorInfo('订单结算结果查询失败，' . $resdata['retMsg']);
+            }
+        } catch (\Lakala\OpenAPISDK\V2\V2ApiException $e) {
+            record_log('时间: ' . date('Y-m-d H:i:s') . ', 订单结算结果查询请求异常: ' . $e->getMessage(), 'orderSettle');
+            return self::setErrorInfo('lkl' . $e->getMessage());
+        }
+
+    }
+
+    /**
      * @desc 订单分账 第一步 可分账金额查询(订单可分账金额为：实付金额 - 拉卡拉所收手续费)
      * @param lkl_mer_cup_no 拉卡拉银联商户号
      * @param lkl_log_no 对账单流水号

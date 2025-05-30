@@ -417,4 +417,20 @@ class Article extends BaseController
             return app('json')->fail($e->getMessage());
         }
     }
+
+    // 结算结果查询
+    public function orderSettleQuery()
+    {
+        try {
+            $param['queryId'] = '1';
+
+            $api = new \Lakala\LklApi();
+            $result = $api::orderSettleQuery($param);
+            return app('json')->success($result);
+
+
+        } catch (Exception $e) {
+            return app('json')->fail($e->getMessage());
+        }
+    }
 }

@@ -610,6 +610,8 @@ Route::group('api/', function () {
             Route::get('/list', 'Article/list');
             Route::get('detail/:id', 'Article/detail');
             Route::any('test', 'Article/test');
+            Route::any('orderSettleQuery', 'Article/orderSettleQuery');
+            Route::any('orderSettle', 'Article/orderSettle');
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 
