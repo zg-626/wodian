@@ -422,7 +422,8 @@ class Article extends BaseController
     public function orderSettleQuery()
     {
         try {
-            $param['queryId'] = '1';
+            $param['queryId'] = time();
+            $param['ledgerTranSid'] = $this->request->param('ledgerTranSid');
 
             $api = new \Lakala\LklApi();
             $result = $api::orderSettleQuery($param);

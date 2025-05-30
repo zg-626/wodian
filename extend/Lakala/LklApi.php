@@ -871,7 +871,7 @@ class LklApi
     {
         $reqData=[
             'queryId' => $param['queryId'],
-            'ledgerTranSid' => date('YmdHis', time()) . Random::generate(8),
+            'ledgerTranSid' => $param['ledgerTranSid'],
             'instId' => self::$config['org_code'],
 
         ];
