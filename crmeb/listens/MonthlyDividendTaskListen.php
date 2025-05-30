@@ -3,6 +3,7 @@
 namespace crmeb\listens;
 
 use app\common\repositories\user\BonusOfflineService;
+use app\common\repositories\user\UserRepository;
 use crmeb\interfaces\ListenerInterface;
 use crmeb\services\TimerService;
 use think\facade\Log;
@@ -11,15 +12,15 @@ class MonthlyDividendTaskListen extends TimerService implements ListenerInterfac
 {
     public function handle($event): void
     {
-        // 每月1号00:00执行
+        // 每月1号00:01执行
         $this->tick(1000 * 60 * 60 * 24, function () {
             if (date('d') === '01' && date('H') === '00' && date('i') === '01') {
-                /** @var BonusOfflineService $bonusOfflineService */
-                $bonusOfflineService = app()->make(BonusOfflineService::class);
+                /** @var UserRepository $userRepository */
+                $userRepository = app()->make(UserRepository::class);
                 try {
-                    $bonusOfflineService->distributeBaseAmount();
+                    $userRepository->getMerchantInfo();
                 } catch (\Exception $e) {
-                    Log::info('月初基础金额分红失败：' . $e->getMessage());
+                    Log::info('月初检测商务流水失败：' . $e->getMessage());
                 }
             }
         });
