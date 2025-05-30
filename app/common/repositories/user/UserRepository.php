@@ -496,7 +496,17 @@ class UserRepository extends BaseRepository
     public function changeDeduction($id, $adminId, $type, $integral)
     {
         $user = $this->dao->get($id);
-        Db::transaction(function () use ($id, $adminId, $user, $type, $integral) {
+        // 获取最多的奖池
+        $poolInfo = Db::name('dividend_pool')
+            ->where('city_id', '<>', 0)
+            ->where('available_amount', '>', $integral)
+            ->order('available_amount', 'desc')
+            ->find();
+
+        if(!$poolInfo){
+            throw new ValidateException('未找到可用的奖池');
+        }
+        Db::transaction(function () use ($id, $adminId, $user, $type, $integral,$poolInfo) {
             $integral = (int)$integral;
             $balance = $type == 1 ? bcadd($user->coupon_amount, $integral, 0) : bcsub($user->coupon_amount, $integral, 0);
             $user->save(['coupon_amount' => $balance]);
@@ -511,6 +521,32 @@ class UserRepository extends BaseRepository
                     'mark' => '系统增加了' . $integral . '抵用券',
                     'balance' => $balance
                 ]);
+
+                if($integral>=$poolInfo['available_amount']){
+                    throw new ValidateException('奖池可用余额不足');
+                }
+
+                Db::name('dividend_pool')
+                    ->where('id', $poolInfo['id'])
+                    ->update([
+                        'available_amount' => Db::raw('available_amount - ' . $integral),
+                        'update_time' => date('Y-m-d H:i:s')
+                    ]);
+
+                // 分红池流水表
+                Db::name('dividend_pool_log')->insert([
+                    'order_id' => 0,
+                    'amount' => $integral,
+                    'handling_fee' => 0,
+                    'mer_id' => 0,
+                    'pm' => 0,
+                    'uid' => $id,
+                    'city' => $poolInfo['city'],
+                    'city_id' => $poolInfo['city_id'],
+                    'create_time' => date('Y-m-d H:i:s'),
+                    'remark' => '系统扣减奖池，给用户增加抵用券',
+                ]);
+
             } else {
                 $make->decBill($id, 'coupon_amount', 'sys_dec', [
                     'link_id' => $adminId,
