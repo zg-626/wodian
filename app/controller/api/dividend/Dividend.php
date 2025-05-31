@@ -104,7 +104,7 @@ class Dividend extends BaseController
                     $info = $bonusOfflineService->distributeBaseAmount($pool);
 
                     $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
-                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 月初基础金额分红执行完成: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
+                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
                 }else{
                     $lastExecuteDay = $this->getLastExecuteDay($pool['id']);
 
@@ -114,7 +114,7 @@ class Dividend extends BaseController
 
                         $this->recordExecuteLog(2, $info['bonus_amount']??0,$pool['id']); // 记录6天分红
 
-                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统5天分红分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
+                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
                     }
                 }
 
