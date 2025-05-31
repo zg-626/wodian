@@ -101,7 +101,11 @@ class Dividend extends BaseController
 
                 // 月初分红,其他的走6天分红
                 if ($currentDay === '01') {
-                    $info = $bonusOfflineService->distributeBaseAmount($pool);
+                    // 查询是否执行过
+                    $lastExecuteDay = $this->checkFirstDayExecuted($pool['id']);
+                    if (!$lastExecuteDay) {
+                        $info = $bonusOfflineService->distributeBaseAmount($pool);
+                    }
 
                     $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
                     record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
@@ -170,6 +174,19 @@ class Dividend extends BaseController
             ->value('execute_date');
         
         return $lastRecord ? date('d', strtotime($lastRecord)) : '0';
+    }
+
+    /**
+     * 查询01号是否执行过
+     */
+    public function checkFirstDayExecuted($poolId): bool
+    {
+        return Db::name('dividend_execute_log')
+            ->where('execute_date', date('Y-m-01'))
+            ->where('execute_type', 1)
+            ->where('status', 1)
+            ->where('dp_id', $poolId)
+            ->count() > 0;
     }
 
     /**
