@@ -1129,7 +1129,7 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         $where = [];
         $sysDel = $merId ? 0 : null;                    //商户删除
-        if ($merId) $where['mer_id'] = $merId;          //商户订单
+        if ($merId) $where['StoreOrderOffline.mer_id'] = $merId;          //商户订单
 
         //1: 未支付 2: 已支付 7: 已删除
         $all = $this->dao->search($where, $sysDel)->where($this->getOrderType(0))->count();
