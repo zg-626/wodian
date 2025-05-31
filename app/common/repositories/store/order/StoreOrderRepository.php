@@ -488,6 +488,7 @@ class StoreOrderRepository extends BaseRepository
        // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
         foreach ($groupOrder->orderList as $_k => $orders) {
             $orders->paid = 1;
+            $orders->status = 3;
             $orders->pay_time = $time;
             $this->computed($orders,$user);
             if(!empty($data)){
@@ -2489,16 +2490,70 @@ class StoreOrderRepository extends BaseRepository
             // TODO 处理美团订单数据
             /*if($order->is_meituan===1){
                 $meituanArray = json_decode($order->create_content,true);
-                // 组装orderProduct
-                $order->orderProduct = [
-                    'cart_info'=>[
-                        'product'=>[
-                            'store_name'=>$meituanArray['goodsName'],
-                            'price'=>$meituanArray['tradeAmount'],
+                if($meituanArray){
+                    $order->meituanArray = $meituanArray;
+                    // 组装orderProduct
+                    $order->orderProduct = [
+                        'cart_info'=>[
+                            'product'=>[
+                                'store_name' => $meituanArray['goodsName'],
+                                'price' => $meituanArray['tradeAmount'],
+                                'product_id' => 291,
+                                'cate_id' => 364,
+                                'image' => 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/4a6f1b0afbd67b5e2062447f752bece4.jpg',
+                                'is_show' => 1,
+                                'status' => 1,
+                                'is_del' => 0,
+                                'unit_name' => '把',
+                                'mer_status' => 1,
+                                'temp_id' => 0,
+                                'give_coupon_ids' => [],
+                                'is_gift_bag' => 0,
+                                'is_used' => 1,
+                                'product_type' => 0,
+                                'old_product_id' => 0,
+                                'integral_rate' => -1,
+                                'delivery_way' => '2',
+                                'delivery_free' => 1,
+                                'type' => 0,
+                                'extend' => '',
+                                'pay_limit' => 0,
+                                'once_max_count' => 0,
+                                'once_min_count' => 0,
+                                'mer_svip_status' => 1,
+                                'svip_price_type' => 0,
+                                'refund_switch' => 1,
+                                'mer_form_id' => 0,
+                                'temp' => null
+                            ],
+                            'productAttr'=>[
+                                'image' => $meituanArray['image'] ?? 'https://img.alicdn.com/imgextra/i4/2208121567021/O1CN01PjARvd21jflT4xf7H_!!2208121567021.jpg',
+                                'price' => $meituanArray['tradeAmount'],
+                                'value_id' => 2780,
+                                'extension_one' => '0.00',
+                                'extension_two' => '0.00',
+                                'product_id' => 292,
+                                'stock' => 100,
+                                'unique' => '1022e08a8a50',
+                                'sku' => '美团订单',
+                                'volume' => '0.00',
+                                'weight' => '0.00',
+                                'ot_price' => '0.00',
+                                'cost' => '0.00',
+                                'svip_price' => '0.00',
+                                'show_svip_price' => false,
+                                'bc_extension_one' => 0,
+                                'bc_extension_two' => 0
+                            ],
+                            'product_type' => 0,
+                            'refund_switch' => 1,
+                            'create_time' => '2023-09-14 17:38:06',
+                            'deduction' => 0,
+                            'deduction_price' => 0,
+                            'deduction_total' => 0,
                         ]
-                    ]
-                ];
-
+                    ];
+                }
             }*/
             $order->takeOrderCount = count($order['takeOrderList']);
             unset($order['takeOrderList']);
