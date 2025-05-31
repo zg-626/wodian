@@ -410,18 +410,32 @@ class DataScreenRepository extends BaseRepository
     {
         return $this->cache(function() use($params) {
             $dates = getDatesBetweenTwoDays(getStartModelTime('month'), date('Y-m-d'), 'd');
+
+            // 线上订单数据
             $storeGroupOrderRepository = app()->make(StoreGroupOrderRepository::class);
-            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%d\') as day,sum(pay_price) as total_sum');
+            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%d\') as day,sum(total_price) as total_sum');
+            $field_offline = Db::raw('from_unixtime(unix_timestamp(StoreOrderOffline.create_time),\'%d\') as day,sum(total_price) as total_sum');
             $query = $storeGroupOrderRepository->search(['paid' => 1])->whereMonth('create_time');
-            $month = $query->field($field)->group('day')->select()->toArray();
-            $month = array_combine(array_column($month, 'day'), array_column($month, 'total_sum'));
+            $onlineMonth = $query->field($field)->group('day')->select()->toArray();
+            $onlineMonth = array_combine(array_column($onlineMonth, 'day'), array_column($onlineMonth, 'total_sum'));
+
+            // 线下订单数据
+            $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+            $offlineQuery = $storeOrderOfflineRepository->search(['paid' => 1])->whereMonth('StoreOrderOffline.create_time');
+            $offlineMonth = $offlineQuery->field($field_offline)->group('day')->select()->toArray();
+            $offlineMonth = array_combine(array_column($offlineMonth, 'day'), array_column($offlineMonth, 'total_sum'));
+
+            // 合并数据
             $month_pay_count = [];
             foreach ($dates as $date) {
+                $onlineSum = $onlineMonth[$date] ?? 0;
+                $offlineSum = $offlineMonth[$date] ?? 0;
                 $month_pay_count[] = [
                     'day' => (string)$date,
-                    'total_sum' => $month[$date] ?? 0,
+                    'total_sum' => bcadd($onlineSum, $offlineSum, 2),
                 ];
             }
+
             return $month_pay_count;
         });
     }
@@ -492,6 +506,10 @@ class DataScreenRepository extends BaseRepository
                 }
                 $today_pay_count[] = $arr;
             }
+            /*foreach ($today_pay_count as &$item) {
+                $item['order_count'] += 36;
+                $item['user_count'] += 21;
+            }*/
             return $today_pay_count;
         });
     }
