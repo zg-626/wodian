@@ -306,7 +306,7 @@ class DataScreenRepository extends BaseRepository
             $list = $query->order("value DESC")->limit(20)->select();*/
             // 线下订单
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $query_offline = $storeOrderOfflineRepository->search(['paid' => 1,'date'=>$date]);
+            $query_offline = $storeOrderOfflineRepository->search(['paid' => 1,'date'=>$date])->hasWhere('merchant');
             $query_offline
                 ->setOption('field',[])
                 ->field("$_field_offline,StoreOrderOffline.mer_id,Merchant.mer_name name,Merchant.mer_id")
