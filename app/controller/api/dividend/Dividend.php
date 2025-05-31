@@ -99,24 +99,26 @@ class Dividend extends BaseController
                     continue;
                 }
 
-                // 月初分红
+                // 月初分红,其他的走6天分红
                 if ($currentDay === '01') {
                     $info = $bonusOfflineService->distributeBaseAmount($pool);
 
                     $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
                     record_log('时间: ' . date('Y-m-d H:i:s') . ', 月初基础金额分红执行完成: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
+                }else{
+                    $lastExecuteDay = $this->getLastExecuteDay($pool['id']);
+
+                    // 6天分红
+                    if ($this->shouldExecuteDividend($lastExecuteDay)) {
+                        $info = $bonusOfflineService->calculateBonus($pool);
+
+                        $this->recordExecuteLog(2, $info['bonus_amount']??0,$pool['id']); // 记录6天分红
+
+                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统5天分红分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
+                    }
                 }
 
-                $lastExecuteDay = $this->getLastExecuteDay($pool['id']);
 
-                // 5天分红
-                if ($this->shouldExecuteDividend($lastExecuteDay)) {
-                    $info = $bonusOfflineService->calculateBonus($pool);
-
-                    $this->recordExecuteLog(2, $info['bonus_amount']??0,$pool['id']); // 记录5天分红
-
-                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统5天分红分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
-                }
 
             }
             Db::commit();
@@ -186,6 +188,6 @@ class Dividend extends BaseController
         }
 
         // 检查是否已经过了5天
-        return ($currentDay - $lastDay) >= 5;
+        return ($currentDay - $lastDay) >= 6;
     }
 }

@@ -117,7 +117,7 @@ class BonusOfflineService extends BaseRepository
             //}
 
         } catch (\Exception $e) {
-            Log::error($e);
+            Log::error('周期分红任务执行失败：' . $e);
         }
     }
 
@@ -289,13 +289,6 @@ class BonusOfflineService extends BaseRepository
     public function distributeBaseAmount($pool)
     {
         try {
-            // 获取所有城市分红池
-            /*$poolInfo = Db::name('dividend_pool')
-                ->where('city_id', '<>', 0)
-                ->where('grand_amount', '>=', $this->initialThreshold)
-                ->select()
-                ->toArray();*/
-
             if($pool['grand_amount']<$this->initialThreshold){
                 return true;
             }
@@ -305,9 +298,9 @@ class BonusOfflineService extends BaseRepository
             $merchants = $this->getValidMerchants($pool);
 
             // 金额的60%为发放金额
-            $grand_amount = round($pool['grand_amount'] * 0.6, 2);
+            $grand_amount = round($pool['available_amount'] * 0.6, 2);
             // 金额的40%为剩余金额
-            $available_amount = round($pool['grand_amount'] * 0.4, 2);
+            $available_amount = round($pool['available_amount'] * 0.4, 2);
             // 计算分红金额
             $userBonus = $grand_amount * $this->userRatio;
             $merchantBonus = $grand_amount * $this->merchantRatio;
@@ -336,16 +329,16 @@ class BonusOfflineService extends BaseRepository
                     'available_amount' => $available_amount,
                     'grand_amount' => 0,
                     'initial_threshold' => $pool['total_amount'], // 新增字段，记录当前周期的初始阈值
-                    'distributed_amount' => Db::raw('distributed_amount + ' . $currentBaseAmount),
+                    'distributed_amount' => Db::raw('distributed_amount + ' . $grand_amount),
                     'update_time' => date('Y-m-d H:i:s')
             ]);
 
             return [
-                'base_amount' => $currentBaseAmount,
+                'bonus_amount' => $grand_amount,
             ];
 
         } catch (\Exception $e) {
-            throw $e;
+            Log::error(' 月初基础金额分红失败：' . $e);
         }
     }
 }
