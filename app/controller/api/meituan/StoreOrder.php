@@ -134,7 +134,8 @@ class StoreOrder extends BaseController
                 // 实际支付金额大于0，走第三方支付流程
                 // 拉卡拉支付参数
                 $order_sn = $groupOrder->group_order_sn;
-
+                $order->pay_price = $pay_price;
+                $order->save();
                 $params = [
                     'order_no' => $order_sn,
                     'total_amount' => $pay_price,
