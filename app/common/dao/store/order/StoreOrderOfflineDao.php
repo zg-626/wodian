@@ -41,6 +41,11 @@ class StoreOrderOfflineDao extends BaseDao
                     $query->where('phone', $where['phone']);
                 });
             $query->where(true);
+        })->hasWhere('merchant', function ($query) use ($where) {
+            if (isset($where['is_trader']) && $where['is_trader'] !== '') {
+                $query->where('is_trader', $where['is_trader']);
+            }
+            $query->where('is_del', 0);
         })
             ->when(isset($where['order_sn']) && $where['order_sn'] !== '', function ($query) use ($where) {
                 $query->whereLike('order_sn', "%{$where['order_sn']}%");

@@ -286,22 +286,34 @@ class DataScreenRepository extends BaseRepository
             if (systemConfig('sys_pay_merchant_rank_type')) {
                 $today_pay_merchant_rank['type'] = '个';
                 $_field = 'sum(total_num) as value';
+                $_field_offline = 'sum(total_num) as value';
             } else {
                 $today_pay_merchant_rank['type']= '元';
                 $_field = 'sum(pay_price + pay_postage) as value';
+                $_field_offline = 'sum(StoreOrderOffline.total_price) as value';
             }
 
-            $storeOrderRepository = app()->make(StoreOrderRepository::class);
+            // 线上订单数据
+            /*$storeOrderRepository = app()->make(StoreOrderRepository::class);
             $query = $storeOrderRepository->search(['paid' => 1])
                 ->when($date, function($query) use($date) {
                     getModelTime($query, $date,'StoreOrder.create_time');
                 });
-            $query->whereDay('StoreOrder.create_time')
+            $query
                 ->setOption('field',[])
                 ->field("$_field,StoreOrder.mer_id,Merchant.mer_name name,Merchant.mer_id")
                 ->group('StoreOrder.mer_id');
-            $list = $query->order("value DESC")->limit(20)->select();
-            foreach ($list as &$item) {
+            $list = $query->order("value DESC")->limit(20)->select();*/
+            // 线下订单
+            $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+            $query_offline = $storeOrderOfflineRepository->search(['paid' => 1,'date'=>$date]);
+            $query_offline
+                ->setOption('field',[])
+                ->field("$_field_offline,StoreOrderOffline.mer_id,Merchant.mer_name name,Merchant.mer_id")
+                ->group('StoreOrderOffline.mer_id');
+            $list = $query_offline->order("value DESC")->limit(20)->select();
+
+            foreach ($query_offline as &$item) {
                 $item['value'] = (int)$item['value'];
             }
             $today_pay_merchant_rank['data'] = $list;
@@ -492,10 +504,82 @@ class DataScreenRepository extends BaseRepository
     public function today_pay_info($params = [])
     {
         return $this->cache(function() use($params) {
-            $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
-            $today_pay_info = $storeOrderProductRepository->getProductRate(0, 'today', 'paytime', 10, false);
+            /** @var StoreOrderProductRepository $storeOrderProductRepository */
+            /*$storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
+            $today_pay_info = $storeOrderProductRepository->getProductRate(0, 'today', 'paytime', 10, false);*/
+            // 线下订单
+            $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
+            $where = ['type', 'date', 'mer_id', 'keywords', 'status', 'username', 'order_sn', 'is_trader', 'activity_type', 'group_order_sn', 'store_name', 'spread_name', 'top_spread_name', 'filter_delivery', 'filter_product'];
+            $where['pay_type'] = '';
+            $where['status'] = 2;
+            $where['date'] = 'today';// 日期格式：2025/05/31-2025/05/31
+            // 获取订单数据
+            $today_pay_info = $storeOrderOfflineRepository->adminGetList($where, 1, 10)['list']->toArray();
+            foreach ($today_pay_info as &$item) {
+                $item['paytime'] = $item['pay_time'];
+                $item['number'] = $item['total_price']?? '';
+                $item['product'] = [
+                    'store_name'=>'线下消费'
+                ];
+            }
+            // 获取模拟数据
+            $getMockData = $this->getMockData();
+            $today_pay_info = array_merge($today_pay_info, $getMockData);
+
+            // 按支付时间降序排序
+            usort($today_pay_info, function($a, $b) {
+                return strtotime($b['paytime']) - strtotime($a['paytime']);
+            });
             return $today_pay_info;
         });
+    }
+
+    // 模拟数据
+    public function getMockData()
+    {
+        $now = time();
+        $store_name='线下消费';
+        return [
+            [
+                "product_id" => 240,
+                "paytime" => date('Y-m-d H:i:s', $now + 10),
+                "number" => number_format(mt_rand(1, 1000), 2),
+                "create_time" => date('Y-m-d H:i:s', $now),
+                "order_id" => 327,
+                "mer_id" => 76,
+                "product" => [
+                    "product_id" => 240,
+                    "store_name" => $store_name,
+                    "image" => "http://shops.lnkj1.com/uploads/copy/b5ab2f38976a10618dfb1a68ea99dcec.jpg"
+                ]
+            ],
+            [
+                "product_id" => 39,
+                "paytime" => date('Y-m-d H:i:s', $now + 20),
+                "number" => number_format(mt_rand(1, 1000), 2),
+                "create_time" => date('Y-m-d H:i:s', $now + 10),
+                "order_id" => 174,
+                "mer_id" => 1,
+                "product" => [
+                    "product_id" => 39,
+                    "store_name" => $store_name,
+                    "image" => "https://mer.crmeb.net/uploads/attach/2022/04/24/ccfbc36666c8d79fb274a93cbbba7f1d.jpg"
+                ]
+            ],
+            [
+                "product_id" => 43,
+                "paytime" => date('Y-m-d H:i:s', $now + 30),
+                "number" => number_format(mt_rand(1, 1000), 2),
+                "create_time" => date('Y-m-d H:i:s', $now + 20),
+                "order_id" => 161,
+                "mer_id" => 4,
+                "product" => [
+                    "product_id" => 43,
+                    "store_name" => $store_name,
+                    "image" => "https://mer.crmeb.net/uploads/attach/2022/04/24/e31d2146a75d193bd8da723a070521aa.jpg"
+                ]
+            ]
+        ];
     }
 
     /**
