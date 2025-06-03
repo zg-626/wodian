@@ -480,7 +480,7 @@ class WaimaiRepositories extends BaseRepository
             // 支付金额大于0时，调用退款逻辑
             if ($order['pay_price'] > 0) {
                 // 调用拉卡拉退款
-                $this->refundLogic($third_refund_no, $refundAmount, $store_order->lkl_log_no);
+                $this->refundLogic($tradeNo.'063', $refundAmount, $store_order->lkl_log_no);
             }
             Db::commit();
 
