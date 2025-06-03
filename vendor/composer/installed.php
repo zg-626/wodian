@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => 'd0ceb72119618a34d567fe0d7862eb7db52d4330',
+    'reference' => '72d799fe8bbb5a79419f621a36df63227590ce4a',
     'name' => 'topthink/think',
   ),
   'versions' => 
@@ -882,6 +882,15 @@
       ),
       'reference' => '77f671b68b0285a6af77dc7c5afa36eabcae35aa',
     ),
+    'rmccue/requests' => 
+    array (
+      'pretty_version' => 'v2.0.15',
+      'version' => '2.0.15.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '877cd66169755899682f1595e057334b40d9d149',
+    ),
     'swoole/ide-helper' => 
     array (
       'pretty_version' => '4.8.13',
@@ -1146,7 +1155,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => 'd0ceb72119618a34d567fe0d7862eb7db52d4330',
+      'reference' => '72d799fe8bbb5a79419f621a36df63227590ce4a',
     ),
     'topthink/think-helper' => 
     array (
@@ -1237,6 +1246,15 @@
       array (
       ),
       'reference' => 'c3f736efe169696cef94730976e604a61c345b5c',
+    ),
+    'zmoyi/jstan' => 
+    array (
+      'pretty_version' => '1.0356',
+      'version' => '1.0356.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '2213d17daf813b1e6b51be2a2474909cf33b2647',
     ),
   ),
 );

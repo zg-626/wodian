@@ -29,6 +29,7 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'a9ed0d27b5a698798a89181429f162c5' => __DIR__ . '/..' . '/khanamiryan/qrcode-detector-decoder/lib/Common/customFunctions.php',
         'ec838a45422f15144062a735bf321ce1' => __DIR__ . '/..' . '/ucloud/ufile-php-sdk/src/functions.php',
         '6b998e7ad3182c0d21d23780badfa07b' => __DIR__ . '/..' . '/yansongda/supports/src/Functions.php',
+        '941748b3c8cae4466c827dfb5ca9602a' => __DIR__ . '/..' . '/rmccue/requests/library/Deprecated.php',
         '9e090711773bfc38738f5dbaee5a7f14' => __DIR__ . '/..' . '/overtrue/wechat/src/Payment/helpers.php',
         'f67964341ef83e59f1cc6a3916599312' => __DIR__ . '/..' . '/qcloud/cos-sdk-v5/src/Qcloud/Cos/Common.php',
         '841780ea2e1d6545ea3a253239d59c05' => __DIR__ . '/..' . '/qiniu/php-sdk/src/Qiniu/functions.php',
@@ -62,6 +63,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         array (
             'Yansongda\\Supports\\' => 19,
             'Yansongda\\Pay\\' => 14,
+        ),
+        'W' => 
+        array (
+            'WpOrg\\Requests\\' => 15,
         ),
         'U' => 
         array (
@@ -133,6 +138,7 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         ),
         'J' => 
         array (
+            'JsTan\\' => 6,
             'Joypack\\Tencent\\Map\\' => 20,
         ),
         'I' => 
@@ -239,6 +245,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'Yansongda\\Pay\\' => 
         array (
             0 => __DIR__ . '/..' . '/yansongda/pay/src',
+        ),
+        'WpOrg\\Requests\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/rmccue/requests/src',
         ),
         'UCloud\\' => 
         array (
@@ -428,6 +438,10 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'League\\Flysystem\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/flysystem/src',
+        ),
+        'JsTan\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/zmoyi/jstan/src',
         ),
         'Joypack\\Tencent\\Map\\' => 
         array (
@@ -712,6 +726,7 @@ class ComposerStaticInitb1229d2685c190533aa1234015613f09
         'Nette\\Utils\\Validators' => __DIR__ . '/..' . '/nette/utils/src/Utils/Validators.php',
         'Normalizer' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
+        'Requests' => __DIR__ . '/..' . '/rmccue/requests/library/Requests.php',
         'Stringable' => __DIR__ . '/..' . '/myclabs/php-enum/stubs/Stringable.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
