@@ -613,7 +613,7 @@ class DataScreenRepository extends BaseRepository
             $date = systemConfig('sys_pay_product_rank') ?: 'today';
             $type =systemConfig('sys_pay_product_rank_type') == 0 ? 'number' : 'count';
             $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
-            $pay_product_rank = $storeOrderProductRepository->getProductRate(0, $date, $type, 20);
+            $pay_product_rank = $storeOrderProductRepository->getProductRate(0, 'year', $type, 20);
             return $pay_product_rank;
         });
     }
