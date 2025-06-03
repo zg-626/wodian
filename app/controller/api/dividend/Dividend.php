@@ -54,8 +54,12 @@ class Dividend extends BaseController
         print_r($info);*/
         /** @var BonusOfflineService $bonusOfflineService **/
         $bonusOfflineService = app()->make(BonusOfflineService::class);
+        $pool = Db::name('dividend_pool')
+                ->where('city_id', '=', 2970)
+                ->find();
+
         try {
-            $info=$bonusOfflineService->calculateBonus();
+            $info = $bonusOfflineService->distributeBaseAmount($pool);
             echo "<pre>";
             print_r($info);
         }catch (\Exception $e) {
@@ -167,7 +171,7 @@ class Dividend extends BaseController
     {
         // 查询最近一次5天分红记录
         $lastRecord = Db::name('dividend_execute_log')
-            ->where('execute_type', 2)
+            //->where('execute_type', 2)
             ->where('status', 1)
             ->where('dp_id', $poolId)
             ->order('execute_date desc')

@@ -122,20 +122,6 @@ class BonusOfflineService extends BaseRepository
     }
 
     /**
-     * 检查分红条件
-     */
-    protected function checkBonusCondition($totalAmount, $poolInfo): bool
-    {
-         // 获取上一次分红记录
-        $lastBonusRecord = Db::name('dividend_period_log')->where('dp_id',$poolInfo['id'])->order('id', 'desc')->find();
-        
-        if (!$lastBonusRecord) {
-            return $totalAmount >= $this->initialThreshold;
-        }
-        return $totalAmount / $lastBonusRecord['total_amount'] >= $this->growthRate;
-    }
-
-    /**
      * 获取有效用户
      */
     protected function getValidUsers($value)
@@ -289,7 +275,7 @@ class BonusOfflineService extends BaseRepository
     public function distributeBaseAmount($pool)
     {
         try {
-            if($pool['grand_amount']<$this->initialThreshold){
+            if($pool['available_amount']<=0){
                 return true;
             }
 

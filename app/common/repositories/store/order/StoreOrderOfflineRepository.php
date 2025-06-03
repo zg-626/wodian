@@ -50,6 +50,7 @@ use think\facade\Db;
 use think\facade\Log;
 use think\facade\Queue;
 use think\Model;
+use think\model\Relation;
 
 /**
  * Class LabelRuleRepository
@@ -462,9 +463,6 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $res->lkl_trade_no = $data['data']['trade_no']??'';
                 $res->lkl_log_date = $data['data']['trade_time']??'';
                 $res->pay_time = date('y_m-d H:i:s', time());
-                if ($res->pay_price == 0) {
-                    $res->pay_type = 'coupon';
-                }
                 $res->save();
                 $order = $res;
 
@@ -474,11 +472,33 @@ class StoreOrderOfflineRepository extends BaseRepository
                 $merchantRepository=app()->make(MerchantRepository::class);
                 // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
                 if($order->deduction > 0){
-                    // 如果不使用抵用券，商家原来应该得到的金额
-                    $old_money=$order->total_price*0.8;
-                    // 计算商家应该得到的平台补贴金额
-                    $mer_money=bcsub($old_money,$order->pay_price,2);
-                    $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $mer_money);
+                    $totalPrice = $order->total_price;
+                    $feeRate = $order->commission_rate; // 手续费率
+                    
+                    // 平台手续费
+                    $platformFee = $order->handling_fee;
+                    
+                    // 用户实际支付金额（不能为负数）
+                    $actualPayment = max($totalPrice - $order->deduction, 0);
+                    
+                    // 计算平台补贴
+                    if ($actualPayment > 0) {
+                        // 情况1：正常抵扣（实际支付 > 0）
+                        // 补贴 = 抵扣券金额（手续费已从用户支付中扣除）
+                        $subsidy = $order->deduction;
+                    } else {
+                        // 情况2：零元购（实际支付 = 0）
+                        // 补贴 = 抵扣券金额 - 手续费（确保手续费被覆盖）
+                        $subsidy = max($order->deduction - $platformFee, 0);
+                    }
+                    
+                    // 发放补贴给商家
+                    $merchantRepository->addOlllineMoney(
+                        $order->mer_id, 
+                        'order', 
+                        $order->order_id, 
+                        $subsidy
+                    );
                     // 增加使用记录
                     $userBillRepository = app()->make(UserBillRepository::class);
                     $userBillRepository->decBill($order->uid, 'coupon_amount', 'deduction', [
@@ -1129,7 +1149,7 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         $where = [];
         $sysDel = $merId ? 0 : null;                    //商户删除
-        if ($merId) $where['StoreOrderOffline.mer_id'] = $merId;          //商户订单
+        if ($merId) $where['mer_id'] = $merId;          //商户订单
 
         //1: 未支付 2: 已支付 7: 已删除
         $all = $this->dao->search($where, $sysDel)->where($this->getOrderType(0))->count();
@@ -1212,7 +1232,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
 
     /**
-     * TODO 平台总的订单列表
+     * 订单列表
      * @param array $where
      * @param $page
      * @param $limit
@@ -1222,18 +1242,148 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         $status = $where['status'];
         unset($where['status']);
-        $query = $this->dao->search($where, null)->where($this->getOrderType($status))
+        $query = $this->dao->search($where, null)
+            ->where($this->getOrderType($status))
             ->with([
                 'merchant' => function ($query) {
-                    return $query->field('mer_id,mer_name,is_trader');
+                    $query->field('mer_id,mer_name,is_trader,mer_state,mer_avatar');
                 },
                 'user' => function ($query) {
-                    $query->field('uid,nickname,avatar');
+                    $query->field('uid,nickname,phone,avatar');
                 },
-            ]);
+            ])
+            ->order('order_id desc');
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
         return compact('count', 'list');
+    }
+
+    /**
+     * 金额统计
+     * @param array $where
+     * @param string $status
+     **/
+    public function getStat(array $where, $status)
+    {
+        unset($where['status']);
+        //实际支付订单数量
+        $all = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1)->count();
+        //实际支付订单金额
+        $countQuery = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1);
+        $countPay1 = $countQuery->sum('StoreOrderOffline.pay_price');
+        $countPay = $countPay1;
+        $presellOrderRepository = app()->make(PresellOrderRepository::class);
+        //微信金额
+        $wechatQuery = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1)->where('pay_type', 'weixin');
+//        $wechatOrderId = $wechatQuery->column('order_id');
+        $wechatPay1 = $wechatQuery->sum('StoreOrderOffline.pay_price');
+//        $wechatPay2 = $presellOrderRepository->search(['pay_type' => [1, 2, 3, 6], 'paid' => 1, 'order_ids' => $wechatOrderId])->sum('pay_price');
+//        $wechatPay = bcadd($wechatPay1, $wechatPay2, 2);
+        $wechatPay = $wechatPay1;
+            //支付宝金额
+        $aliQuery = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1)->where('pay_type', 'alipay');
+//        $aliOrderId = $aliQuery->column('order_id');
+        $aliPay1 = $aliQuery->sum('StoreOrderOffline.pay_price');
+//        $aliPay2 = $presellOrderRepository->search(['pay_type' => [4, 5], 'paid' => 1, 'order_ids' => $aliOrderId])->sum('pay_price');
+//        $aliPay = bcadd($aliPay1, $aliPay2, 2);
+        $aliPay = $aliPay1;
+        // 抵扣金
+        $deductiontQuery = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1);
+        $deduction = $deductiontQuery->sum('StoreOrderOffline.deduction');
+
+        $stat = [
+            [
+                'className' => 'el-icon-s-goods',
+                'count' => $all,
+                'field' => '件',
+                'name' => '已支付订单数量'
+            ],
+            [
+                'className' => 'el-icon-s-order',
+                'count' => (float)$countPay,
+                'field' => '元',
+                'name' => '实际支付金额'
+            ],
+            [
+                'className' => 'el-icon-s-cooperation',
+                'count' => (float)$deduction,
+                'field' => '元',
+                'name' => '抵扣金'
+            ],
+            [
+                'className' => 'el-icon-s-cooperation',
+                'count' => (float)$wechatPay,
+                'field' => '元',
+                'name' => '微信支付金额'
+            ],
+            [
+                'className' => 'el-icon-s-cooperation',
+                'count' => (float)$aliPay,
+                'field' => '元',
+                'name' => '支付宝支付金额'
+            ],
+        ];
+        return $stat;
+    }
+
+    /**
+     * 订单详情
+     * @param integer $id
+     * @param integer $merId
+     **/
+    public function getOne($id, ?int $merId)
+    {
+        $where = [$this->getPk() => $id];
+        if ($merId) {
+            $where['mer_id'] = $merId;
+        }
+        $res = $this->dao->getWhere($where, '*', [
+//                'merchant' => function (Relation $query) {
+//                    $query->field('mer_id,mer_name,mer_state,mer_avatar,delivery_way,commission_rate,category_id,type_id')
+//                        ->with(['merchantCategory', 'type_name']);
+//                },
+                'merchant' => function (Relation $query) {
+                    return $query->field('mer_id,mer_name,is_trader,mer_state,mer_avatar');
+                },
+                'user' => function ($query) {
+                    $query->field('uid,real_name,nickname,is_svip,svip_endtime,phone');
+                },
+                'spread' => function ($query) {
+                    $query->field('uid,nickname,avatar');
+                },
+                'TopSpread' => function ($query) {
+                    $query->field('uid,nickname,avatar');
+                },
+            ]
+        );
+        if (!$res) throw new ValidateException('数据不存在');
+        return $res;
+    }
+
+    /**
+     * 线下平台账单列表
+     **/
+    public function getFinancialRecordList($where, $page, $limit)
+    {
+        $field = ',sum(total_price) as total_amount,sum(extension_one) as extension_one_amount,sum(extension_two) as extension_two_amount,sum(deduction) as deduction_amount,sum(handling_fee) as handling_amount';
+        //日
+        if(!$where['type'] || $where['type'] == 1){
+            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m-%d\') as time'.$field);
+        }else{
+            //月
+            if(!empty($where['date'])){
+                list($startTime, $endTime) = explode('-', $where['date']);
+                $firstday = date('Y/m/01', strtotime($startTime));
+                $lastday_ = date('Y/m/01', strtotime($endTime));
+                $lastday = date('Y/m/d', strtotime("$lastday_ +1 month -1 day"));
+                $where['date'] = $firstday.'-'.$lastday;
+            }
+            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m\') as time'.$field);
+        }
+        $query = $this->dao->search_new($where)->field($field)->group("time")->order('create_time DESC');
+        $count = $query->count();
+        $list = $query->page($page,$limit)->select();
+        return compact('count','list');
     }
 
 }
