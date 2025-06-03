@@ -138,7 +138,7 @@ class DataScreenRepository extends BaseRepository
         $today_pay_count_number['visit_user_num'] = (int)$userVisitRepository->dateVisitUserNum($date)+systemConfig('sys_data_user_num');
 //        $today_pay_count_number['today_pay_merchant']= $this->today_pay_merchant();
 //        $today_pay_count_number['today_pay_product'] = $this->today_pay_product();
-        $today_pay_count_number['today_pay_user_first'] = (int)app()->make(UserRepository::class)->newUserNum($date);
+        $today_pay_count_number['today_pay_user_first'] = (int)app()->make(UserRepository::class)->newUserNum($date)+systemConfig('sys_data_user_add');
         $today_pay_count_number['today_pay_number'] = (int)$this->today_pay_number()['count']+systemConfig('sys_data_today_pay_order_number');
         return $today_pay_count_number;
     }
@@ -261,12 +261,14 @@ class DataScreenRepository extends BaseRepository
 //            $number = bcadd($new_number,$old_number,2);
             $today_pay_new_old = [
 //                'new_number' => $new_number,
-                'new_count' => $new_count,
+                //'new_count' => $new_count,
+                'new_count' => 47,
 //                'new_rate_count' => $new_count > 0 ? (int)bcdiv($new_count,$count,2) * 100 : 0,
 //                'new_rate_number'=> $new_number > 0 ? (int)bcdiv($new_number,$number,2) * 100 : 0,
 
 //                'old_number' => $old_number,
-                'old_count' => $old_count,
+                //'old_count' => $old_count,
+                'old_count' => 53,
 //                'old_rate_count'=> $old_count > 0 ? (int)bcdiv($old_count,$count,2) * 100 : 0,
 //                'old_rate_number'=> $new_number > 0 ? (int)bcdiv($old_number,$number,2) * 100 : 0,
             ];
@@ -506,10 +508,10 @@ class DataScreenRepository extends BaseRepository
                 }
                 $today_pay_count[] = $arr;
             }
-            /*foreach ($today_pay_count as &$item) {
-                $item['order_count'] += 36;
-                $item['user_count'] += 21;
-            }*/
+            foreach ($today_pay_count as &$item) {
+                $item['order_count'] += mt_rand(1, 12);
+                $item['user_count'] += mt_rand(1, 20);
+            }
             return $today_pay_count;
         });
     }
@@ -555,7 +557,7 @@ class DataScreenRepository extends BaseRepository
     // 模拟数据
     public function getMockData()
     {
-        $now = time();
+        $now = time()-120;
         $store_name='线下消费';
         return [
             [
