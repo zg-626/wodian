@@ -22,6 +22,14 @@ class BonusOfflineService extends BaseRepository
     protected $merchantRatio = 0.5;
 
     /**
+     * 构造方法
+     */
+    public function __construct()
+    {
+        $this->initialThreshold = systemConfig('sys_red_money');
+    }
+    
+    /**
      * 获取当前的基础金额
      * @param int $poolId 分红池ID
      * @return float

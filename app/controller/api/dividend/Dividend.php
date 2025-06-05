@@ -125,9 +125,7 @@ class Dividend extends BaseController
                         record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
                     }
                 }
-
-
-
+                
             }
             Db::commit();
             return json(['code' => 1, 'msg' => '分红任务执行成功']);
@@ -198,6 +196,7 @@ class Dividend extends BaseController
      */
     private function shouldExecuteDividend(string $lastDay): bool
     {
+        $day=systemConfig('sys_red_day')+1??6;
         if ($lastDay === '0') return true;
 
         $currentDay = (int)date('d');
@@ -208,7 +207,7 @@ class Dividend extends BaseController
             $lastDay = $currentDay; // 重置上次执行日期
         }
 
-        // 检查是否已经过了5天
-        return ($currentDay - $lastDay) >= 6;
+        // 检查是否已经过了6天
+        return ($currentDay - $lastDay) >= $day;
     }
 }
