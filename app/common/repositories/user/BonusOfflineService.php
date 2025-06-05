@@ -173,12 +173,12 @@ class BonusOfflineService extends BaseRepository
                 'uid' => $user['uid'],
                 'link_id' => 0,
                 'pm' => 1,
-                'title' => '分红收益',
+                'title' => '补贴抵用券',
                 'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
                 'balance' => $user['coupon_amount'] + $bonus,
-                'mark' => '金额分红收益' . $bonus,
+                'mark' => '金额补贴抵用券' . $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ]);
         }
@@ -202,12 +202,12 @@ class BonusOfflineService extends BaseRepository
                 'mer_id' => $merchant['mer_id'],
                 'link_id' => 0,
                 'pm' => 1,
-                'title' => '分红收益',
+                'title' => '补贴抵用券',
                 'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
                 'balance' => $merchant['coupon_amount'] + $bonus,
-                'mark' => '金额分红收益' . $bonus,
+                'mark' => '金额补贴抵用券' . $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ]);
         }
