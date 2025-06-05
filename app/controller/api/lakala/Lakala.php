@@ -229,7 +229,7 @@ class Lakala extends BaseController
         //$config = new Configuration();
         //$api = new LakalaNotifyApi($config);
         try {
-            Log::info('拉卡拉发货确认回调更新:0');
+            //Log::info('拉卡拉发货确认回调更新:0');
             if ($obj['trade_state'] == 'SUCCESS') {
                 //Log::info('拉卡拉发货确认回调更新:1');
                 // 替换更新发货后的流水号
@@ -242,8 +242,9 @@ class Lakala extends BaseController
                     $res->origin_log_no = $res->lkl_log_no ?? '';
                     $res->lkl_log_no = $obj['log_no'] ?? '';
                     $res->is_share = 2;
+                    $res->lkl_log_date = $obj['trade_time'];
                     $res->save();
-                    Log::info('拉卡拉发货确认回调更新:3');
+                    //Log::info('拉卡拉发货确认回调更新:3');
                     // 同步更新订单分账表
                     /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
                     $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
