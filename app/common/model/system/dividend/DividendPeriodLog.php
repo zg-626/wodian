@@ -41,7 +41,7 @@ class DividendPeriodLog extends BaseModel
 
     public function getTypeList()
     {
-        return ['1' => '月初分红', '2' => '5天分红'];
+        return ['1' => '月初分红', '2' => '周期分红'];
     }
 
     public function dividendPool()
