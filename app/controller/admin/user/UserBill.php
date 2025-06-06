@@ -40,7 +40,7 @@ class UserBill extends BaseController
     {
         [$page, $limit] = $this->getPage();
         $where = $this->request->params(['keyword', 'date', 'type']);
-        $where['category'] = [$this->repository::CATEGORY_NOW_MONEY,$this->repository::CATEGORY_SVIP_PAY];
+        $where['category'] = [$this->repository::CATEGORY_NOW_MONEY,$this->repository::CATEGORY_SVIP_PAY,$this->repository::CATEGORY_BROKERAGE,$this->repository::CATEGORY_INTEGRAL,$this->repository::COUPON_AMOUNT];
         return app('json')->success($this->repository->getList($where, $page, $limit));
     }
 

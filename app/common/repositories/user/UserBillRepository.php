@@ -101,6 +101,7 @@ class UserBillRepository extends BaseRepository
     const CATEGORY_NOW_MONEY = 'now_money';
     const CATEGORY_INTEGRAL = 'integral';
     const CATEGORY_BROKERAGE= 'brokerage';
+    const COUPON_AMOUNT= 'coupon_amount';
     const CATEGORY_MER_MARGIN = 'mer_margin';
     const CATEGORY_MER_INTEGRAL = 'mer_integral';
     const CATEGORY_MER_LOCK_MONEY = 'mer_lock_money';
