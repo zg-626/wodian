@@ -167,7 +167,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $total_give_integral = bcmul($total_price, $rate, 2);
         }
 
-        // 抵用券额
+        // 抵用券
         if(isset($params['user_deduction']) && $params['user_deduction'] > 0){
             // 计算抵扣后的抵用券
             $user_coupon_amount = $user->coupon_amount;
