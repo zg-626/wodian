@@ -12,6 +12,7 @@
 
 namespace crmeb\services;
 
+use app\common\model\system\dividend\DividendPool;
 use app\common\repositories\store\order\StoreImportDeliveryRepository;
 use app\common\repositories\store\order\StoreOrderProfitsharingRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
@@ -20,6 +21,11 @@ use app\common\repositories\store\order\StoreRefundOrderRepository;
 use app\common\repositories\store\StoreActivityRelatedRepository;
 use app\common\repositories\system\financial\FinancialRepository;
 use app\common\repositories\system\form\FormRepository;
+use app\common\repositories\system\dividend\DividendDistributionLogRepository;
+use app\common\repositories\system\dividend\DividendExecuteLogRepository;
+use app\common\repositories\system\dividend\DividendPeriodLogRepository;
+use app\common\repositories\system\dividend\DividendPoolRepository;
+use app\common\repositories\system\dividend\DividendPoolLogRepository;
 use app\common\repositories\system\merchant\FinancialRecordRepository;
 use app\common\repositories\system\merchant\MerchantIntentionRepository;
 use app\common\repositories\user\UserBillRepository;
@@ -33,6 +39,7 @@ use think\Exception;
 use think\exception\ValidateException;
 use think\facade\Cache;
 use think\facade\Db;
+use think\model\Relation;
 
 class ExcelService
 {
@@ -1029,4 +1036,345 @@ class ExcelService
         $foot = '';
         return compact('count', 'header', 'title', 'export', 'foot', 'filename');
     }
+
+
+    /**
+     * 线下订单导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function offlineOrder(array $where, int $page, int $limit)
+    {
+        $statusType = [0 => '未知', 1 => '待付款', 2 => '已付款', 7 => '已删除'];
+        $paytype = ['weixin' => '微信', 'alipay' => '支付宝'];
+
+        $count = 0;
+        $header = ['商户名称', '订单编号', '订单状态', '推广人', '用户信息', '实付金额(元)', '抵扣金', '下单时间', '支付方式', '支付状态', '是否删除'];
+        $title = ['线下订单列表', '导出时间：' . date('Y-m-d H:i:s', time())];
+        $export = [];
+        $foot = '';
+        $filename = '线下订单列表_' . date('YmdHis');
+
+        /** @var StoreOrderRepository $make */
+        $make = app()->make(StoreOrderRepository::class);
+        $status = $where['status'];
+        unset($where['status']);
+        $query = $make->search($where)
+            ->where($make->getOrderType($status))
+            ->with([
+                'merchant' => function ($query) {
+                    $query->field('mer_id,mer_name,is_trader,mer_state,mer_avatar');
+                },
+                'user' => function ($query) {
+                    $query->field('uid,nickname,phone,avatar');
+                },
+                'spread' => function ($query) {
+                    $query->field('uid,nickname,avatar');
+                },
+                'TopSpread' => function ($query) {
+                    $query->field('uid,nickname,avatar');
+                },
+            ])
+            ->order('order_id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $item) {
+            $status = $this->getOrderStatus($item);
+            $one = [
+                $item['merchant']['mer_name'] ?? '',
+                $item['order_sn'],
+                $statusType[$status],
+                $item['spread']['nickname'] ?? '无',
+                $item['user']['nickname'] ?? $item['uid'],
+                $item['pay_price'],
+                $item['deduction'],
+                $item['create_time'],
+                $paytype[$item['pay_type']] ?? '',
+                $item['paid'] ? '已支付' : '未支付',
+                $item['is_del'] ? '是' : '否',
+            ];
+            $export[] = $one;
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
+    public function getOrderStatus($item)
+    {
+        $status = 0;
+        if ($item['paid'] == 0) {
+            $status = 1;
+        }
+        if ($item['paid'] == 1) {
+            $status = 2;
+        }
+        return $status;
+    }
+
+    /**
+     * 分红池统计导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function dividendPool(array $where, int $page, int $limit)
+    {
+        $count = 0;
+        $header = [
+            '城市名称',
+            '总金额',
+            '当前可分配金额',
+            '累计分红金额',
+            '分红周期记录',
+            '累计未发放的金额',
+            '当前周期的初始阈值',
+            '创建时间'
+        ];
+        $title = ['分红池统计列表', '生成时间:' . date('Y-m-d H:i:s')];
+        $export = [];
+        $foot = '';
+        $filename = '分红池统计列表_' . date('YmdHis');
+
+        /** @var DividendPoolRepository $make */
+        $make = app()->make(DividendPoolRepository::class);
+        $query = $make->search($where)->order('id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $v) {
+            $export[] = [
+                $v['city'],
+                $v['total_amount'],
+                $v['available_amount'],
+                $v['distributed_amount'],
+                $v['distribution_cycle'],
+                $v['grand_amount'],
+                $v['initial_threshold'],
+                $v['create_time'],
+            ];
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
+    /**
+     * 分红池流水导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function dividendPoolLog(array $where, int $page, int $limit)
+    {
+        $count = 0;
+        $header = [
+            '用户昵称',
+            '用户手机号',
+            '类型',
+            '本次进入金额',
+            '备注说明',
+            '订单手续费',
+            '城市名称',
+            '创建时间'
+        ];
+        $title = ['分红池流水列表', '生成时间:' . date('Y-m-d H:i:s')];
+        $export = [];
+        $foot = '';
+        $filename = '分红池流水列表_' . date('YmdHis');
+
+        /** @var DividendPoolLogRepository $make */
+        $make = app()->make(DividendPoolLogRepository::class);
+        $query = $make->search($where)
+            ->with([
+//                'merchant' => function ($query) {
+//                    $query->field('mer_id,mer_name,is_trader,mer_state,mer_avatar');
+//                },
+                'user' => function ($query) {
+                    $query->field('uid,nickname,phone,avatar');
+                },
+            ])
+            ->order('id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $v) {
+            $export[] = [
+                $v['user']['nickname'] ?? '',
+                $v['user']['phone'] ?? '',
+                ['支出', '获得'][$v['pm']] ?? '未知',
+                $v['amount'],
+                $v['remark'],
+                $v['handling_fee'],
+                $v['city'],
+                $v['create_time'],
+            ];
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
+    /**
+     * 分红明细记录导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function dividendDistributionLog(array $where, int $page, int $limit)
+    {
+        $count = 0;
+        $header = [
+            '城市名称',
+            '类型',
+            '抵用券金额',
+            '分红金额',
+            '积分',
+            '创建时间'
+        ];
+        $title = ['分红明细记录列表', '生成时间:' . date('Y-m-d H:i:s')];
+        $export = [];
+        $foot = '';
+        $filename = '分红明细记录列表_' . date('YmdHis');
+
+        if ($where['city']) {
+            $dp_ids = DividendPool::where('city', 'like', '%' . $where['city'] . '%')->column('id');
+            if ($dp_ids) {
+                $where['dp_ids'] = $dp_ids;
+            } else {
+                return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+            }
+        }
+
+        /** @var DividendDistributionLogRepository $make */
+        $make = app()->make(DividendDistributionLogRepository::class);
+        $query = $make->search($where)
+            ->with([
+                'dividendPool' => function ($query) {
+                    $query->field('id,city_id,city');
+                },
+            ])
+            ->order('id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $v) {
+            $export[] = [
+                $v['dividendPool']['city'] ?? '',
+                $v['type_text'],
+                $v['coupon_amount'],
+                $v['bonus_amount'],
+                $v['integral'],
+                $v['create_time'],
+            ];
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
+    /**
+     * 分红执行记录导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function dividendExecuteLog(array $where, int $page, int $limit)
+    {
+        $count = 0;
+        $header = [
+            '城市名称',
+            '执行日期',
+            '执行类型',
+            '执行状态',
+            '分红金额',
+            '创建时间'
+        ];
+        $title = ['分红执行记录列表', '生成时间:' . date('Y-m-d H:i:s')];
+        $export = [];
+        $foot = '';
+        $filename = '分红执行记录列表_' . date('YmdHis');
+
+        if ($where['city']) {
+            $dp_ids = DividendPool::where('city', 'like', '%' . $where['city'] . '%')->column('id');
+            if ($dp_ids) {
+                $where['dp_ids'] = $dp_ids;
+            } else {
+                return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+            }
+        }
+
+        /** @var DividendExecuteLogRepository $make */
+        $make = app()->make(DividendExecuteLogRepository::class);
+        $query = $make->search($where)
+            ->with([
+                'dividendPool' => function ($query) {
+                    $query->field('id,city_id,city');
+                },
+            ])
+            ->order('id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $v) {
+            $export[] = [
+                $v['dividendPool']['city'] ?? '',
+                $v['execute_date'],
+                $v['execute_type_text'],
+                $v['status_text'],
+                $v['bonus_amount'],
+                $v['create_time'],
+            ];
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
+    /**
+     * 分红期数记录导出
+     * @param array $where
+     * @param int $page
+     * @param int $limit
+     */
+    public function dividendPeriodLog(array $where, int $page, int $limit)
+    {
+        $count = 0;
+        $header = [
+            '城市名称',
+            '执行类型',
+            '期数',
+            '实际分红金额',
+            '分红总金额',
+            '当期分红标准金额',
+            '增长率',
+            '创建时间'
+        ];
+        $title = ['分红期数记录列表', '生成时间:' . date('Y-m-d H:i:s')];
+        $export = [];
+        $foot = '';
+        $filename = '分红期数记录列表_' . date('YmdHis');
+
+        if ($where['city']) {
+            $dp_ids = DividendPool::where('city', 'like', '%' . $where['city'] . '%')->column('id');
+            if ($dp_ids) {
+                $where['dp_ids'] = $dp_ids;
+            } else {
+                return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+            }
+        }
+
+        /** @var DividendPeriodLogRepository $make */
+        $make = app()->make(DividendPeriodLogRepository::class);
+        $query = $make->search($where)
+            ->with([
+                'dividendPool' => function ($query) {
+                    $query->field('id,city_id,city');
+                },
+            ])
+            ->order('id desc');
+        $count = $query->count();
+        $list = $query->page($page, $limit)->select();
+        foreach ($list as $v) {
+            $export[] = [
+                $v['dividendPool']['city'] ?? '',
+                $v['execute_type_text'],
+                $v['period'],
+                $v['actual_amout'],
+                $v['total_amount'],
+                $v['should_amount'],
+                $v['growth_rate'],
+                $v['create_time'],
+            ];
+        }
+        return compact('count', 'header', 'title', 'export', 'foot', 'filename');
+    }
+
 }

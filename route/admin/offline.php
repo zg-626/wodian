@@ -17,28 +17,22 @@ use app\common\middleware\LogMiddleware;
 
 Route::group(function () {
     Route::group('offline_order', function () {
-        Route::get('lst', 'Order/getAllList')->name('systemOrderLst')->option([
+        Route::get('lst', '/getAllList')->name('systemOrderLst')->option([
             '_alias' => '列表',
         ]);
-        Route::get('title', 'Order/title')->name('systemOrderStat')->option([
+        Route::get('title', '/title')->name('systemOrderStat')->option([
             '_alias' => '金额统计',
         ]);
-        Route::get('chart', 'Order/chart')->name('systemOrderTitle')->option([
+        Route::get('chart', '/chart')->name('systemOrderTitle')->option([
             '_alias' => '头部统计',
         ]);
-        Route::get('detail/:id', 'Order/detail')->name('systemOrderDetail')->option([
+        Route::get('detail/:id', '/detail')->name('systemOrderDetail')->option([
             '_alias' => '详情',
         ]);
-        Route::get('excel', 'Order/Excel')->name('systemOrderExcel')->option([
+        Route::get('export', '/export')->name('systemOrderExport')->option([
             '_alias' => '导出',
         ]);
-        Route::get('status/:id', 'Order/status')->name('systemOrderStatus')->option([
-            '_alias' => '记录',
-        ]);
-        Route::get('children/:id', 'Order/childrenList')->name('systemOrderChildrenList')->option([
-            '_alias' => '关联订单',
-        ]);
-    })->prefix('admin.offline.')->option([
+    })->prefix('admin.offline.Order')->option([
         '_path' => '/offline_order/list',
         '_auth' => true,
         '_append'=> [

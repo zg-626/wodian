@@ -73,6 +73,13 @@ class StoreOrderOfflineDao extends BaseDao
             });
     }
 
+    public function search_new(array $where)
+    {
+        return StoreOrderOffline::when(isset($where['date']) && $where['date'] !== '', function ($query) use ($where) {
+            getModelTime($query, $where['date'], 'create_time');
+        });
+    }
+
     /**
      * @param $time
      * @param bool $is_remind

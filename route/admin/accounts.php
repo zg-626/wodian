@@ -30,11 +30,11 @@ Route::group(function () {
         ]);
         Route::get('merchant/:id', '/getMerchant')->name('systemMerchantApplymentsGet')->option([
             '_alias' => '分账商户审核查询',
-            '_auth'  => false,
+            '_auth' => false,
         ]);
         Route::get('mark/:id/form', '/markForm')->name('systemMerchantApplymentsMarrk')->option([
             '_alias' => '分账商户申请备注表单',
-            '_form'  => 'systemMerchantApplymentsMarrkSave',
+            '_form' => 'systemMerchantApplymentsMarrkSave',
             '_auth' => false,
         ]);
         Route::post('mark/:id', '/mark')->name('systemMerchantApplymentsMarrkSave')->option([
@@ -71,7 +71,7 @@ Route::group(function () {
     })->prefix('admin.system.config.ConfigOthers')->option([
         '_path' => '/accounts/settings',
         '_auth' => true,
-        '_doc'  => '分账',
+        '_doc' => '分账',
     ]);
 
     //提现
@@ -81,7 +81,7 @@ Route::group(function () {
         ]);
         Route::get('status_form/:id', 'UserExtract/switchStatusForm')->name('systemUserExtractSwitchStatusForm')->option([
             '_alias' => '审核表单',
-            '_form'  => 'systemUserExtractSwitchStatus',
+            '_form' => 'systemUserExtractSwitchStatus',
             '_auth' => false,
         ]);
         Route::post('status/:id', 'UserExtract/switchStatus')->name('systemUserExtractSwitchStatus')->option([
@@ -121,7 +121,7 @@ Route::group(function () {
     })->prefix('admin.user.')->option([
         '_path' => '/accounts/bill',
         '_auth' => true,
-        '_doc'  => '充值管理',
+        '_doc' => '充值管理',
     ]);
 
     //余额变动记录
@@ -131,7 +131,7 @@ Route::group(function () {
         ]);
         Route::get('type', '/type')->option([
             '_alias' => '类型',
-            '_auth'  => false,
+            '_auth' => false,
         ]);
         Route::get('export', '/export')->name('systemUserBillExport')->option([
             '_alias' => '导出',
@@ -215,7 +215,7 @@ Route::group(function () {
         ]);
         Route::get('mark/:id/form', 'Financial/markForm')->name('systemFinancialMarkForm')->option([
             '_alias' => '备注表单',
-            '_form'  => 'systemFinancialMark',
+            '_form' => 'systemFinancialMark',
             '_auth' => false,
         ]);
         Route::post('mark/:id', 'Financial/mark')->name('systemFinancialMark')->option([
@@ -229,6 +229,91 @@ Route::group(function () {
         ]);
     })->prefix('admin.system.financial.')->option([
         '_path' => '/accounts/transferRecord',
+        '_auth' => true,
+    ]);
+
+
+    // 线下平台账单
+    Route::group('financial_record_offline', function () {
+        Route::get('lst', '/getList')->name('systemFinancialRecordOfflineLst')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('title', '/title')->name('systemFinancialRecordOfflineTitle')->option([
+            '_alias' => '统计',
+        ]);
+//        Route::get('detail/:id', '/detail')->name('systemFinancialRecordOfflineDetail')->option([
+//            '_alias' => '详情',
+//        ]);
+//        Route::get('export', '/export')->name('systemFinancialRecordOfflineExport')->option([
+//            '_alias' => '导出',
+//        ]);
+    })->prefix('admin.offline.FinancialRecord')->option([
+        '_path' => '/accounts/financial_record_offline',
+        '_auth' => true,
+    ]);
+
+    // 分红池统计
+    Route::group('dividend_pool', function () {
+        Route::get('list', '/lst')->name('systemDividendPoolList')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('export', '/export')->name('systemDividendPoolExport')->option([
+            '_alias' => '导出',
+        ]);
+    })->prefix('admin.system.dividend.DividendPool')->option([
+        '_path' => '/accounts/DividendPool',
+        '_auth' => true,
+    ]);
+
+    // 分红池流水
+    Route::group('dividend_pool_log', function () {
+        Route::get('list', '/lst')->name('systemDividendPoolLogList')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('export', '/export')->name('systemDividendPoolLogExport')->option([
+            '_alias' => '导出',
+        ]);
+    })->prefix('admin.system.dividend.DividendPoolLog')->option([
+        '_path' => '/accounts/DividendPoolLog',
+        '_auth' => true,
+    ]);
+
+    // 分红执行记录
+    Route::group('dividend_execute_log', function () {
+        Route::get('list', '/lst')->name('systemDividendExecuteLogList')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('export', '/export')->name('systemDividendExecuteLogExport')->option([
+            '_alias' => '导出',
+        ]);
+    })->prefix('admin.system.dividend.DividendExecuteLog')->option([
+        '_path' => '/accounts/DividendExecuteLog',
+        '_auth' => true,
+    ]);
+
+    // 分红期数记录
+    Route::group('dividend_period_log', function () {
+        Route::get('list', '/lst')->name('systemDividendPeriodLogList')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('export', '/export')->name('systemDividendPeriodLogExport')->option([
+            '_alias' => '导出',
+        ]);
+    })->prefix('admin.system.dividend.DividendPeriodLog')->option([
+        '_path' => '/accounts/DividendPeriodLog',
+        '_auth' => true,
+    ]);
+
+    // 分红明细记录
+    Route::group('dividend_distribution_log', function () {
+        Route::get('list', '/lst')->name('systemDividendDistributionLogList')->option([
+            '_alias' => '列表',
+        ]);
+        Route::get('export', '/export')->name('systemDividendDistributionLogExport')->option([
+            '_alias' => '导出',
+        ]);
+    })->prefix('admin.system.dividend.DividendDistributionLog')->option([
+        '_path' => '/accounts/DividendDistributionLog',
         '_auth' => true,
     ]);
 

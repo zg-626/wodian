@@ -396,7 +396,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $res->total_separate_amt=$can_separate_amt;
             $res->actual_separate_amt=$can_separate_amt - $handling_fee;
             $res->save();
-            
+
             // 同步更新订单分账表
             /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
             $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
@@ -414,9 +414,9 @@ class StoreOrderOfflineRepository extends BaseRepository
             // 分账成功 同步状态
             if(isset($result['log_no'])){
                 $models->status = 1;// 分账成功
-                 $models->save();
+                $models->save();
             }
-           
+
         }
 
     }
@@ -457,73 +457,73 @@ class StoreOrderOfflineRepository extends BaseRepository
         $type = explode('-',$res['order_type'])[0].'-';
         if ($type == self::TYPE_SVIP) {
             //return Db::transaction(function () use($data, $res) {
-                $res->paid = 1;
-                $res->transaction_id = $data['data']['acc_trade_no']??'';
-                $res->lkl_log_no = $data['data']['log_no']??'';
-                $res->lkl_trade_no = $data['data']['trade_no']??'';
-                $res->lkl_log_date = $data['data']['trade_time']??'';
-                $res->pay_time = date('y_m-d H:i:s', time());
-                $res->save();
-                $order = $res;
+            $res->paid = 1;
+            $res->transaction_id = $data['data']['acc_trade_no']??'';
+            $res->lkl_log_no = $data['data']['log_no']??'';
+            $res->lkl_trade_no = $data['data']['trade_no']??'';
+            $res->lkl_log_date = $data['data']['trade_time']??'';
+            $res->pay_time = date('y_m-d H:i:s', time());
+            $res->save();
+            $order = $res;
 
-                $user = app()->make(UserRepository::class)->get($res['uid']);
+            $user = app()->make(UserRepository::class)->get($res['uid']);
 
-                /** @var MerchantRepository $merchantRepository */
-                $merchantRepository=app()->make(MerchantRepository::class);
-                // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
-                if($order->deduction > 0){
-                    $totalPrice = $order->total_price;
-                    $feeRate = $order->commission_rate; // 手续费率
-                    
-                    // 平台手续费
-                    $platformFee = $order->handling_fee;
-                    
-                    // 用户实际支付金额（不能为负数）
-                    $actualPayment = max($totalPrice - $order->deduction, 0);
-                    
-                    // 计算平台补贴
-                    if ($actualPayment > 0) {
-                        // 情况1：正常抵扣（实际支付 > 0）
-                        // 补贴 = 抵扣券金额（手续费已从用户支付中扣除）
-                        $subsidy = $order->deduction;
-                    } else {
-                        // 情况2：零元购（实际支付 = 0）
-                        // 补贴 = 抵扣券金额 - 手续费（确保手续费被覆盖）
-                        $subsidy = max($order->deduction - $platformFee, 0);
-                    }
-                    
-                    // 发放补贴给商家
-                    $merchantRepository->addOlllineMoney(
-                        $order->mer_id, 
-                        'order', 
-                        $order->order_id, 
-                        $subsidy
-                    );
-                    // 增加使用记录
-                    $userBillRepository = app()->make(UserBillRepository::class);
-                    $userBillRepository->decBill($order->uid, 'coupon_amount', 'deduction', [
-                        'link_id' => $order['order_id'],
-                        'status' => 1,
-                        'title' => '线下消费使用抵用券',
-                        'number' => $order->deduction,
-                        'mark' => $user->nickname. '线下消费' . (float)$order->total_price. '元,扣减抵用券' .$order->deduction,
-                        'balance' => 0,
-                    ]);
+            /** @var MerchantRepository $merchantRepository */
+            $merchantRepository=app()->make(MerchantRepository::class);
+            // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
+            if($order->deduction > 0){
+                $totalPrice = $order->total_price;
+                $feeRate = $order->commission_rate; // 手续费率
+
+                // 平台手续费
+                $platformFee = $order->handling_fee;
+
+                // 用户实际支付金额（不能为负数）
+                $actualPayment = max($totalPrice - $order->deduction, 0);
+
+                // 计算平台补贴
+                if ($actualPayment > 0) {
+                    // 情况1：正常抵扣（实际支付 > 0）
+                    // 补贴 = 抵扣券金额（手续费已从用户支付中扣除）
+                    $subsidy = $order->deduction;
+                } else {
+                    // 情况2：零元购（实际支付 = 0）
+                    // 补贴 = 抵扣券金额 - 手续费（确保手续费被覆盖）
+                    $subsidy = max($order->deduction - $platformFee, 0);
                 }
 
-                // 赠送积分
-                $this->giveIntegral($order);
+                // 发放补贴给商家
+                $merchantRepository->addOlllineMoney(
+                    $order->mer_id,
+                    'order',
+                    $order->order_id,
+                    $subsidy
+                );
+                // 增加使用记录
+                $userBillRepository = app()->make(UserBillRepository::class);
+                $userBillRepository->decBill($order->uid, 'coupon_amount', 'deduction', [
+                    'link_id' => $order['order_id'],
+                    'status' => 1,
+                    'title' => '线下消费使用抵用券',
+                    'number' => $order->deduction,
+                    'mark' => $user->nickname. '线下消费' . (float)$order->total_price. '元,扣减抵用券' .$order->deduction,
+                    'balance' => 0,
+                ]);
+            }
 
-                // 赠送商户积分
-                $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+            // 赠送积分
+            $this->giveIntegral($order);
 
-                // 所有身份赠送佣金
-                /** @var StoreOrderRepository $storeOrderRepository */
-                $storeOrderRepository = app()->make(StoreOrderRepository::class);
-                $storeOrderRepository->addCommission($order->mer_id,$order);
+            // 赠送商户积分
+            $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
 
-                // 发放推广抵用券
-                $this->computed($order,$user);
+            // 所有身份赠送佣金
+            /** @var StoreOrderRepository $storeOrderRepository */
+            $storeOrderRepository = app()->make(StoreOrderRepository::class);
+            $storeOrderRepository->addCommission($order->mer_id,$order);
+
+            // 发放推广抵用券
+            $this->computed($order,$user);
 
             $handling_fee = floatval($order->handling_fee);
             $total_amount = bcmul((string)$handling_fee, "0.4", 2);
@@ -572,56 +572,56 @@ class StoreOrderOfflineRepository extends BaseRepository
 
             $this->payAfter($res);
 
-                // 更新用户支付时间
-                /** @var UserMerchantRepository $userMerchantRepository */
-                $userMerchantRepository = app()->make(UserMerchantRepository::class);
-                $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id,$order->handling_fee);
-                SwooleTaskService::merchant('notice', [
-                    'type' => 'new_order',
-                    'data' => [
-                        'title' => '新订单',
-                        'message' => '您有一个新的订单',
-                        'id' => $order->order_id
-                    ]
-                ], $order->mer_id);
+            // 更新用户支付时间
+            /** @var UserMerchantRepository $userMerchantRepository */
+            $userMerchantRepository = app()->make(UserMerchantRepository::class);
+            $userMerchantRepository->updatePayTime($order->uid, $order->mer_id, $order->pay_price,true,$order->order_id,$order->handling_fee);
+            SwooleTaskService::merchant('notice', [
+                'type' => 'new_order',
+                'data' => [
+                    'title' => '新订单',
+                    'message' => '您有一个新的订单',
+                    'id' => $order->order_id
+                ]
+            ], $order->mer_id);
 
-                if ($order->spread_uid) {
-                    Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_pay_num', 'inc' => 1]);
-                    Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_money', 'inc' => $order->pay_price]);
-                }
-                app()->make(UserRepository::class)->update($order->uid, [
-                    'pay_count' => Db::raw('pay_count+' . 1),
-                    'pay_price' => Db::raw('pay_price+' . $order->pay_price),
-                    //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
-                ]);
+            if ($order->spread_uid) {
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_pay_num', 'inc' => 1]);
+                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_money', 'inc' => $order->pay_price]);
+            }
+            app()->make(UserRepository::class)->update($order->uid, [
+                'pay_count' => Db::raw('pay_count+' . 1),
+                'pay_price' => Db::raw('pay_price+' . $order->pay_price),
+                //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
+            ]);
 
-                // 创建分账账单
-                /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
-                $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
-                // 支付金額不是0
-                if ($order->pay_price > 0) {
-                    $profitsharing= [
-                        'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
-                        'order_id' => $order->order_id,
-                        'transaction_id' => $order->transaction_id ?? '',
-                        'mer_id' => $order->mer_id,
-                        'profitsharing_price' => $order->pay_price,
-                        'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
-                        'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
-                    ];
+            // 创建分账账单
+            /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
+            $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
+            // 支付金額不是0
+            if ($order->pay_price > 0) {
+                $profitsharing= [
+                    'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
+                    'order_id' => $order->order_id,
+                    'transaction_id' => $order->transaction_id ?? '',
+                    'mer_id' => $order->mer_id,
+                    'profitsharing_price' => $order->pay_price,
+                    'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                    'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
+                ];
 
-                    $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
-                    // 虚拟发货
-                    //$this->virtualDelivery($res);
-                }
+                $profitsharingInfo = $storeOrderProfitsharingRepository->create($profitsharing);
+                // 虚拟发货
+                //$this->virtualDelivery($res);
+            }
 
 
 
-                Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_PAY_SUCCESS', 'id' => $order->order_id]);
-                Queue::push(SendSmsJob::class, ['tempId' => 'ADMIN_PAY_SUCCESS_CODE', 'id' => $order->order_id]);
-                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_money', 'inc' => $order->pay_price]);
-                Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_num', 'inc' => 1]);
-                app()->make(UserBrokerageRepository::class)->incMemberValue($order->uid, 'member_pay_num', $order->order_id);
+            Queue::push(SendSmsJob::class, ['tempId' => 'ORDER_PAY_SUCCESS', 'id' => $order->order_id]);
+            Queue::push(SendSmsJob::class, ['tempId' => 'ADMIN_PAY_SUCCESS_CODE', 'id' => $order->order_id]);
+            Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_money', 'inc' => $order->pay_price]);
+            Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->uid, 'type' => 'pay_num', 'inc' => 1]);
+            app()->make(UserBrokerageRepository::class)->incMemberValue($order->uid, 'member_pay_num', $order->order_id);
 
             //});
         }
@@ -1232,7 +1232,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 
 
     /**
-     * 订单列表
+     * 线下订单列表
      * @param array $where
      * @param $page
      * @param $limit
@@ -1259,7 +1259,7 @@ class StoreOrderOfflineRepository extends BaseRepository
     }
 
     /**
-     * 金额统计
+     * 线下订单金额统计
      * @param array $where
      * @param string $status
      **/
@@ -1280,7 +1280,7 @@ class StoreOrderOfflineRepository extends BaseRepository
 //        $wechatPay2 = $presellOrderRepository->search(['pay_type' => [1, 2, 3, 6], 'paid' => 1, 'order_ids' => $wechatOrderId])->sum('pay_price');
 //        $wechatPay = bcadd($wechatPay1, $wechatPay2, 2);
         $wechatPay = $wechatPay1;
-            //支付宝金额
+        //支付宝金额
         $aliQuery = $this->dao->search($where)->where($this->getOrderType($status))->where('paid', 1)->where('pay_type', 'alipay');
 //        $aliOrderId = $aliQuery->column('order_id');
         $aliPay1 = $aliQuery->sum('StoreOrderOffline.pay_price');
@@ -1327,7 +1327,7 @@ class StoreOrderOfflineRepository extends BaseRepository
     }
 
     /**
-     * 订单详情
+     * 线下订单详情
      * @param integer $id
      * @param integer $merId
      **/
@@ -1367,23 +1367,80 @@ class StoreOrderOfflineRepository extends BaseRepository
     {
         $field = ',sum(total_price) as total_amount,sum(extension_one) as extension_one_amount,sum(extension_two) as extension_two_amount,sum(deduction) as deduction_amount,sum(handling_fee) as handling_amount';
         //日
-        if(!$where['type'] || $where['type'] == 1){
-            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m-%d\') as time'.$field);
-        }else{
+        if (!$where['type'] || $where['type'] == 1) {
+            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m-%d\') as time' . $field);
+        } else {
             //月
-            if(!empty($where['date'])){
+            if (!empty($where['date'])) {
                 list($startTime, $endTime) = explode('-', $where['date']);
                 $firstday = date('Y/m/01', strtotime($startTime));
                 $lastday_ = date('Y/m/01', strtotime($endTime));
                 $lastday = date('Y/m/d', strtotime("$lastday_ +1 month -1 day"));
-                $where['date'] = $firstday.'-'.$lastday;
+                $where['date'] = $firstday . '-' . $lastday;
             }
-            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m\') as time'.$field);
+            $field = Db::raw('from_unixtime(unix_timestamp(create_time),\'%Y-%m\') as time' . $field);
         }
-        $query = $this->dao->search_new($where)->field($field)->group("time")->order('create_time DESC');
+        $query = $this->dao->search_new($where)->where('paid', 1)->field($field)->group("time")->order('create_time desc');
         $count = $query->count();
-        $list = $query->page($page,$limit)->select();
-        return compact('count','list');
+        $list = $query->page($page, $limit)->select()->each(function ($item) use ($where) {
+            $extension_amount = bcadd($item['extension_one_amount'], $item['extension_two_amount'], 2);
+            $sub_amount = bcadd($extension_amount, $item['deduction_amount'], 2);
+            $item['income'] = $item['total_amount'];
+            $item['expend'] = $sub_amount;
+            $item['charge'] = $item['handling_amount'];
+        });
+        return compact('count', 'list');
+    }
+
+    /**
+     * 线下平台账单统计
+     **/
+    public function getFinancialRecordTitle($where){
+        //订单收入总金额
+        $count = $this->dao->search_new($where)->where('paid', 1)->sum('total_price');
+        //佣金支出金额
+        $brokerage_ = $this->dao->search_new($where)->where('paid', 1)->sum('extension_one');
+        $_brokerage = $this->dao->search_new($where)->where('paid', 1)->sum('extension_two');
+        $brokerage = bcsub($brokerage_,$_brokerage,2);
+        // 抵扣金
+        $coupon = $this->dao->search_new($where)->where('paid', 1)->sum('deduction');
+        //平台手续费
+        $charge = $this->dao->search_new($where)->where('paid', 1)->sum('handling_fee');
+        //产生交易的商户数
+        $mer_number = $this->dao->search($where)->group('mer_id')->count('order_id');
+        $stat = [
+            [
+                'className' => 'el-icon-s-goods',
+                'count' => $count,
+                'field' => '元',
+                'name' => '订单收入总金额'
+            ],
+            [
+                'className' => 'el-icon-s-cooperation',
+                'count' => $brokerage,
+                'field' => '元',
+                'name' => '佣金支出金额'
+            ],
+            [
+                'className' => 'el-icon-s-cooperation',
+                'count' => $charge,
+                'field' => '元',
+                'name' => '平台手续费'
+            ],
+            [
+                'className' => 'el-icon-s-goods',
+                'count' => $mer_number,
+                'field' => '个',
+                'name' => '产生交易的商户数'
+            ],
+            [
+                'className' => 'el-icon-s-goods',
+                'count' => $coupon,
+                'field' => '元',
+                'name' => '抵扣金金额'
+            ]
+        ];
+        return compact('stat');
     }
 
 }

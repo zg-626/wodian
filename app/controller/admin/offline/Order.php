@@ -13,39 +13,79 @@
 
 namespace app\controller\admin\offline;
 
+use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use crmeb\basic\BaseController;
-use app\common\repositories\store\ExcelRepository;
-use app\common\repositories\system\merchant\MerchantRepository;
-use app\common\repositories\store\order\StoreOrderRepository as repository1;
-use app\common\repositories\store\order\StoreOrderOfflineRepository as repository;
 use crmeb\services\ExcelService;
 use think\App;
 
+/**
+ * 线下订单
+ **/
 class Order extends BaseController
 {
     protected $repository;
-    protected $isSpread;
 
-    public function __construct(App $app, repository $repository)
+    public function __construct(App $app, StoreOrderOfflineRepository $repository)
     {
         parent::__construct($app);
         $this->repository = $repository;
     }
 
     /**
-     * TODO
+     * 列表
      * @return mixed
-     * @author Qinii
-     * @day 2020-06-25
      */
     public function getAllList()
     {
         [$page, $limit] = $this->getPage();
-        $where = $this->request->params(['type', 'date', 'mer_id', 'keywords', 'status', 'username', 'order_sn', 'is_trader', 'activity_type', 'group_order_sn', 'store_name', 'spread_name', 'top_spread_name', 'filter_delivery', 'filter_product']);
-        $pay_type = $this->request->param('pay_type', '');
-        if ($pay_type != '') $where['pay_type'] = $this->repository::PAY_TYPE_FILTEER[$pay_type];
-        $where['is_spread'] = $this->request->param('is_spread', 0);
+        $where = $this->request->params(['date', 'mer_id', 'pay_type','status', 'keywords', 'order_sn', 'is_trader']);
         $data = $this->repository->adminGetList($where, $page, $limit);
+        return app('json')->success($data);
+    }
+
+    /**
+     * 金额统计
+     * @return mixed
+     */
+    public function title()
+    {
+        $where = $this->request->params(['date', 'mer_id', 'pay_type','status', 'keywords', 'order_sn', 'is_trader']);
+        return app('json')->success($this->repository->getStat($where, $where['status']));
+    }
+
+    /**
+     * 头部统计
+     * @return mixed
+     */
+    public function chart()
+    {
+        return app('json')->success($this->repository->OrderTitleNumber(null, null));
+    }
+
+    /**
+     * 详情
+     * @return mixed
+     **/
+    public function detail($id)
+    {
+        $data = $this->repository->getOne($id, null);
+        if (!$data){
+            return app('json')->fail('数据不存在');
+        }
+        return app('json')->success($data);
+    }
+
+    /**
+     * 导出
+     * @return mixed
+     **/
+    public function export()
+    {
+        [$page, $limit] = $this->getPage();
+        $where = $this->request->params(['date', 'mer_id', 'pay_type','status', 'keywords', 'order_sn', 'is_trader']);
+        /** @var ExcelService $service */
+        $service = app()->make(ExcelService::class);
+        $data = $service->offlineOrder($where, $page, $limit);
         return app('json')->success($data);
     }
 
