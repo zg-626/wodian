@@ -67,11 +67,17 @@ class UserBillRepository extends BaseRepository
        'now_money' => [
            'now_money/brokerage' => '佣金转入余额',
            'now_money/pay_product' => '购买商品',
+           'now_money/offline_order' => '线下门店支付',
+           'integral/lock' => '用户增加积分',
+           'coupon_amount/order_one' => '一级推广抵用券',
+           'coupon_amount/order_two' => '二级推广抵用券',
+           'coupon_amount/exchange' => '获得转移抵用券',
+           'brokerage/order_one' => '推广佣金',
            'now_money/presell' => '支付预售尾款',
            'now_money/recharge' => '余额充值',
-           'now_money/sys_dec_money' => '系统减少余额',
-           'now_money/sys_inc_money' => '系统增加余额',
-           'svip_pay/svip_pay' => '付费会员支付'
+           //'now_money/sys_dec_money' => '系统减少余额',
+           //'now_money/sys_inc_money' => '系统增加余额',
+           //'svip_pay/svip_pay' => '付费会员支付'
        ],
         'mer_margin' => [
             'mer_margin/local_margin' => '线下缴纳保证金',
