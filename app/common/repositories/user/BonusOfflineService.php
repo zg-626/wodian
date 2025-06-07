@@ -161,27 +161,28 @@ class BonusOfflineService extends BaseRepository
     protected function distributeUserBonus($users, $totalBonus): array
     {
         $totalUserPoints = array_sum(array_column($users->toArray(), 'integral'));
-        $bonusAmounts = []; // 记录每个用户的分红金额
+        $bonusAmounts = [];
+        $actualTotal = 0;
+
+        // 先计算每个用户的分红金额
         foreach ($users->toArray() as $user) {
-            $bonus = round($user['integral'] * $totalBonus / $totalUserPoints, 2);// 两位小数
-            $bonusAmounts[$user['uid']] = $bonus; // 保存分红金额
-            
-            Db::name('user')->where('uid', $user['uid'])->inc('coupon_amount', $bonus)->update();
-            
-            // 记录用户分红明细
-            Db::name('user_bill')->insert([
-                'uid' => $user['uid'],
-                'link_id' => 0,
-                'pm' => 1,
-                'title' => '补贴抵用券',
-                'category' => 'coupon_amount',
-                'type' => 'dividend',
-                'number' => $bonus,
-                'balance' => $user['coupon_amount'] + $bonus,
-                'mark' => '金额补贴抵用券' . $bonus,
-                'create_time' => date('Y-m-d H:i:s')
-            ]);
+            $bonus = round($user['integral'] * $totalBonus / $totalUserPoints, 2);
+            $bonusAmounts[$user['uid']] = $bonus;
+            $actualTotal += $bonus;
         }
+
+        // 如果实际分配总额与预期不符，调整最后一个用户的分红金额
+        if ($actualTotal != $totalBonus && !empty($bonusAmounts)) {
+            $lastUid = array_key_last($bonusAmounts);
+            $diff = $totalBonus - $actualTotal;
+            $bonusAmounts[$lastUid] = round($bonusAmounts[$lastUid] + $diff, 2);
+        }
+
+        // 更新用户余额和记录
+        /*foreach ($users->toArray() as $user) {
+            $bonus = $bonusAmounts[$user['uid']];
+
+        }*/
         return $bonusAmounts;
     }
 
@@ -192,25 +193,26 @@ class BonusOfflineService extends BaseRepository
     {
         $totalMerchantPoints = array_sum(array_column($merchants->toArray(), 'integral'));
         $bonusAmounts = []; // 记录每个商家的分红金额
-        foreach ($merchants as $merchant) {
-            $bonus = round(($merchant['integral'] / $totalMerchantPoints) * $totalBonus,2);
-            $bonusAmounts[$merchant['mer_id']] = $bonus; // 保存分红金额
-            Db::name('merchant')->where('mer_id', $merchant['mer_id'])->inc('coupon_amount', $bonus)->update();
-            
-            // 记录商家分红明细
-            Db::name('user_bill')->insert([
-                'mer_id' => $merchant['mer_id'],
-                'link_id' => 0,
-                'pm' => 1,
-                'title' => '补贴抵用券',
-                'category' => 'coupon_amount',
-                'type' => 'dividend',
-                'number' => $bonus,
-                'balance' => $merchant['coupon_amount'] + $bonus,
-                'mark' => '金额补贴抵用券' . $bonus,
-                'create_time' => date('Y-m-d H:i:s')
-            ]);
+        $actualTotal = 0;
+
+        // 先计算每个商家的分红金额
+        foreach ($merchants->toArray() as $merchant) {
+            $bonus = round($merchant['integral'] * $totalBonus / $totalMerchantPoints, 2);
+            $bonusAmounts[$merchant['mer_id']] = $bonus;
+            $actualTotal += $bonus;
         }
+
+        // 如果实际分配总额与预期不符，调整最后一个用户的分红金额
+        if ($actualTotal != $totalBonus && !empty($bonusAmounts)) {
+            $lastUid = array_key_last($bonusAmounts);
+            $diff = $totalBonus - $actualTotal;
+            $bonusAmounts[$lastUid] = round($bonusAmounts[$lastUid] + $diff, 2);
+        }
+
+        /*foreach ($merchants as $merchant) {
+            $bonus = $bonusAmounts[$merchant['mer_id']];
+
+        }*/
         return $bonusAmounts;
     }
 
@@ -260,6 +262,20 @@ class BonusOfflineService extends BaseRepository
                 'bonus_amount' => $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ];
+            Db::name('user')->where('uid', $user['uid'])->inc('coupon_amount', $bonus)->update();
+
+            Db::name('user_bill')->insert([
+                'uid' => $user['uid'],
+                'link_id' => 0,
+                'pm' => 1,
+                'title' => '补贴抵用券',
+                'category' => 'coupon_amount',
+                'type' => 'dividend',
+                'number' => $bonus,
+                'balance' => $user['coupon_amount'] + $bonus,
+                'mark' => '金额补贴抵用券' . $bonus,
+                'create_time' => date('Y-m-d H:i:s')
+            ]);
         }
         
         foreach ($merchants as $merchant) {
@@ -273,6 +289,21 @@ class BonusOfflineService extends BaseRepository
                 'bonus_amount' => $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ];
+            Db::name('merchant')->where('mer_id', $merchant['mer_id'])->inc('coupon_amount', $bonus)->update();
+
+            // 记录商家分红明细
+            Db::name('user_bill')->insert([
+                'mer_id' => $merchant['mer_id'],
+                'link_id' => 0,
+                'pm' => 1,
+                'title' => '补贴抵用券',
+                'category' => 'coupon_amount',
+                'type' => 'dividend',
+                'number' => $bonus,
+                'balance' => $merchant['coupon_amount'] + $bonus,
+                'mark' => '金额补贴抵用券' . $bonus,
+                'create_time' => date('Y-m-d H:i:s')
+            ]);
         }
         Db::name('dividend_distribution_log')->insertAll($logs);
     }
