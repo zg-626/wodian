@@ -539,7 +539,7 @@ class DataScreenRepository extends BaseRepository
                 $item['paytime'] = $item['pay_time'];
                 $item['number'] = $item['total_price']?? '';
                 $item['product'] = [
-                    'store_name'=>'线下消费'
+                    'store_name'=>'消费'
                 ];
             }
             // 获取模拟数据
@@ -558,7 +558,7 @@ class DataScreenRepository extends BaseRepository
     public function getMockData()
     {
         $now = time()-120;
-        $store_name='线下消费';
+        $store_name='消费';
         return [
             [
                 "product_id" => 240,
@@ -614,6 +614,9 @@ class DataScreenRepository extends BaseRepository
             $type =systemConfig('sys_pay_product_rank_type') == 0 ? 'number' : 'count';
             $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
             $pay_product_rank = $storeOrderProductRepository->getProductRate(0, 'year', $type, 20);
+            foreach ($pay_product_rank as $item) {
+                $item['product']['store_name'] = '*****';
+            }
             return $pay_product_rank;
         });
     }
