@@ -16,6 +16,7 @@ namespace app\common\repositories\user;
 use app\common\dao\BaseDao;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\dao\user\UserDao;
+use app\common\model\alipay\AlipayUser;
 use app\common\model\user\User;
 use app\common\model\wechat\WechatUser;
 use app\common\repositories\BaseRepository;
@@ -606,6 +607,47 @@ class UserRepository extends BaseRepository
                 'nickname' => $wechatUser['nickname'] ?? '',
                 'avatar' => $wechatUser['headimgurl'] ?? '',
                 'sex' => $wechatUser['sex'] ?? 0,
+                'spread_uid' => 0,
+                'group_id' => 1,
+                'is_promoter' => 1,// 默认成为推广员
+                'promoter_time' => date('Y-m-d H:i:s'),
+                'last_time' => date('Y-m-d H:i:s'),
+                'last_ip' => $request->ip()
+            ]);
+        }
+        return $user;
+    }
+
+    /**
+     * @param AlipayUser $alipayUser
+     * @return BaseDao|array|Model|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @author xaboy
+     * @day 2020-04-28
+     */
+    public function syncAlipayUser(AlipayUser $alipayUser, $userType = 'alipay')
+    {
+        $user = $this->dao->alipayUserIdBytUser($alipayUser->alipay_user_id);
+        $request = request();
+
+        if ($user) {
+            $user->save(array_filter([
+                'nickname' => $alipayUser['nickname'] ?? '',
+                'avatar' => $alipayUser['headimgurl'] ?? '',
+                'sex' => $alipayUser['sex'] ?? 0,
+                'last_time' => date('Y-m-d H:i:s'),
+                'last_ip' => $request->ip(),
+            ]));
+        } else {
+            $user = $this->create($userType, [
+                'account' => 'wx' . $alipayUser->alipay_user_id . time(),
+                'alipay_user_id' => $alipayUser->alipay_user_id,
+                'pwd' => $this->encodePassword($this->dao->defaultPwd()),
+                'nickname' => $alipayUser['nickname'] ?? '',
+                'avatar' => $alipayUser['headimgurl'] ?? '',
+                'sex' => $alipayUser['sex'] ?? 0,
                 'spread_uid' => 0,
                 'group_id' => 1,
                 'is_promoter' => 1,// 默认成为推广员
