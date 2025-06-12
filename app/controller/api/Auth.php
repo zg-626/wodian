@@ -17,6 +17,7 @@ namespace app\controller\api;
 use app\common\dao\store\order\StoreOrderDao;
 use app\common\dao\store\order\StoreOrderOfflineDao;
 use app\common\model\user\UserExtract;
+use app\common\repositories\alipay\AlipayUserRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\order\StoreRefundOrderRepository;
@@ -699,6 +700,7 @@ class Auth extends BaseController
             return $user;
         }else if ($auth['type'] === 'alipay'){
             $code = $data['code'] ?? '';
+            $user_id=$auth['user_id'];
             // 使用授权码获取访问令牌
             Factory::setOptions($this->getOptions());
             $result = Factory::base()->oauth()->getToken($code);
@@ -706,7 +708,6 @@ class Auth extends BaseController
             if (!isset($result->accessToken)) {
                 throw new ValidateException('获取access_token失败');
             }
-
 
             //var_dump($result);exit();
             try {
@@ -726,39 +727,32 @@ class Auth extends BaseController
                 );
                 // 获取用户信息
                 if ($result->code === '10000') {
-                    $userInfo = $result->nick_name; // 用户昵称、头像等
-                    // 同步用户信息到数据库
-                    /** @var UserRepository $userRepository */
-                    $userRepository = app()->make(UserRepository::class);
+                    /** @var AlipayUserRepository $make */
+                    $make = app()->make(AlipayUserRepository::class);
 
-                    // 查找是否已存在该支付宝用户
-                    $user = $userRepository->getWhere(['alipay_user_id' => $result->userId]);
+                    $alipayInfo = [
+                        'openid' => $result->open_id,
+                        'user_id'=> $result->user_id,
+                        'nickname' => $result->nick_name,
+                        'avatar' => $result->avatar,
+                    ];
 
-                    if (!$user) {
-                        // 创建新用户
-                        $userData = [
-                            'nickname' => $result->userId . '_alipay', // 支付宝基础授权只能获取userId，无法获取昵称等信息
-                            'avatar' => '',
-                            'alipay_user_id' => $result->userId,
-                            'user_type' => 'alipay',
-                            'sex' => 0,
-                        ];
+                    $alipayUserInfo = $make->syncUser($alipayInfo['openid'], $alipayInfo, false, $createUser);
 
-                        $user = $userRepository->registr($result->userId . '@alipay.com', null, 'alipay', $userData);
+                    if ($alipayUserInfo)
+                    {
+                        // 同步用户信息到数据库
+                        /** @var UserRepository $userRepository */
+                        $userRepository = app()->make(UserRepository::class);
+                        $userInfo = $userRepository->getWhere(['uid' => $user_id]);
+                        if ($userInfo && !$userInfo['alipay_user_id']) {
+                            $userInfo->alipay_user_id = $alipayUserInfo['alipay_user_id'];
+                            $userInfo->save();
+                        }
                     }
 
-                    // 处理主用户信息
-                    $user = $userRepository->mainUser($user);
+                    return $alipayUserInfo;
 
-                    // 绑定推广关系
-                    $pid = $this->request->param('spread', 0);
-                    $userRepository->bindSpread($user, intval($pid));
-
-                    // 创建token
-                    $tokenInfo = $userRepository->createToken($user);
-                    $userRepository->loginAfter($user);
-
-                    return app('json')->success($userRepository->returnToken($user, $tokenInfo));
                 }
 
                 //return app('json')->fail($result->subMsg);
@@ -781,6 +775,21 @@ class Auth extends BaseController
         if (!$code) return app('json')->fail('请获取code参数');
         $spread = $this->request->param('spread', 0);
         $data = app()->make(WechatUserRepository::class)->mpLoginType($code, $spread);
+        return app('json')->success($data);
+    }
+
+    /**
+     * 查询支付宝小程序是否需要绑定手机号 以及绑定手机号的方式
+     * @return \think\response\Json
+     * @author Qinii
+     * @day 2023/11/10'
+     */
+    public function alipayLoginType()
+    {
+        $code = $this->request->param('code');
+        if (!$code) return app('json')->fail('请获取code参数');
+        $spread = $this->request->param('spread', 0);
+        $data = app()->make(AlipayUserRepository::class)->mpLoginType($code, $spread);
         return app('json')->success($data);
     }
 
