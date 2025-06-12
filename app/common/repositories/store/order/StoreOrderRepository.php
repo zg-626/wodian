@@ -523,7 +523,7 @@ class StoreOrderRepository extends BaseRepository
             'serviceFeeAmount' => $order->service_fee_amount,
             'tradeAmount' => $groupOrder->pay_price,
         ];
-        //$waimai->payCallback($params);
+        $waimai->payCallback($params);
 
     }
 

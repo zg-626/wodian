@@ -2,6 +2,7 @@
 
 namespace app\controller\api\meituan;
 
+use app\common\repositories\alipay\AlipayUserRepository;
 use app\common\repositories\delivery\DeliveryOrderRepository;
 use app\common\repositories\store\order\StoreCartRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
@@ -81,18 +82,25 @@ class StoreOrder extends BaseController
         if (!$order) {
             return app('json')->fail('美团订单不存在');
         }
-        $wechatUserRepository = app()->make(WechatUserRepository::class);
-        $openId = $wechatUserRepository->idByRoutineId($userInfo['wechat_user_id']);
-        if (!$openId)
-            throw new ValidateException('请关联微信小程序!');
 
         if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
+        // 区分微信和支付宝
         $account_type = 'WECHAT';
         $trans_type = 71;
         if($payType=='alipay'){
             $trans_type = 51;
             $account_type = 'ALIPAY';
+            /** @var AlipayUserRepository $alipayUserRepository */
+            $alipayUserRepository = app()->make(AlipayUserRepository::class);
+            $openId = $alipayUserRepository->idByUserId($user['alipay_user_id']);
+            if (!$openId)
+                throw new ValidateException('请授权支付宝小程序!');
+        }else{
+            $wechatUserRepository = app()->make(WechatUserRepository::class);
+            $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
+            if (!$openId)
+                throw new ValidateException('请关联微信小程序!');
         }
         try {
             $trade_amount = $order->trade_amount;

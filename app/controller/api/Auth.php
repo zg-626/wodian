@@ -752,7 +752,7 @@ class Auth extends BaseController
 
                 $alipayInfo = [
                     'openid' => $userId,
-                    'user_id'=> $userId,
+                    'a_user_id'=> $userId,
                     'nickname' => $userId,
                     'avatar' => '',
                 ];

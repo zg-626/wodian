@@ -49,7 +49,6 @@ class StoreOrderOffline extends BaseController
         if(!$mer_id)
             return app('json')->fail('缺少商户id');
         $params['is_app'] = $this->request->isApp();
-        //$params['pay_type']='weixin';
         return $storeOrderOfflineRepository->add($money,$mer_id,$this->request->userInfo(),$params);
     }
 
