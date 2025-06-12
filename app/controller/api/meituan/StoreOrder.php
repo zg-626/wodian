@@ -88,6 +88,12 @@ class StoreOrder extends BaseController
 
         if (!in_array($payType, ['weixin', 'routine', 'h5', 'alipay', 'alipayQr', 'weixinQr', 'native'], true))
             return app('json')->fail('请选择正确的支付方式');
+        $account_type = 'WECHAT';
+        $trans_type = 71;
+        if($payType=='alipay'){
+            $trans_type = 51;
+            $account_type = 'ALIPAY';
+        }
         try {
             $trade_amount = $order->trade_amount;
             $pay_price = $trade_amount;
@@ -136,6 +142,7 @@ class StoreOrder extends BaseController
                 $order_sn = $groupOrder->group_order_sn;
                 $order->pay_price = $pay_price;
                 $order->save();
+
                 $params = [
                     'order_no' => $order_sn,
                     'total_amount' => $pay_price,
@@ -143,7 +150,8 @@ class StoreOrder extends BaseController
                     'merchant_no' => '822584053112XE1',
                     'term_nos' => 'L8394421',
                     'openid' => $openId,
-                    'trans_type' => 71,
+                    'trans_type' => $trans_type,
+                    'account_type' => $account_type,
                     'goods_id' => '2',
                     'settle_type' => '0',
                 ];

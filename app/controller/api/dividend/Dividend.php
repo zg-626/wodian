@@ -55,11 +55,11 @@ class Dividend extends BaseController
         /** @var BonusOfflineService $bonusOfflineService **/
         $bonusOfflineService = app()->make(BonusOfflineService::class);
         $pool = Db::name('dividend_pool')
-                ->where('city_id', '=', 2970)
+                ->where('city_id', '=', 20188)
                 ->find();
 
         try {
-            $info = $bonusOfflineService->distributeBaseAmount($pool);
+            $info = $bonusOfflineService->calculateBonus($pool);
             echo "<pre>";
             print_r($info);
         }catch (\Exception $e) {

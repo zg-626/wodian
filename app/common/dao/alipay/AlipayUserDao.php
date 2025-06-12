@@ -123,6 +123,17 @@ class AlipayUserDao extends BaseDao
      * @author xaboy
      * @day 2020/5/30
      */
+    public function idByUserId(int $id)
+    {
+        return AlipayUser::getDB()->where('alipay_user_id', $id)->value('a_user_id');
+    }
+
+    /**
+     * @param $id
+     * @return mixed
+     * @author xaboy
+     * @day 2020/5/30
+     */
     public function idByRoutineId(int $id)
     {
         return AlipayUser::getDB()->where('alipay_user_id', $id)->value('routine_openid');

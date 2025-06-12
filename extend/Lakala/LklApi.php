@@ -712,7 +712,7 @@ class LklApi
             'merchant_no' => $param['merchant_no'], //TODO： $param['lkl_mer_cup_no']
             'term_no' => $param['term_nos'], //TODO： $param['lkl_mer_term_no']
             'out_trade_no' => $param['order_no'],
-            'account_type' => 'WECHAT', //钱包类型 微信：WECHAT 支付宝：ALIPAY 银联：UQRCODEPAY 翼支付: BESTPAY 苏宁易付宝: SUNING 拉卡拉支付账户：LKLACC 网联小钱包：NUCSPAY 京东钱包：JD
+            'account_type' => $param['account_type']??'WECHAT', //钱包类型 微信：WECHAT 支付宝：ALIPAY 银联：UQRCODEPAY 翼支付: BESTPAY 苏宁易付宝: SUNING 拉卡拉支付账户：LKLACC 网联小钱包：NUCSPAY 京东钱包：JD
             'trans_type' => $param['trans_type']??71, //接入方式 41:NATIVE（（ALIPAY，云闪付支持，京东白条分期），51:JSAPI（微信公众号支付，支付宝服务窗支付，银联JS支付，翼支付JS支付、拉卡拉钱包支付），71:微信小程序支付，61:APP支付（微信APP支付）
             'total_amount' => bcmul($param['total_amount'], 100, 0), //金额 单位：分
             'location_info' => [
@@ -722,7 +722,29 @@ class LklApi
             'notify_url' => systemConfig('site_url') .'/api/lakala/lklPayNotify',
             'settle_type' => $param['settle_type']??1, //结算类型，0或者空常规结算方式，如需接拉卡拉分账需传1
             'remark' => $param['remark'], //商户定义，原样回传
-            'acc_busi_fields' => [
+            'complete_notify_url' => systemConfig('site_url') .'/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
+        ];
+
+        // 根据支付类型设置不同的业务字段
+        if ($sepParam['account_type'] == 'ALIPAY') {
+            // 支付宝主扫支付业务字段
+            $sepParam['acc_busi_fields'] = [
+                'timeout_express' => '15',
+                'user_id' => $param['openid'], // 支付宝用户ID
+                'goods_detail' => [
+                    [
+                        'goods_id' => $param['goods_id'],
+                        'goods_name' => '商品名称',
+                        'quantity' => 1,
+                        'price' => floatval(bcmul($param['total_amount'], 100, 2))
+                    ]
+                ],
+                'auth_code' => $param['auth_code'] ?? '', // 支付宝付款码
+                'store_id' => self::$config['app_id'], // 门店编号
+            ];
+        } else {
+            // 微信支付业务字段
+            $sepParam['acc_busi_fields'] = [
                 'timeout_express' => '15', //拉卡拉方预下单的订单有效时间(分钟)=>微信后台并不会依据此失效时间发起关单
                 'sub_appid' => self::$config['app_id'],
                 'user_id' => $param['openid'],
@@ -735,9 +757,9 @@ class LklApi
                         ]
                     ]
                 ]
-            ],
-            'complete_notify_url' => systemConfig('site_url') .'/api/lakala/lklSendcompleteNotify' //发货确认通知地址 必须用户确认收货后方可进行订单分账
-        ];
+            ];
+        }
+
 
         record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求参数: ' . json_encode($sepParam, JSON_UNESCAPED_UNICODE), 'lkl');
 
@@ -753,15 +775,20 @@ class LklApi
                 $resdata = json_decode($res, true);
                 if (!empty($resdata['code']) && $resdata['code'] == 'BBS00000') {
                     $acc = $resdata['resp_data']['acc_resp_fields'];
+                    if ($sepParam['account_type'] == 'ALIPAY'){
+                        return $acc;
+                    }
+
                     $acc['nonceStr'] = $acc['nonce_str'];
                     $acc['paySign'] = $acc['pay_sign'];
                     $acc['signType'] = $acc['sign_type'];
                     $acc['appId'] = $acc['app_id'];
                     $acc['timeStamp'] = $acc['time_stamp'];
                     return $acc;
-                } else {
-                    return self::setErrorInfo('lkl' . $resdata['msg']);
+
                 }
+
+                return self::setErrorInfo('lkl' . $resdata['msg']);
             }
         } catch (\Lakala\OpenAPISDK\V3\ApiException $e) {
             record_log('时间: ' . date('Y-m-d H:i:s') . ', 聚合主扫(微信端)请求异常: ' . $e->getMessage(), 'lkl');

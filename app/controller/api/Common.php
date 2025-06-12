@@ -310,7 +310,7 @@ class Common extends BaseController
 
     public function alipayNotify($type)
     {
-        if (!in_array($type, ['order', 'user_recharge', 'presell', 'user_order'], true))
+        if (!in_array($type, ['order', 'user_recharge', 'presell', 'user_order','offline_order'], true))
             throw new ValidateException('参数错误');
         $post = $_POST;
         $get = $_GET;

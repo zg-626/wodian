@@ -604,17 +604,23 @@ class Auth extends BaseController
     public function alipayAuth()
     {
         $auth = $this->request->param('auth');
-        $users = $this->authInfo($auth, systemConfig('is_phone_login') !== '1');
-        if (!$users)
-            return app('json')->fail('授权失败');
+
+        try {
+            $users = $this->authInfo($auth, systemConfig('is_phone_login') !== '1');
+            return app('json')->success('授权成功');
+        } catch (Exception $e) {
+            throw new ValidateException('授权失败' . $e->getMessage());
+        }
 
 
     }
 
     private function authInfo($auth, $createUser = false)
     {
-        if (!in_array($auth['type'] ?? '', ['wechat', 'alipay','routine', 'apple', 'app_wechat']) || !isset($auth['auth']))
-            throw new ValidateException('授权信息类型有误');
+        $authType = strtolower(trim($auth['type'] ?? ''));
+        if (!in_array($authType, ['wechat', 'routine', 'apple', 'app_wechat', 'alipay']) || !isset($auth['auth'])) {
+            throw new ValidateException('授权信息类型有误，当前类型: ' . $authType);
+        }
         $data = $auth['auth'];
         if ($auth['type'] === 'routine') {
             $code = $data['code'] ?? '';
@@ -700,66 +706,77 @@ class Auth extends BaseController
             return $user;
         }else if ($auth['type'] === 'alipay'){
             $code = $data['code'] ?? '';
-            $user_id=$auth['user_id'];
-            // 使用授权码获取访问令牌
-            Factory::setOptions($this->getOptions());
-            $result = Factory::base()->oauth()->getToken($code);
+            $user_id = $data['user_id'];
 
-            if (!isset($result->accessToken)) {
-                throw new ValidateException('获取access_token失败');
-            }
-
-            //var_dump($result);exit();
             try {
-                $accessToken= $result->accessToken;
+                // 使用授权码获取访问令牌
+                Factory::setOptions($this->getOptions());
+                $token_result = Factory::base()->oauth()->getToken($code);
 
-                $textParams = [
-                    'auth_token' => $accessToken // 注意：此处的 auth_token 是系统参数，不是业务参数
-                ];
-                // 业务参数
-                $bizParams = [];
 
-                // 获取用户信息
-                $result = Factory::util()->generic()->execute(
-                    'alipay.user.info.share',
-                    $textParams,  // 系统参数
-                    $bizParams    // 业务参数（必须传，即使为空）
-                );
-                // 获取用户信息
-                if ($result->code === '10000') {
-                    /** @var AlipayUserRepository $make */
-                    $make = app()->make(AlipayUserRepository::class);
-
-                    $alipayInfo = [
-                        'openid' => $result->open_id,
-                        'user_id'=> $result->user_id,
-                        'nickname' => $result->nick_name,
-                        'avatar' => $result->avatar,
-                    ];
-
-                    $alipayUserInfo = $make->syncUser($alipayInfo['openid'], $alipayInfo, false, $createUser);
-
-                    if ($alipayUserInfo)
-                    {
-                        // 同步用户信息到数据库
-                        /** @var UserRepository $userRepository */
-                        $userRepository = app()->make(UserRepository::class);
-                        $userInfo = $userRepository->getWhere(['uid' => $user_id]);
-                        if ($userInfo && !$userInfo['alipay_user_id']) {
-                            $userInfo->alipay_user_id = $alipayUserInfo['alipay_user_id'];
-                            $userInfo->save();
-                        }
-                    }
-
-                    return $alipayUserInfo;
-
+                if (!isset($token_result->accessToken) || !isset($token_result->userId)) {
+                    Log::error('支付宝授权失败: 获取token失败', ['result' => $token_result]);
+                    throw new ValidateException('获取access_token失败');
                 }
 
-                //return app('json')->fail($result->subMsg);
+                /*echo "<pre>";
+                print_r($token_result);
+                echo "</pre>";
+                exit;*/
+
+                $accessToken = $token_result->accessToken;
+                $userId = $token_result->userId;
+
+                $textParams = [
+                    'auth_token' => $accessToken,
+                ];
+
+                // 获取用户信息
+                /*$result = Factory::util()->generic()->execute(
+                    'alipay.user.info.share',
+                    [], // 业务参数必须传空数组
+                    ['auth_token' => $accessToken] // 额外参数要放在第三个参数里
+                );
+
+                if ($result->code !== '10000') {
+                    Log::error('支付宝获取用户信息失败', [
+                        'code' => $result->code,
+                        'msg' => $result->msg,
+                        'subMsg' => $result->subMsg ?? ''
+                    ]);
+                    throw new ValidateException('获取用户信息失败: ' . ($result->subMsg ?? $result->msg));
+                }*/
+
+                /** @var AlipayUserRepository $make */
+                $make = app()->make(AlipayUserRepository::class);
+
+                $alipayInfo = [
+                    'openid' => $userId,
+                    'user_id'=> $userId,
+                    'nickname' => $userId,
+                    'avatar' => '',
+                ];
+
+                $alipayUserInfo = $make->syncUser($alipayInfo['openid'], $alipayInfo, false, $createUser);
+
+                if ($alipayUserInfo)
+                {
+                    // 同步用户信息到数据库
+                    /** @var UserRepository $userRepository */
+                    $userRepository = app()->make(UserRepository::class);
+                    $userInfo = $userRepository->getWhere(['uid' => $user_id]);
+                    if ($userInfo && !$userInfo['alipay_user_id']) {
+                        $userInfo->alipay_user_id = $alipayUserInfo['alipay_user_id'];
+                        $userInfo->save();
+                    }
+                }
+                return $alipayUserInfo;
 
             } catch (\Exception $e) {
-                return app('json')->fail('授权失败：' . $e->getMessage());
+                Log::error('支付宝授权异常'.$e->getMessage());
+                throw new ValidateException('支付宝授权失败: ' . $e->getMessage());
             }
+
         }
     }
 

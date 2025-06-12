@@ -20,6 +20,7 @@ use app\common\dao\user\LabelRuleDao;
 use app\common\dao\wechat\PayQrcodeDao;
 use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\User;
+use app\common\repositories\alipay\AlipayUserRepository;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\coupon\StoreCouponUserRepository;
 use app\common\repositories\store\order\StoreOrderRepository;
@@ -97,10 +98,30 @@ class StoreOrderOfflineRepository extends BaseRepository
      */
     public function add($money,$mer_id, $user, $params)
     {
-        $wechatUserRepository = app()->make(WechatUserRepository::class);
-        $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
-        if (!$openId)
-            throw new ValidateException('请关联微信小程序!');
+        $type = $params['pay_type'];
+        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
+
+        if (in_array($type, ['weixin', 'alipay','routine'], true) && $params['is_app']) {
+            $type .= 'App';
+        }
+        // 区分微信和支付宝
+        $account_type = 'WECHAT';
+        $trans_type = 71;
+        if($type=='alipay'){
+            $trans_type = 51;
+            $account_type = 'ALIPAY';
+            /** @var AlipayUserRepository $alipayUserRepository */
+            $alipayUserRepository = app()->make(AlipayUserRepository::class);
+            $openId = $alipayUserRepository->idByUserId($user['alipay_user_id']);
+            if (!$openId)
+                throw new ValidateException('请授权支付宝小程序!');
+        }else{
+            $wechatUserRepository = app()->make(WechatUserRepository::class);
+            $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
+            if (!$openId)
+                throw new ValidateException('请关联微信小程序!');
+        }
+
         $total_price=$money;
 
         $handling_fee=0;
@@ -153,9 +174,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             $rate = $commission_rate /100;
             $handling_fee = bcmul($money,$rate, 2);
         }
-
-        //积分配置
-        $sysIntegralConfig = systemConfig(['integral_money', 'integral_status', 'integral_order_rate']);
 
         // 精确到小数点后两位
         $pay_price = round($money, 2);
@@ -265,12 +283,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             'body' =>'线下门店支付'
         ];*/
 
-        $type = $params['pay_type'];
-        if ($params['return_url'] && $type === 'alipay') $body['return_url'] = $params['return_url'];
-
-        if (in_array($type, ['weixin', 'alipay','routine'], true) && $params['is_app']) {
-            $type .= 'App';
-        }
         $info = $this->dao->create($data);
         // 拉卡拉支付参数
         $params = [
@@ -280,24 +292,14 @@ class StoreOrderOfflineRepository extends BaseRepository
             'merchant_no' => $merchant['merchant_no'],
             'term_nos' => $merchant['term_nos'],
             'openid' => $openId,
-            'trans_type' => 71,
+            'trans_type' => $trans_type,
+            'account_type' => $account_type,
             'goods_id' => '1',
             'settle_type' => '1',
         ];
 
         if ($pay_price>0){
-//            try {
-//                //$service = new PayService($type,$body, 'offline_order');
-//
-//                $service = new OfflinePayService($type, $body);
-//                //$config = $service->pay($user);
-//                //return app('json')->status($type, $config + ['order_id' => $info->order_id]);
-//                // TODO 测试身份佣金，直接支付成功
-//                $this->paySuccess($data);
-//                return app('json')->status($type, ['order_id' => $info->order_id]);
-//            } catch (\Exception $e) {
-//                return app('json')->fail('error', $e->getMessage(), ['order_id' => $info->order_id]);
-//            }
+
             $api = new \Lakala\LklApi();
             $result = $api::lklPreorder($params);
             if (!$result) {
