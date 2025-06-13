@@ -93,12 +93,12 @@ class StoreOrder extends BaseController
             $account_type = 'ALIPAY';
             /** @var AlipayUserRepository $alipayUserRepository */
             $alipayUserRepository = app()->make(AlipayUserRepository::class);
-            $openId = $alipayUserRepository->idByUserId($user['alipay_user_id']);
+            $openId = $alipayUserRepository->idByUserId($userInfo['alipay_user_id']);
             if (!$openId)
                 throw new ValidateException('请授权支付宝小程序!');
         }else{
             $wechatUserRepository = app()->make(WechatUserRepository::class);
-            $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
+            $openId = $wechatUserRepository->idByRoutineId($userInfo['wechat_user_id']);
             if (!$openId)
                 throw new ValidateException('请关联微信小程序!');
         }
