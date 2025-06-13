@@ -115,6 +115,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $openId = $alipayUserRepository->idByUserId($user['alipay_user_id']);
             if (!$openId)
                 throw new ValidateException('请授权支付宝小程序!');
+            //$is_share = 1;
         }else{
             $wechatUserRepository = app()->make(WechatUserRepository::class);
             $openId = $wechatUserRepository->idByRoutineId($user['wechat_user_id']);
@@ -1222,7 +1223,8 @@ class StoreOrderOfflineRepository extends BaseRepository
         $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-1 minute'));
 
         return StoreOrderOffline::getDB()
-            ->where('is_share', 0) // 微发货,未分账状态
+            ->where('is_share', 0) // 未发货,未分账状态
+            ->where('pay_type','<>','alipay') // 只处理微信订单
             ->where('transaction_id', '<>', '') // transaction_id
             //->where('pay_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
             ->where('pay_time', '>', '1970-01-01') // 过滤无效时间
