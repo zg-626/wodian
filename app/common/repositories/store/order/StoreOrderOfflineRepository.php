@@ -1225,10 +1225,12 @@ class StoreOrderOfflineRepository extends BaseRepository
         return StoreOrderOffline::getDB()
             ->where('is_share', 0) // 未发货,未分账状态
             ->where('pay_type','<>','alipay') // 只处理微信订单
+            ->where('paid',1) // 已支付
             ->where('transaction_id', '<>', '') // transaction_id
             //->where('pay_time', '<=', $oneMinuteAgo) // 支付时间超过1分钟
             ->where('pay_time', '>', '1970-01-01') // 过滤无效时间
             ->limit(2)
+            //->order('order_id', 'desc')
             ->select();
     }
 

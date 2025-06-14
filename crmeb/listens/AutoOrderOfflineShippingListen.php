@@ -86,7 +86,7 @@ class AutoOrderOfflineShippingListen extends TimerService implements ListenerInt
                 'failed_orders' => $exceptionOrders
             ];
             // 最终统计日志
-            Log::info('自动发货任务执行完成'.json_encode($data));
+            Log::info('自动发货任务执行完成'.json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
         });
     }
 
