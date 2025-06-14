@@ -27,7 +27,7 @@ class AutoOrderOfflineShippingListen extends TimerService implements ListenerInt
 
     public function handle($event): void
     {
-        $this->tick(60000*3, function () {
+        $this->tick(60000*2, function () {
             request()->clearCache();
             /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
