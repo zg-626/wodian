@@ -239,7 +239,8 @@ class Lakala extends BaseController
                 $res = $storeOrderOfflineRepository->getWhere(['order_sn' => $out_trade_no]);
                 if (!empty($res)) {
                     //Log::info('拉卡拉发货确认回调更新:2');
-                    $res->origin_log_no = $res->lkl_log_no ?? '';
+                    //$res->origin_log_no = $res->lkl_log_no ?? '';
+                    $res->origin_log_no = $obj['origin_log_no'];
                     $res->lkl_log_no = $obj['log_no'] ?? '';
                     $res->is_share = 2;
                     $res->lkl_log_date = $obj['trade_time'];
