@@ -541,6 +541,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     Db::name('dividend_pool')->insert([
                         'total_amount' => $total_amount,
                         'available_amount' => $total_amount,
+                        'initial_threshold' => $total_amount,
                         'distributed_amount' => 0,
                         'city_id' => $order->city_id,
                         'city' => $order->city,
@@ -553,6 +554,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
                         'total_amount' => Db::raw('total_amount + ' . $total_amount),
                         'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                        'initial_threshold' => Db::raw('initial_threshold + ' . $total_amount),
                         'update_time' => date('Y-m-d H:i:s')
                     ]);
                 }
