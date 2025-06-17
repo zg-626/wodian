@@ -41,7 +41,7 @@ class Dividend extends BaseController
         $this->repository = $repository;
     }
 
-    // 测试接口
+    // 测试接口(单个城市测试)
     public function test()
     {
         /** @var DividendPoolService $dividendPoolService **/
@@ -89,7 +89,6 @@ class Dividend extends BaseController
 
             $currentDay = date('d');
 
-
             // 获取所有城市分红池
             $poolInfo = Db::name('dividend_pool')
                 ->where('city_id', '<>', 0)
@@ -98,41 +97,46 @@ class Dividend extends BaseController
 
             foreach ($poolInfo as $pool) {
 
-                // 检查今天是否已执行过
-                if ($this->isExecutedToday($pool['id'])) {
-                    continue;
+                // 1. 执行周期分红（如果条件满足且今天未执行过周期分红）
+                $lastCycleExecuteFullDate = $this->getLastExecuteDay($pool['id']);
+                if ($this->shouldExecuteDividend($lastCycleExecuteFullDate)) {
+                    if (!$this->hasExecutedToday($pool['id'], 2)) { // 检查周期分红（类型2）今天是否已执行
+                        $infoCycle = $bonusOfflineService->calculateBonus($pool);
+                        if ($infoCycle && isset($infoCycle['bonus_amount'])) { // 确保有有效的分红金额
+                            $this->recordExecuteLog(2, $infoCycle['bonus_amount'], $pool['id']); // 记录周期分红
+
+                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($infoCycle, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
+
+                        } else {
+                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error'); // 记录错误或特殊情况
+                        }
+                    }
                 }
 
-                // 月初分红,其他的走6天分红
+                // 2. 执行月初分红（如果是1号，且今天未执行过月初分红，且本月初未执行过月初分红）
                 if ($currentDay === '01') {
-                    // 查询是否执行过
-                    $lastExecuteDay = $this->checkFirstDayExecuted($pool['id']);
-                    if (!$lastExecuteDay) {
-                        $info = $bonusOfflineService->distributeBaseAmount($pool);
-                    }
+                    if (!$this->hasExecutedToday($pool['id'], 1)) { // 检查月初分红（类型1）今天是否已执行
+                        if (!$this->checkFirstDayExecuted($pool['id'])) {
+                            $infoMonthly = $bonusOfflineService->distributeBaseAmount($pool);
+                            if ($infoMonthly && isset($infoMonthly['bonus_amount'])) { // 确保有有效的分红金额
+                                $this->recordExecuteLog(1, $infoMonthly['bonus_amount'], $pool['id']); // 记录月初分红
 
-                    $this->recordExecuteLog(1, $info['bonus_amount']??0,$pool['id']); // 记录月初分红
-                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE), 'red');
-                }else{
-                    $lastExecuteDay = $this->getLastExecuteDay($pool['id']);
+                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($infoMonthly, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
 
-                    // 6天分红
-                    if ($this->shouldExecuteDividend($lastExecuteDay)) {
-                        $info = $bonusOfflineService->calculateBonus($pool);
-
-                        $this->recordExecuteLog(2, $info['bonus_amount']??0,$pool['id']); // 记录6天分红
-
-                        record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($info, JSON_UNESCAPED_UNICODE).'奖池id'.$pool['id'], 'red');
+                            } else {
+                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error'); // 记录错误或特殊情况
+                            }
+                        }
                     }
                 }
-                
             }
             Db::commit();
             return json(['code' => 1, 'msg' => '分红任务执行成功']);
 
         } catch (\Exception $e) {
-            Log::info('分红任务执行失败：' . $e->getMessage().$e->getFile());
-            return json(['code' => 0, 'msg' => '分红任务执行失败：' . $e->getMessage().$e->getLine()]);
+            Db::rollback(); // 确保事务回滚
+            Log::info('分红任务执行失败：奖池ID[' . ($pool['id'] ?? '未知') . '] ' . $e->getMessage() . ' File:' . $e->getFile() . ' Line:' . $e->getLine());
+            return json(['code' => 0, 'msg' => '分红任务执行失败：' . $e->getMessage() . ' Line:' . $e->getLine()]);
         } finally {
             // 释放锁（确保是自己的锁）
             if (Cache::store('redis')->get($lockKey) === $lockValue) {
@@ -141,10 +145,17 @@ class Dividend extends BaseController
         }
     }
 
-    private function isExecutedToday($poolId): bool
+    /**
+     * 检查指定类型的分红今天是否已执行
+     * @param int $poolId 奖池ID
+     * @param int $type 执行类型：1=月初分红，2=周期分红
+     * @return bool
+     */
+    private function hasExecutedToday(int $poolId, int $type): bool
     {
         return Db::name('dividend_execute_log')
             ->where('execute_date', date('Y-m-d'))
+            ->where('execute_type', $type)
             ->where('status', 1)
             ->where('dp_id', $poolId)
             ->count() > 0;
@@ -167,15 +178,16 @@ class Dividend extends BaseController
      */
     private function getLastExecuteDay($poolId): string
     {
-        // 查询最近一次5天分红记录
-        $lastRecord = Db::name('dividend_execute_log')
-            //->where('execute_type', 2)
+        // 查询最近一次周期分红（execute_type = 2）记录
+        $lastRecordDate = Db::name('dividend_execute_log')
+            ->where('execute_type', 2) // 明确指定周期分红类型
             ->where('status', 1)
             ->where('dp_id', $poolId)
             ->order('execute_date desc')
             ->value('execute_date');
         
-        return $lastRecord ? date('d', strtotime($lastRecord)) : '0';
+        // return $lastRecordDate ? date('d', strtotime($lastRecordDate)) : '0'; // 返回的是月份中的天
+        return $lastRecordDate ?: ''; // 返回完整的日期字符串 YYYY-MM-DD，如果不存在则返回空字符串
     }
 
     /**
@@ -194,20 +206,37 @@ class Dividend extends BaseController
     /**
      * 判断是否需要执行分红
      */
-    private function shouldExecuteDividend(string $lastDay): bool
+    /**
+     * 判断是否需要执行周期分红
+     * @param string $lastExecuteDate 上次周期分红的完整日期 (YYYY-MM-DD)，如果从未执行过则为空字符串或null
+     * @return bool
+     */
+    private function shouldExecuteDividend(string $lastExecuteDate): bool
     {
-        $day=systemConfig('sys_red_day')+1??6;
-        if ($lastDay === '0') return true;
+        $cycleDays = (int)systemConfig('sys_red_day') ?: 5; // 获取周期分红天数，默认为5天
 
-        $currentDay = (int)date('d');
-        $lastDay = intval($lastDay);
-
-        // 如果跨月了，需要特殊处理
-        if ($currentDay < $lastDay) {
-            $lastDay = $currentDay; // 重置上次执行日期
+        // 如果从未执行过周期分红，则应该执行一次
+        if (empty($lastExecuteDate)) {
+            return true;
         }
 
-        // 检查是否已经过了6天
-        return ($currentDay - $lastDay) >= $day;
+        try {
+            $lastDate = new \DateTime($lastExecuteDate);
+            $currentDate = new \DateTime(date('Y-m-d')); // 获取当前日期，不含时间部分
+
+            // 计算日期差异
+            $interval = $currentDate->diff($lastDate);
+            $daysPassed = $interval->days;
+
+            if ($interval->invert == 1) {
+                 return false; // 当前日期早于上次执行日期
+            }
+
+            return $daysPassed >= $cycleDays;
+        } catch (\Exception $e) {
+            // 日期格式错误等异常处理
+            Log::error('shouldExecuteDividend日期处理异常: ' . $e->getMessage());
+            return false; // 发生异常则不执行
+        }
     }
 }
