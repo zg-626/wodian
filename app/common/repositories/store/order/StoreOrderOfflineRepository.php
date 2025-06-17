@@ -534,7 +534,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             // 记录本次分红池,手续费的40%
             try {
                 $poolInfo = Db::name('dividend_pool')->where('city_id', $order->city_id)->order('id', 'desc')->find();
-                Log::info('查询分红池' . $poolInfo['id']);
+                Log::info('查询分红池');
                 if (!$poolInfo) {
                     Log::info('创建分红池' . $order->city);
                     // 第一次创建分红池记录
