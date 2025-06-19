@@ -79,8 +79,6 @@ class Dividend extends BaseController
         $lockKey = 'dividend_task_lock';
         $lockValue = uniqid(mt_rand(), true);
 
-        Db::startTrans();
-
         try {
             // 获取锁，5分钟超时
             if (!Cache::store('redis')->set($lockKey, $lockValue, 300, 'NX')) {
@@ -91,52 +89,81 @@ class Dividend extends BaseController
 
             // 获取所有城市分红池
             $poolInfo = Db::name('dividend_pool')
-                ->where('city_id', '<>', 0)
+                ->where('city_id', '=', 20188)
                 ->select()
                 ->toArray();
 
+            $successCount = 0;
+            $failCount = 0;
+            $errorMessages = [];
+
             foreach ($poolInfo as $pool) {
-
-                // 1. 执行周期分红（如果条件满足且今天未执行过周期分红）
-                $lastCycleExecuteFullDate = $this->getLastExecuteDay($pool['id']);
-                if ($this->shouldExecuteDividend($lastCycleExecuteFullDate)) {
-                    if (!$this->hasExecutedToday($pool['id'], 2)) { // 检查周期分红（类型2）今天是否已执行
-                        $infoCycle = $bonusOfflineService->calculateBonus($pool);
-                        if ($infoCycle && isset($infoCycle['bonus_amount'])) { // 确保有有效的分红金额
-                            $this->recordExecuteLog(2, $infoCycle['bonus_amount'], $pool['id']); // 记录周期分红
-
-                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($infoCycle, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
-
-                        } else {
-                            record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error'); // 记录错误或特殊情况
-                        }
-                    }
-                }
-
-                // 2. 执行月初分红（如果是1号，且今天未执行过月初分红，且本月初未执行过月初分红）
-                if ($currentDay === '01') {
-                    if (!$this->hasExecutedToday($pool['id'], 1)) { // 检查月初分红（类型1）今天是否已执行
-                        if (!$this->checkFirstDayExecuted($pool['id'])) {
-                            $infoMonthly = $bonusOfflineService->distributeBaseAmount($pool);
-                            if ($infoMonthly && isset($infoMonthly['bonus_amount'])) { // 确保有有效的分红金额
-                                $this->recordExecuteLog(1, $infoMonthly['bonus_amount'], $pool['id']); // 记录月初分红
-
-                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($infoMonthly, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
-
+                // 为每个分红池单独使用事务
+                Db::startTrans();
+                try {
+                    // 1. 执行周期分红（如果条件满足且今天未执行过周期分红）
+                    $lastCycleExecuteFullDate = $this->getLastExecuteDay($pool['id']);
+                    if ($this->shouldExecuteDividend($lastCycleExecuteFullDate)) {
+                        if (!$this->hasExecutedToday($pool['id'], 2)) { // 检查周期分红（类型2）今天是否已执行
+                            $infoCycle = $bonusOfflineService->calculateBonus($pool);
+                            if ($infoCycle === false) {
+                                // 处理执行失败的情况
+                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红执行失败: 奖池id' . $pool['id'], 'red_error');
+                            } else if ($infoCycle && isset($infoCycle['bonus_amount'])) {
+                                // 处理成功分红的情况
+                                $this->recordExecuteLog(2, $infoCycle['bonus_amount'], $pool['id']);
+                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($infoCycle, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
                             } else {
-                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error'); // 记录错误或特殊情况
+                                // 处理正常执行但没有分红的情况
+                                record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error');
                             }
                         }
                     }
+
+                    // 2. 执行月初分红（如果是1号，且今天未执行过月初分红，且本月初未执行过月初分红）
+                    if ($currentDay === '01') {
+                        if (!$this->hasExecutedToday($pool['id'], 1)) { // 检查月初分红（类型1）今天是否已执行
+                            if (!$this->checkFirstDayExecuted($pool['id'])) {
+                                $infoMonthly = $bonusOfflineService->distributeBaseAmount($pool);
+                                if ($infoMonthly && isset($infoMonthly['bonus_amount'])) { // 确保有有效的分红金额
+                                    $this->recordExecuteLog(1, $infoMonthly['bonus_amount'], $pool['id']); // 记录月初分红
+
+                                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红: ' . json_encode($infoMonthly, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
+
+                                } else {
+                                    record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统月初分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error'); // 记录错误或特殊情况
+                                }
+                            }
+                        }
+                    }
+
+                    // 提交当前分红池的事务
+                    Db::commit();
+                    $successCount++;
+
+                } catch (\Exception $e) {
+                    // 回滚当前分红池的事务
+                    Db::rollback();
+                    $failCount++;
+                    $errorMessages[] = '奖池ID[' . $pool['id'] . '] 处理失败: ' . $e->getMessage();
+                    Log::error('分红任务执行失败：奖池ID[' . $pool['id'] . '] ' . $e->getMessage() . ' File:' . $e->getFile() . ' Line:' . $e->getLine());
                 }
             }
-            Db::commit();
-            return json(['code' => 1, 'msg' => '分红任务执行成功']);
+
+            // 返回总体执行结果
+            if ($failCount > 0) {
+                return json([
+                    'code' => $successCount > 0 ? 1 : 0, // 如果有成功的，返回部分成功
+                    'msg' => '分红任务执行完成，成功: ' . $successCount . '，失败: ' . $failCount,
+                    'errors' => $errorMessages
+                ]);
+            } else {
+                return json(['code' => 1, 'msg' => '分红任务执行成功，共处理 ' . $successCount . ' 个分红池']);
+            }
 
         } catch (\Exception $e) {
-            Db::rollback(); // 确保事务回滚
-            Log::info('分红任务执行失败：奖池ID[' . ($pool['id'] ?? '未知') . '] ' . $e->getMessage() . ' File:' . $e->getFile() . ' Line:' . $e->getLine());
-            return json(['code' => 0, 'msg' => '分红任务执行失败：' . $e->getMessage() . ' Line:' . $e->getLine()]);
+            Log::error('分红任务整体执行失败：' . $e->getMessage() . ' File:' . $e->getFile() . ' Line:' . $e->getLine());
+            return json(['code' => 0, 'msg' => '分红任务整体执行失败：' . $e->getMessage()]);
         } finally {
             // 释放锁（确保是自己的锁）
             if (Cache::store('redis')->get($lockKey) === $lockValue) {
@@ -228,8 +255,9 @@ class Dividend extends BaseController
             $interval = $currentDate->diff($lastDate);
             $daysPassed = $interval->days;
 
-            if ($interval->invert == 1) {
-                 return false; // 当前日期早于上次执行日期
+            // 如果当前日期早于上次执行日期（这种情况不应该发生）
+            if ($interval->invert == 0) {
+                return false; // 当前日期早于上次执行日期
             }
 
             return $daysPassed >= $cycleDays;
