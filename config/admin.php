@@ -13,7 +13,7 @@
 
 return [
     //token 有效期
-    'token_exp' => 6, //6小时
+    'token_exp' => 24, //6小时
     //token超时多久可自动续期(后台)
     'token_valid_exp' => 30, //30分钟
     //token超时多久可自动续期(用户)
