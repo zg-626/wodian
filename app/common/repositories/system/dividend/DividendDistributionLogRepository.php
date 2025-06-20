@@ -59,6 +59,9 @@ class DividendDistributionLogRepository extends BaseRepository
                 'dividendPool' => function ($query) {
                     $query->field('id,city_id,city');
                 },
+                /*'dividendPeriodLog' => function ($query) {
+                    $query->field('id,city_id,city');
+                },*/
             ])
             ->order('id desc');
         $count = $query->count();

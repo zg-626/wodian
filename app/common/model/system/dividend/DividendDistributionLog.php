@@ -46,6 +46,12 @@ class DividendDistributionLog extends BaseModel
 
     public function dividendPool()
     {
-        return $this->hasOne(DividendPool::class, 'id', 'period_id');
+        //return $this->hasOne(DividendPool::class, 'id', 'period_id');
+        return $this->hasOne(DividendPeriodLog::class, 'id', 'period_id');
     }
+
+    /*public function dividendPeriodLog()
+    {
+        return $this->hasOne(DividendPeriodLog::class, 'id', 'period_id');
+    }*/
 }
