@@ -15,6 +15,7 @@ namespace app\common\repositories\system\dividend;
 
 
 use app\common\dao\system\dividend\DividendDistributionLogDao;
+use app\common\model\system\dividend\DividendPeriodLog;
 use app\common\model\system\dividend\DividendPool;
 use app\common\repositories\BaseRepository;
 use think\facade\Cache;
@@ -45,7 +46,7 @@ class DividendDistributionLogRepository extends BaseRepository
     public function getList(array $where, int $page, int $limit)
     {
         if ($where['city']) {
-            $dp_ids = DividendPool::where('city', 'like', '%' . $where['city'] . '%')->column('id');
+            $dp_ids = DividendPeriodLog::where('city', 'like', '%' . $where['city'] . '%')->column('id');
             if ($dp_ids) {
                 $where['dp_ids'] = $dp_ids;
             } else{
