@@ -262,13 +262,13 @@ class DataScreenRepository extends BaseRepository
             $today_pay_new_old = [
 //                'new_number' => $new_number,
                 //'new_count' => $new_count,
-                'new_count' => 47,
+                'new_count' => 9632,
 //                'new_rate_count' => $new_count > 0 ? (int)bcdiv($new_count,$count,2) * 100 : 0,
 //                'new_rate_number'=> $new_number > 0 ? (int)bcdiv($new_number,$number,2) * 100 : 0,
 
 //                'old_number' => $old_number,
                 //'old_count' => $old_count,
-                'old_count' => 53,
+                'old_count' => 5368,
 //                'old_rate_count'=> $old_count > 0 ? (int)bcdiv($old_count,$count,2) * 100 : 0,
 //                'old_rate_number'=> $new_number > 0 ? (int)bcdiv($old_number,$number,2) * 100 : 0,
             ];
