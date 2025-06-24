@@ -289,13 +289,14 @@ class BonusOfflineService extends BaseRepository
                 'bonus_amount' => $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ];
-            Db::name('user')->where('uid', $user['uid'])->inc('coupon_amount', $bonus)->update();
+            //Db::name('user')->where('uid', $user['uid'])->inc('coupon_amount', $bonus)->update();
 
             Db::name('user_bill')->insert([
                 'uid' => $user['uid'],
                 'link_id' => 0,
                 'pm' => 1,
                 'title' => '补贴抵用券',
+                'status' => -2,
                 'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
@@ -316,7 +317,7 @@ class BonusOfflineService extends BaseRepository
                 'bonus_amount' => $bonus,
                 'create_time' => date('Y-m-d H:i:s')
             ];
-            Db::name('merchant')->where('mer_id', $merchant['mer_id'])->inc('coupon_amount', $bonus)->update();
+            //Db::name('merchant')->where('mer_id', $merchant['mer_id'])->inc('coupon_amount', $bonus)->update();
 
             // 记录商家分红明细
             Db::name('user_bill')->insert([
@@ -324,6 +325,7 @@ class BonusOfflineService extends BaseRepository
                 'link_id' => 0,
                 'pm' => 1,
                 'title' => '补贴抵用券',
+                'status' => -2,
                 'category' => 'coupon_amount',
                 'type' => 'dividend',
                 'number' => $bonus,
