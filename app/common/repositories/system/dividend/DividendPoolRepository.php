@@ -65,9 +65,10 @@ class DividendPoolRepository extends BaseRepository
                 }
             }else{
                 $new_amount = systemConfig('sys_red_money')??10000;
-                if($initial_threshold>$new_amount){
+                $item['initial_threshold'] = $new_amount;
+                if($new_amount>$initial_threshold){
                     // 差值
-                    $item['difference'] = bcsub($initial_threshold,$new_amount,2);
+                    $item['difference'] = bcsub($new_amount,$initial_threshold,2);
                     // 计算抹平差值的流水
                     $item['water'] = round($item['difference']/0.4/0.2,2);
                 }else{
