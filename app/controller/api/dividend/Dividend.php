@@ -270,7 +270,7 @@ class Dividend extends BaseController
                 return false; // 当前日期早于上次执行日期
             }
 
-            return $daysPassed >= $cycleDays;
+            return $daysPassed > $cycleDays;
         } catch (\Exception $e) {
             // 日期格式错误等异常处理
             Log::error('shouldExecuteDividend日期处理异常: ' . $e->getMessage());
