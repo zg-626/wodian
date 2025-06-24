@@ -49,22 +49,25 @@ class DividendPoolRepository extends BaseRepository
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
         foreach ($list as &$item) {
-            $new_amount = $item['initial_threshold'];
+            $initial_threshold = $item['initial_threshold'];// 当前最新累计金额
             // 获取当前最新周期数据
-            $next_threshold=DividendPeriodLog::where('dp_id',$item['id'])->where('execute_type',2)->order('id desc')->value('next_threshold')?:10000;
-            if($next_threshold){
-                if($next_threshold>$new_amount){
+            $lastInfo=DividendPeriodLog::where('dp_id',$item['id'])->where('execute_type',2)->order('id desc')->field('next_threshold,initial_threshold')->find();
+            if($lastInfo){
+                $last_next_threshold=$lastInfo['next_threshold'];// 下一个周期应该达到的金额
+                $item['initial_threshold'] = $lastInfo['initial_threshold'];// 上期开始的金额
+                if($last_next_threshold>$initial_threshold){
                     // 差值
-                    $item['difference'] = bcsub($next_threshold,$new_amount,2);
+                    $item['difference'] = bcsub($last_next_threshold,$initial_threshold,2);
                     // 计算抹平差值的流水
                     $item['water'] = round($item['difference']/0.4/0.2,2);
                 }else{
                     $item['difference'] = 0;
                 }
             }else{
-                if($next_threshold>$new_amount){
+                $new_amount = systemConfig('sys_red_money')??10000;
+                if($initial_threshold>$new_amount){
                     // 差值
-                    $item['difference'] = bcsub($next_threshold,$new_amount,2);
+                    $item['difference'] = bcsub($initial_threshold,$new_amount,2);
                     // 计算抹平差值的流水
                     $item['water'] = round($item['difference']/0.4/0.2,2);
                 }else{
