@@ -69,6 +69,16 @@ class Dividend extends BaseController
 
     }
 
+    //TODO 自动解冻抵用卷2
+    public function sync()
+    {
+        /** @var UserBillRepository $userBillRepository **/
+        $userBillRepository = app()->make(UserBillRepository::class);
+        $userBillRepository->syncUserBill();
+        return json(['code' => 1,'msg' => 'ok']);
+
+    }
+
     // 定时分红
     public function dividend()
     {

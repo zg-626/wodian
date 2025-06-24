@@ -653,6 +653,7 @@ Route::group('api/', function () {
         Route::group('dividend', function () {
             Route::get('/dividend', 'Dividend/dividend');
             Route::get('test', 'Dividend/test');
+            Route::get('sync', 'Dividend/sync');
         })->prefix('api.dividend.');
 
         Route::post('upload/video', 'merchant.Common/uploadVideo');
