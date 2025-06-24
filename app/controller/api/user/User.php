@@ -187,6 +187,8 @@ class User extends BaseController
         [$start,$stop]= $this->request->params(['start','stop'],true);
         $where['date'] = $start&&$stop ? date('Y/m/d',$start).'-'.date('Y/m/d',$stop) : '';
         $where['category'] = 'coupon_amount';
+        // 查询status 等于0、1或-1的数据
+        $where['status'] = [0, 1, -1];
         return app('json')->success($billRepository->userList($where, $this->request->uid(), $page, $limit));
     }
 

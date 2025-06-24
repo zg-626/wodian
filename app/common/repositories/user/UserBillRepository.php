@@ -22,6 +22,7 @@ use app\common\repositories\store\product\ProductRepository;
 use app\common\repositories\system\merchant\MerchantRepository;
 use crmeb\jobs\SendSmsJob;
 use think\exception\ValidateException;
+use think\facade\Db;
 use think\facade\Queue;
 use think\Model;
 
@@ -375,6 +376,38 @@ class UserBillRepository extends BaseRepository
     public function allCouponCount($merId = null,$field = 'coupon_amount')
     {
         return app()->make(MerchantRepository::class)->search(['mer_id' => $merId])->sum('coupon_amount');
+    }
+
+    public function syncUserBill()
+    {
+
+        $bills =UserBill::getDB()->where(['status' => -2, 'category' => 'coupon_amount','pm' => 1])->select();
+        Db::transaction(function () use ($bills) {
+            foreach ($bills as $bill) {
+                // 用户
+                if ($bill->number > 0 && $bill->user!==0) {
+                    $user=app()->make(UserRepository::class)->find($bill->uid);
+                    $user->coupon_amount = bcadd($user->coupon_amount, $bill->number, 2);
+                    $user->save();
+
+                    $bill->status = 1;
+                    $bill->create_time = date('Y-m-d H:i:s');
+                    $bill->balance = $user->coupon_amount ?? 0;
+                    $bill->save();
+                }
+                // 商户
+                if ($bill->number > 0 && $bill->mer_id !== 0) {
+                    $merchant = app()->make(MerchantRepository::class)->get($bill->mer_id);
+                    $merchant->coupon_amount = bcadd($merchant->coupon_amount, $bill->number, 2);
+                    $merchant->save();
+
+                    $bill->status = 1;
+                    $bill->create_time = date('Y-m-d H:i:s');
+                    $bill->balance = $merchant->coupon_amount ?? 0;
+                    $bill->save();
+                }
+            }
+        });
     }
 
 

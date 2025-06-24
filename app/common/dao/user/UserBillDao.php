@@ -231,7 +231,7 @@ class UserBillDao extends BaseDao
                 $query->where('category', $where['category']);
             })
             ->when(isset($where['status']) && $where['status'] !== '', function ($query) use ($where) {
-                $query->where('status', $where['status']);
+                $query->whereIn('status', $where['status']);
             })
             ->when(isset($where['date']) && $where['date'] !== '', function ($query) use ($where) {
                 getModelTime($query, $where['date'], 'create_time');
