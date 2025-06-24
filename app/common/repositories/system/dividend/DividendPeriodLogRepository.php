@@ -63,6 +63,21 @@ class DividendPeriodLogRepository extends BaseRepository
             ->order('id desc');
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
+        foreach ($list as &$item) {
+            if($item['execute_type']===2){
+                // 获取当前最新数据
+                $new_amount = DividendPool::where('id',$item['dp_id'])->value('initial_threshold');
+                if($item['next_threshold']>$new_amount){
+                    // 差值
+                    $item['difference'] = bcsub($item['next_threshold'],$new_amount,2);
+                    // 计算抹平差值的流水
+                    $item['water'] = round($item['difference']/0.4/0.2,2);
+                }else{
+                    $item['difference'] = 0;
+                }
+                $item['new_amount']=$new_amount;
+            }
+        }
         return compact('count', 'list');
     }
 
