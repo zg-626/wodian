@@ -184,8 +184,8 @@ class BonusOfflineService extends BaseRepository
             $diff = $totalBonus - $actualTotal;
             $newAmount = $bonusAmounts[$lastUid] + $diff;
 
-            // 确保调整后的金额不小于0
-            if ($newAmount >= 0) {
+            // 确保调整后的金额不小于0.01
+            if ($newAmount >= 0.01) {
                 $bonusAmounts[$lastUid] = round($newAmount, 2);
             } else {
                 // 如果调整后为负数，则按比例减少所有用户的分红金额
@@ -222,8 +222,8 @@ class BonusOfflineService extends BaseRepository
             $diff = $totalBonus - $actualTotal;
             $newAmount = $bonusAmounts[$lastUid] + $diff;
 
-            // 确保调整后的金额不小于0
-            if ($newAmount >= 0) {
+            // 确保调整后的金额不小于0.01
+            if ($newAmount >= 0.01) {
                 $bonusAmounts[$lastUid] = round($newAmount, 2);
             } else {
                 // 如果调整后为负数，则按比例减少所有商家的分红金额
