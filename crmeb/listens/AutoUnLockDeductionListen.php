@@ -35,7 +35,7 @@ class AutoUnLockDeductionListen extends TimerService implements ListenerInterfac
             Db::transaction(function () use ($userBill, $bills) {
                 foreach ($bills as $bill) {
                     if ($bill->number > 0 && $bill->user) {
-                        $brokerage = bcsub($bill->number, $userBill->refundBrokerage($bill->link_id, $bill->uid), 4);
+                        $brokerage = bcsub($bill->number, 0, 4);
                         if ($brokerage > 0) {
                             $bill->user->coupon_amount = bcadd($bill->user->coupon_amount, $brokerage, 4);
                             $bill->user->save();
