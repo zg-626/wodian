@@ -385,8 +385,8 @@ class UserBillRepository extends BaseRepository
         Db::transaction(function () use ($bills) {
             foreach ($bills as $bill) {
                 // 用户
-                if ($bill->number > 0 && $bill->user!==0) {
-                    $user=app()->make(UserRepository::class)->find($bill->uid);
+                if ($bill->number > 0 && $bill->uid!==0) {
+                    $user=app()->make(UserRepository::class)->get($bill->uid);
                     $user->coupon_amount = bcadd($user->coupon_amount, $bill->number, 2);
                     $user->save();
 
