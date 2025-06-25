@@ -631,6 +631,7 @@ class MerchantIntention extends BaseController
         $adminRepository = app()->make(MerchantAdminRepository::class);
         if ($adminRepository->fieldExists('account', $data['phone']))
             throw new ValidateException('手机号已是管理员，不可申请');
+        $data['commission_rate'] = 20;
         $intention = $this->repository->create($data);
         SwooleTaskService::admin('notice', [
             'type' => 'new_intention',
