@@ -875,26 +875,34 @@ class StoreOrderRepository extends BaseRepository
                     $processedUids[] = $superior['uid'];
                 }
 
-                // 如果是区域经理，发放佣金
-                if ($superior['group_id'] == self::USER_GROUP['REGIONAL_MANAGER']) {
-                    Log::info('直属上级是区域经理');
-                    $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
-                    $this->giveBrokerage($orderId, $userBillRepository, $superior, $superior_extension, '区域经理推广佣金');
-                    $processedUids[] = $superior['uid'];
-                    // 实时获取上级信息
-                    $superior = $userRepository->get($superior->superior_uid);
-
-                    // 如果是大区经理
-                    if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
-                        Log::info('直属上级是区域经理，上级是大区经理');
-                        // 实时获取上级分组信息及比例
-                        $superiorGroup = $userGroupRepository->get($superior['group_id']);
-
+                // 查询所有已经处理过的用户分组信息,避免重复发放
+                //$processedGroups = User::whereIn('uid', $processedUids)->column('group_id');
+                // 用户id白名单
+                $userId=327882;
+                // 如果已经处理过该分组的佣金，只发放一次
+                if (!in_array($userId, $processedUids, true)) {
+                    // 如果是区域经理，发放佣金
+                    if ($superior['group_id'] == self::USER_GROUP['REGIONAL_MANAGER']) {
+                        Log::info('直属上级是区域经理');
                         $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
-                        $this->giveBrokerage($orderId,$userBillRepository, $superior, $superior_extension, '大区经理推广佣金');
+                        $this->giveBrokerage($orderId, $userBillRepository, $superior, $superior_extension, '区域经理推广佣金');
                         $processedUids[] = $superior['uid'];
+                        // 实时获取上级信息
+                        $superior = $userRepository->get($superior->superior_uid);
+
+                        // 如果是大区经理
+                        if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
+                            Log::info('直属上级是区域经理，上级是大区经理');
+                            // 实时获取上级分组信息及比例
+                            $superiorGroup = $userGroupRepository->get($superior['group_id']);
+
+                            $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
+                            $this->giveBrokerage($orderId,$userBillRepository, $superior, $superior_extension, '大区经理推广佣金');
+                            $processedUids[] = $superior['uid'];
+                        }
                     }
                 }
+
             }
         }
 
