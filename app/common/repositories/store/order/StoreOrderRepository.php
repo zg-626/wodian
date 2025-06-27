@@ -483,7 +483,7 @@ class StoreOrderRepository extends BaseRepository
         $order->save();
         // 赠送积分
         $this->giveIntegral($groupOrder);
-        // 发放推广抵用券
+
         $user = app()->make(UserRepository::class)->get($order['uid']);
        // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
         foreach ($groupOrder->orderList as $_k => $orders) {
