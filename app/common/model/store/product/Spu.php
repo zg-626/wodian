@@ -131,7 +131,8 @@ class Spu extends BaseModel
      */
     public function getShowSvipInfoAttr($value, $data)
     {
-        if ($this->product_type == 0) return  $this->product->show_svip_info;
+        if ($this->product_type == 0 && isset($this->product)) return $this->product->show_svip_info;
+        return ['show_svip' => false, 'is_svip' => false, 'show_svip_price' => false, 'save_money' => 0];
     }
 
     /**
@@ -142,12 +143,15 @@ class Spu extends BaseModel
      */
     public function getSvipPriceAttr()
     {
-        if ($this->product_type == 0) return $this->product->svip_price;
+        // 添加判断，确保 product 对象存在
+        if ($this->product_type == 0 && isset($this->product)) return $this->product->svip_price;
+        return 0; // 如果 product 不存在，返回默认值
     }
 
     public function getIsSvipPriceAttr()
     {
-        if ($this->product_type == 0) return $this->product->is_svip_price;
+        if ($this->product_type == 0 && isset($this->product)) return $this->product->is_svip_price;
+        return 0;
     }
 
     public function getMerLabelsDataAttr()

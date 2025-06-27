@@ -158,6 +158,7 @@ class SpuRepository extends BaseRepository
                 $query->field($this->merchantFiled)->with(['type_name']);
             },
             'issetCoupon',
+            'product',
         ]);
         $productMake = app()->make(ProductRepository::class);
         $count = $query->count();
