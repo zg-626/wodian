@@ -426,33 +426,6 @@ class StoreOrderOfflineRepository extends BaseRepository
 
     public function paySuccess($data)
     {
-        /*
-          array (
-            'order_sn' => 'wxs167090166498470921',
-            'data' =>
-            EasyWeChat\Support\Collection::__set_state(array(
-               'items' =>
-              array (
-                'appid' => 'wx4409eaedbd62b213',
-                'attach' => 'user_order',
-                'bank_type' => 'OTHERS',
-                'cash_fee' => '1',
-                'fee_type' => 'CNY',
-                'is_subscribe' => 'N',
-                'mch_id' => '1288093001',
-                'nonce_str' => '6397efa100165',
-                'openid' => 'oOdvCvjvCG0FnCwcMdDD_xIODRO0',
-                'out_trade_no' => 'wxs167090166498470921',
-                'result_code' => 'SUCCESS',
-                'return_code' => 'SUCCESS',
-                'sign' => '125C56DE030A461E45D421E44C88BC30',
-                'time_end' => '20221213112118',
-                'total_fee' => '1',
-                'trade_type' => 'JSAPI',
-                'transaction_id' => '4200001656202212131458556229',
-              ),
-        )),
-         */
         $res = $this->dao->getWhere(['order_sn' => $data['order_sn']]);
         if($res->paid == 1){
             return true;
@@ -721,7 +694,15 @@ class StoreOrderOfflineRepository extends BaseRepository
 //                'id' => $order->order_id
 //            ]
 //        ], $order->mer_id);
-
+        if ($order->spread_uid) {
+            Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_pay_num', 'inc' => 1]);
+            Queue::push(UserBrokerageLevelJob::class, ['uid' => $order->spread_uid, 'type' => 'spread_money', 'inc' => $order->pay_price]);
+        }
+        app()->make(UserRepository::class)->update($order->uid, [
+            'pay_count' => Db::raw('pay_count+' . 1),
+            'pay_price' => Db::raw('pay_price+' . $order->pay_price),
+            //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
+        ]);
         // 创建分账账单
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
