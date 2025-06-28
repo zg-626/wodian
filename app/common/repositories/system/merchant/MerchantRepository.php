@@ -707,7 +707,14 @@ class MerchantRepository extends BaseRepository
     public function addMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
     {
         if ($integral <= 0) return;
-        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type')->find();
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,is_integral')->find();
+
+        if (!$merchant) {
+            return;
+        }
+        if($merchant->is_integral === 0){
+            return;
+        }
 
         app()->make(UserBillRepository::class)->incBill(0, 'mer_integral', $orderType, [
             'link_id' => $orderId,
