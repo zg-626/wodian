@@ -281,6 +281,22 @@ class Merchants extends BaseController
      * @author xaboy
      * @day 2020-03-31
      */
+    public function switchIntegral($id)
+    {
+        $is_integral = $this->request->param('is_integral', 0) == 1 ? 1 : 0;
+        if (!$this->repository->exists($id))
+            return app('json')->fail('数据不存在');
+        $this->repository->update($id, compact('is_integral'));
+        return app('json')->success('修改成功');
+    }
+
+    /**
+     * @param int $id
+     * @return mixed
+     * @throws DbException
+     * @author xaboy
+     * @day 2020-03-31
+     */
     public function switchClose($id)
     {
         $status = $this->request->param('status', 0) == 1 ? 1 : 0;

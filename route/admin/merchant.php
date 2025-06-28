@@ -126,6 +126,9 @@ Route::group(function () {
         Route::post('status/:id', '.Merchants/switchStatus')->name('systemMerchantsStatus')->option([
             '_alias' => '商户修改推荐',
         ]);
+        Route::post('integral/:id', '.Merchants/switchIntegral')->name('systemMerchantsIntegral')->option([
+            '_alias' => '商户修改积分开关',
+        ]);
         Route::post('close/:id', '.Merchants/switchClose')->name('systemMerchantsClose')->option([
             '_alias' => '商户开启/关闭',
         ]);

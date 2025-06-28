@@ -104,7 +104,7 @@ class MerchantRepository extends BaseRepository
                 'user',
                 'merchantType'
             ])
-            ->field('sort,mer_id,mer_name,real_name,mer_phone,mer_address,mark,status,create_time,is_best,is_trader,type_id,category_id,copy_product_num,export_dump_num,is_margin,margin,ot_margin,mer_avatar,margin_remind_time,province_id,city_id,district_id,salesman_id')->select();
+            ->field('sort,mer_id,mer_name,real_name,mer_phone,mer_address,mark,status,create_time,is_best,is_trader,type_id,category_id,copy_product_num,export_dump_num,is_margin,margin,ot_margin,mer_avatar,margin_remind_time,province_id,city_id,district_id,salesman_id,is_integral')->select();
         return compact('count', 'list');
     }
 
