@@ -485,7 +485,7 @@ class StoreOrderRepository extends BaseRepository
         $this->giveIntegral($groupOrder);
 
         $user = app()->make(UserRepository::class)->get($order['uid']);
-       // $storeOrder = $this->dao->getWhere(['order_no' => $tradeNo]);
+
         foreach ($groupOrder->orderList as $_k => $orders) {
             $orders->paid = 1;
             $orders->status = 3;
