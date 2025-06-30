@@ -600,6 +600,12 @@ class StoreOrderRepository extends BaseRepository
         $this->giveBrokerage($order['order_id'],$userBillRepository, $salesman, $extension_one, '【直推】'.$this->getSuperiorTitle($salesman->group_id));
 
         $processedUids = [$salesman['uid']]; // 记录已处理过佣金的用户ID
+        // 用户id黑名单
+        $userId=[327882,328691];
+        // 当前商务的信息，只发放一次
+        if(in_array($salesman['uid'],$userId)){
+            $processedUids[] = 327699;
+        }
 
         // 单独处理省市区代理商：根据商家所在省市区分配省市区代理商的佣金
         $processedUids[]=$this->distributeRegionalCommission($order['order_id'], $userRepository, $userBillRepository, $userGroupRepository, $merchant, $money, $processedUids);
@@ -641,7 +647,7 @@ class StoreOrderRepository extends BaseRepository
             }
 
             // 如果是大区经理，终止循环
-            if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
+            if ($superior && $superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
                 $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, $this->getSuperiorTitle($superior['group_id']));
                 // 记录已处理的用户ID
@@ -878,9 +884,9 @@ class StoreOrderRepository extends BaseRepository
                 // 查询所有已经处理过的用户分组信息,避免重复发放
                 //$processedGroups = User::whereIn('uid', $processedUids)->column('group_id');
                 // 用户id白名单
-                $userId=[327882,328691];
+                //$userId=327882;
                 // 如果已经处理过该分组的佣金，只发放一次
-                if (empty(array_intersect($processedUids, $userId))) {
+                //if (!in_array($userId, $processedUids, true)) {
                     // 如果是区域经理，发放佣金
                     if ($superior['group_id'] == self::USER_GROUP['REGIONAL_MANAGER']) {
                         Log::info('直属上级是区域经理');
@@ -891,7 +897,7 @@ class StoreOrderRepository extends BaseRepository
                         $superior = $userRepository->get($superior->superior_uid);
 
                         // 如果是大区经理
-                        if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
+                        if ($superior && $superior['group_id'] === self::USER_GROUP['AREA_MANAGER']) {
                             Log::info('直属上级是区域经理，上级是大区经理');
                             // 实时获取上级分组信息及比例
                             $superiorGroup = $userGroupRepository->get($superior['group_id']);
@@ -901,7 +907,8 @@ class StoreOrderRepository extends BaseRepository
                             $processedUids[] = $superior['uid'];
                         }
                     }
-                }
+
+                //}
 
             }
         }
@@ -1023,7 +1030,7 @@ class StoreOrderRepository extends BaseRepository
             }
 
             // 如果是大区经理，终止循环
-            if ($superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
+            if ($superior && $superior['group_id'] == self::USER_GROUP['AREA_MANAGER']) {
                 $superior_extension = bcmul($superiorGroup->extension/100, $money, 2);
                 $this->giveBrokerage($order['order_id'],$userBillRepository, $superior, $superior_extension, '大区经理推广佣金');
                 break;
