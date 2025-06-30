@@ -359,9 +359,9 @@ class BonusOfflineService extends BaseRepository
             $merchants = $this->getValidMerchants($pool);
 
             // 金额的60%为发放金额
-            $grand_amount = round($money * 0.5, 2);
+            $grand_amount = round($money * 0.6, 2);
             // 金额的40%为剩余金额
-            $deduct_amount = round($money * 0.5, 2);
+            $deduct_amount = round($money * 0.4, 2);
             // 计算分红金额
             $userBonus = $grand_amount * $this->userRatio;
             $merchantBonus = $grand_amount * $this->merchantRatio;
