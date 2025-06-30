@@ -78,7 +78,7 @@ class BonusOfflineService extends BaseRepository
                 // 非首次分红，判断是否达到当前周期的阈值且满足增长率
                 $shouldAmount = round($currentThreshold * $this->growthRate, 2);
                 if ($initialThreshold >=$shouldAmount) {
-                    $bonusAmount = round($initialThreshold - $currentThreshold, 2);
+                    $bonusAmount = round($shouldAmount - $currentThreshold, 2);// 根据额定增长率计算可分红金额，不按实际增长的金额计算
                 }
             }
 
@@ -174,6 +174,8 @@ class BonusOfflineService extends BaseRepository
         // 先计算每个用户的分红金额
         foreach ($users->toArray() as $user) {
             $bonus = round($user['integral'] * $totalBonus / $totalUserPoints, 2);
+            // 设置最低分红金额为0.01
+            $bonus = max(0.01, $bonus);
             $bonusAmounts[$user['uid']] = $bonus;
             $actualTotal += $bonus;
         }
@@ -212,6 +214,8 @@ class BonusOfflineService extends BaseRepository
         // 先计算每个商家的分红金额
         foreach ($merchants->toArray() as $merchant) {
             $bonus = round($merchant['integral'] * $totalBonus / $totalMerchantPoints, 2);
+            // 设置最低分红金额为0.01
+            $bonus = max(0.01, $bonus);
             $bonusAmounts[$merchant['mer_id']] = $bonus;
             $actualTotal += $bonus;
         }
@@ -343,18 +347,21 @@ class BonusOfflineService extends BaseRepository
     public function distributeBaseAmount($pool)
     {
         try {
-            if($pool['available_amount']<=0){
+            if($pool['available_amount']<=1){
                 return true;
             }
-
+            $money=$pool['available_amount'];
+            if ($pool['available_amount'] >=40000) {
+                $money=$pool['available_amount']-20000;
+            }
             // 获取参与分红的用户和商家
             $users = $this->getValidUsers($pool);
             $merchants = $this->getValidMerchants($pool);
 
             // 金额的60%为发放金额
-            $grand_amount = round($pool['available_amount'] * 0.6, 2);
+            $grand_amount = round($money * 0.5, 2);
             // 金额的40%为剩余金额
-            $deduct_amount = round($pool['available_amount'] * 0.4, 2);
+            $deduct_amount = round($money * 0.5, 2);
             // 计算分红金额
             $userBonus = $grand_amount * $this->userRatio;
             $merchantBonus = $grand_amount * $this->merchantRatio;
@@ -367,7 +374,7 @@ class BonusOfflineService extends BaseRepository
             $currentBaseAmount = $this->getCurrentBaseAmount($pool['id']);
 
             // 记录分红日志
-            $poolId = $this->recordDividendPeriod($grand_amount, $pool, $pool['grand_amount'],$grand_amount,$deduct_amount,$pool['available_amount'],1,1,1);
+            $poolId = $this->recordDividendPeriod($grand_amount, $pool, $pool['grand_amount'],$grand_amount,$deduct_amount,$money,$money,$deduct_amount,1);
             $this->recordDividendLog($poolId, $users, $merchants, $userBonusAmounts, $merchantBonusAmounts);
 
             // 更新分红池时需要保存最后一次的总金额作为新的基准
@@ -381,7 +388,7 @@ class BonusOfflineService extends BaseRepository
                 ->where('id', $pool['id'])
                 ->update([
                     'available_amount' => $deduct_amount,
-                    'grand_amount' => $available_amount,
+                    'grand_amount' => $deduct_amount,
                     //'initial_threshold' => $pool['total_amount'], //记录当前周期的初始阈值
                     'distributed_amount' => Db::raw('distributed_amount + ' . $grand_amount),
                     'update_time' => date('Y-m-d H:i:s')
