@@ -880,7 +880,7 @@ class StoreOrderRepository extends BaseRepository
                 // 用户id白名单
                 $userId=[327882,328691];
                 // 如果已经处理过该分组的佣金，只发放一次
-                if (empty(array_intersect($processedUids, $userId, true))) {
+                if (empty(array_intersect($processedUids, $userId))) {
                     // 如果是区域经理，发放佣金
                     if ($superior['group_id'] == self::USER_GROUP['REGIONAL_MANAGER']) {
                         Log::info('直属上级是区域经理');
