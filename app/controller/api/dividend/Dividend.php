@@ -99,7 +99,7 @@ class Dividend extends BaseController
 
             // 获取所有城市分红池
             $poolInfo = Db::name('dividend_pool')
-                ->where('city_id', '=', 20188)
+                ->where('city_id', '<>', 0)
                 ->select()
                 ->toArray();
 
