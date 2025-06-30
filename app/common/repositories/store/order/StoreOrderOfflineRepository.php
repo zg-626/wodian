@@ -495,7 +495,7 @@ class StoreOrderOfflineRepository extends BaseRepository
             $this->giveIntegral($order);
 
             // 赠送商户积分
-            $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+            $merchantRepository->addMerIntegral($order);
 
             // 所有身份赠送佣金
             /** @var StoreOrderRepository $storeOrderRepository */
@@ -671,7 +671,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $this->giveIntegral($order);
 
         // 赠送商户积分
-        $merchantRepository->addMerIntegral($order->mer_id, 'lock', $order->order_id, $order->give_integral);
+        $merchantRepository->addMerIntegral($order);
 
         // 所有身份赠送佣金
         /** @var StoreOrderRepository $storeOrderRepository */

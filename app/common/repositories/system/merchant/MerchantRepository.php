@@ -704,8 +704,12 @@ class MerchantRepository extends BaseRepository
 
     }
 
-    public function addMerIntegral(int $merId, string $orderType, int $orderId, float $integral)
+    public function addMerIntegral($order)
     {
+        $integral = $order->give_integral;
+        $merId = $order->mer_id;
+        $orderType='lock';
+        $orderId=$order->order_id;
         if ($integral <= 0) return;
         $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,is_integral')->find();
 
@@ -713,6 +717,8 @@ class MerchantRepository extends BaseRepository
             return;
         }
         if($merchant->is_integral === 0){
+            // 商户不开启积分时，给支付人增加积分
+            $this->giveIntegral($order);
             return;
         }
 
@@ -730,6 +736,25 @@ class MerchantRepository extends BaseRepository
 
         $this->dao->addIntegral($merId, $integral);
 
+    }
+
+    public function giveIntegral($offlineOrder,$type='线下门店')
+    {
+        if ($offlineOrder->give_integral > 0) {
+            $make = app()->make(UserRepository::class);
+            $user = $make->get($offlineOrder->uid);
+            $user->integral=$user->integral+$offlineOrder->give_integral;
+            $user->save();
+            app()->make(UserBillRepository::class)->incBill($offlineOrder->uid, 'integral', 'lock', [
+                'link_id' => $offlineOrder['order_id'],
+                'status' => 1,
+                'title' => $type.'消费，商户转移积分',
+                'number' => $offlineOrder->give_integral,
+                'mark' => '用户成功消费,增加积分' . $offlineOrder->give_integral,
+                //'mark' => '线下消费' . floatval($offlineOrder['pay_price']) . '元,赠送积分' . floatval($offlineOrder->give_integral),
+                'balance' => $offlineOrder->user->integral
+            ]);
+        }
     }
 
     public function addCommission(int $merId,  float $pay_price, $orderId)
