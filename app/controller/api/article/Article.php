@@ -13,6 +13,10 @@
 namespace app\controller\api\article;
 
 use app\common\dao\system\merchant\MerchantDao;
+use app\common\model\store\order\StoreOrder;
+use app\common\model\store\order\StoreOrderOffline;
+use app\common\model\system\merchant\Merchant;
+use app\common\model\user\UserBill;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
 use app\common\repositories\store\order\StoreOrderProfitsharingRepository;
@@ -36,6 +40,7 @@ use think\App;
 use app\common\repositories\article\ArticleRepository as repository;
 use crmeb\basic\BaseController;
 use think\exception\ValidateException;
+use think\facade\Db;
 use think\facade\Log;
 use think\facade\Queue;
 
@@ -302,11 +307,7 @@ class Article extends BaseController
 //
 //        // 获取商家绑定的上级信息
 
-        try {
-            $info = $userRepository->getMerchantInfo();
-        }catch (Exception $e) {
-            print_r($e->getMessage().$e->getLine());
-        }
+
 //
 //        // 如果商家上级是省级代理商，终止发放佣金
 //        //if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
@@ -323,8 +324,91 @@ class Article extends BaseController
 //        var_dump($extension_one);
         try {
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [1814]]);
-            $date = substr($order['lkl_log_date'], 0, 8);
+            //$order = StoreOrderOffline::where(['order_id' => 3569, 'paid' => 1])->find();
+            /*if($order->deduction > 0){
+                $totalPrice = $order->total_price;
+                $feeRate = $order->commission_rate; // 手续费率
+
+                // 平台手续费(根据总金额)
+                $platformFee = $order->handling_fee;
+                // 第三方实际手续费
+                $thirdPlatformFee = round((float)$order->pay_price * (float)$feeRate / 100,2);
+
+                // 用户实际支付金额（不能为负数）
+                $actualPayment = max($totalPrice - $order->deduction, 0);
+
+                // 计算平台补贴
+                if ($actualPayment > 0) {
+                    // 情况1：正常抵扣（实际支付 > 0）
+                    // 补贴 = 抵扣券金额 - (平台手续费 - 第三方实际手续费)
+                    // 即：补贴商家抵扣券金额，但扣除平台多承担的手续费部分
+                    $subsidyAdjustment = $platformFee - $thirdPlatformFee; // 平台多承担的手续费
+                    $subsidy = max($order->deduction - $subsidyAdjustment, 0);
+                } else {
+                    // 情况2：零元购（实际支付 = 0）
+                    // 补贴 = 抵扣券金额 - 手续费（确保手续费被覆盖）
+                    $subsidy = max($order->deduction - $platformFee, 0);
+                }
+
+                echo "补贴: ". $subsidy ."<br>";
+            }*/
+            /*$handling_fee = floatval($order->handling_fee);
+            $total_amount = bcmul((string)$handling_fee, "0.4", 2);
+            // 记录本次分红池,手续费的40%
+            try {
+                $poolInfo = Db::name('dividend_pool')->where('city_id', $order->city_id)->order('id', 'desc')->find();
+                Log::info('查询分红池');
+                if (!$poolInfo) {
+                    Log::info('创建分红池' . $order->city);
+                    // 第一次创建分红池记录
+                    Db::name('dividend_pool')->insert([
+                        'total_amount' => $total_amount,
+                        'available_amount' => $total_amount,
+                        'initial_threshold' => $total_amount,
+                        'distributed_amount' => 0,
+                        'city_id' => $order->city_id,
+                        'city' => $order->city,
+                        'create_time' => date('Y-m-d H:i:s'),
+                        'update_time' => date('Y-m-d H:i:s')
+                    ]);
+                } else {
+                    Log::info('更新分红池' . $poolInfo['id']);
+                    // 更新现有分红池
+                    Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
+                        'total_amount' => Db::raw('total_amount + ' . $total_amount),
+                        'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                        'initial_threshold' => Db::raw('initial_threshold + ' . $total_amount),
+                        'update_time' => date('Y-m-d H:i:s')
+                    ]);
+                }
+
+                // 分红池流水表
+                Db::name('dividend_pool_log')->insert([
+                    'order_id' => $order->order_id,
+                    'amount' => $total_amount,
+                    'handling_fee' => $handling_fee,
+                    'mer_id' => $order->mer_id,
+                    'uid' => $order->uid,
+                    'city' => $order->city,
+                    'city_id' => $order->city_id,
+                    'create_time' => date('Y-m-d H:i:s'),
+                    'remark' => '订单分红入池'
+                ]);
+            } catch (\Exception $e) {
+                Log::info('查询分红池失败' . $order->order_id . $e->getMessage().$e->getLine());
+            }*/
+            /*foreach ($order as $item) {
+                // 查询订单的城市信息
+                $merchant = Merchant::where('mer_id', $item->mer_id)->find();
+                //print_r($merchant);exit();
+                // 同步订单的城市信息
+                $item->city_id = $merchant['city_id'];
+                $item->city = $merchant['city'];
+                $item->province_id = $merchant['province_id'];
+                $item->province = $merchant['province'];
+                $item->save();
+            }*/
+            /*$date = substr($order['lkl_log_date'], 0, 8);
             $time = substr($order['lkl_log_date'], 8, 6);
             $param['tranDate'] = date('Ymd');
             $param['tranTime'] = date('his');
@@ -342,11 +426,13 @@ class Article extends BaseController
             ];
             $api = new \Lakala\LklApi();
             $result = $api::orderSettle($param);
-            print_r($result);exit();
+            print_r($result);exit();*/
             // 测试美团退款
             /** @var WaimaiRepositories $repository */
             $repository = app()->make(WaimaiRepositories::class);
-            //$result = $repository->refundLogic($order->order_sn.'520', $order->pay_price,$order->lkl_log_no);
+            //$store_order = StoreOrder::where('trade_no', 1929484805910286360)->find();
+            //$result = $repository->refundLogic('1929484805910286360', $store_order->pay_price,$store_order->lkl_log_no);
+            //print_r($result);exit();
             //print_r($result);
             //$user = app()->make(UserRepository::class)->get($order['uid']);
 //            if($order->deduction > 0){
@@ -368,7 +454,8 @@ class Article extends BaseController
 
                 $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction_money);
             }*/
-            //$storeOrderOfflineRepository->computeds($order);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [3715]]);
+            $storeOrderOfflineRepository->computeds($order);
             //$storeOrderOfflineRepository->red($order);
             //$info=$storeOrderOfflineRepository->paySuccess($order);
             //$storeOrderOfflineRepository->virtualDelivery($order);
@@ -430,6 +517,88 @@ class Article extends BaseController
             return app('json')->success($result);
 
 
+        } catch (Exception $e) {
+            return app('json')->fail($e->getMessage());
+        }
+    }
+
+    // 退款逻辑
+    public function refundLogic()
+    {
+        $order = StoreOrderOffline::where(['order_id' => 2668, 'paid' => 1])->select();
+
+        foreach ($order as $item) {
+            // 查询订单的城市信息
+            $merchant = Merchant::where('mer_id', $item->mer_id)->find();
+
+            // 拉卡拉退款参数
+            $params = [
+                'order_sn' => $item['order_sn'].'616',
+                'refund_amount' => $item['pay_price'],
+                'origin_log_no' => $item['origin_log_no'],
+                'merchant_no' => $merchant['merchant_no'],
+                'term_nos' => $merchant['term_nos'],
+                'trans_type' => 51,
+            ];
+            $api = new \Lakala\LklApi();
+            $result = $api::lklRefund($params);
+            if (!$result) {
+                record_log('拉卡拉退款异常: ' . $api->getErrorInfo(), 'lakl_refund_error');
+                //return app('json')->fail($api->getErrorInfo());
+            }
+
+        }
+
+        return true;
+
+    }
+
+    // 计算订单剩下的佣金
+    public function computeCommission()
+    {
+        try {
+            // 某个城市的订单数据，平台佣金=handling_fee*0.6
+            $orders = StoreOrderOffline::where(['paid' => 1, 'city_id' => 20188])->where('pay_price', '>', 0)->where('handling_fee', '>', 0)->where('create_time', '>=', '2025-05-01 00:00:00')
+                ->field('order_id, handling_fee, create_time,pay_price')
+                ->select();
+
+            $monthlyEarnings = [];
+            $totalEarnings = 0;
+
+            foreach ($orders as $item) {
+                // 计算平台收益，保留两位小数
+                $platformRevenue = round($item['handling_fee'] * 0.6, 2);
+
+                // 获取该订单关联的佣金支出记录，添加 category 条件
+                $userBill = UserBill::where(['link_id' => $item['order_id']])
+                    ->whereNotIn('category', ['sys_members', 'now_money', 'mer_integral', 'integral'])
+                    ->field('number')
+                    ->select()
+                    ->toArray();
+
+                // 计算总支出，保留两位小数
+                $totalExpense = round(array_sum(array_column($userBill, 'number')), 2);
+
+                // 计算该订单的实际收益，保留两位小数
+                $actualRevenue = round($platformRevenue - $totalExpense, 2);
+
+                // 获取订单创建的月份
+                $month = date('Y-m', strtotime($item['create_time']));
+
+                // 累加每月收益
+                if (!isset($monthlyEarnings[$month])) {
+                    $monthlyEarnings[$month] = 0;
+                }
+                $monthlyEarnings[$month] = round($monthlyEarnings[$month] + $actualRevenue, 2);
+
+                // 累加总收益，保留两位小数
+                $totalEarnings = round($totalEarnings + $actualRevenue, 2);
+            }
+
+            return app('json')->success([
+                'monthly_earnings' => $monthlyEarnings,
+                'total_earnings' => $totalEarnings
+            ]);
         } catch (Exception $e) {
             return app('json')->fail($e->getMessage());
         }
