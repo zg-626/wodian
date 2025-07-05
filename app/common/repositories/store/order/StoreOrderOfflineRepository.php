@@ -1254,6 +1254,13 @@ class StoreOrderOfflineRepository extends BaseRepository
             ->order('order_id desc');
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
+        foreach ($list as $k => $v) {
+            if($list[$k]['pay_type'] == 'routine'){
+                $list[$k]['pay_type']=1;
+            }else{
+                $list[$k]['pay_type']=4;
+            }
+        }
         return compact('count', 'list');
     }
 
