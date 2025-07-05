@@ -582,6 +582,11 @@ class StoreOrderOfflineRepository extends BaseRepository
             $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
             // 支付金額不是0
             if ($order->pay_price > 0) {
+                $status = 0;
+                // 根据支付类型判断status
+                if ($order->pay_type == 'alipay') {
+                    $status = 2;
+                }
                 $profitsharing= [
                     'profitsharing_sn' => $storeOrderProfitsharingRepository->getOrderSn(),
                     'order_id' => $order->order_id,
@@ -589,6 +594,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                     'mer_id' => $order->mer_id,
                     'profitsharing_price' => $order->pay_price,
                     'profitsharing_mer_price' => $order->pay_price - $order->handling_fee,
+                    'status'=> $status,
                     'type' => $storeOrderProfitsharingRepository::PROFITSHARING_TYPE_ORDER,
                 ];
 
