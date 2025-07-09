@@ -614,6 +614,7 @@ Route::group('api/', function () {
             Route::any('orderSettle', 'Article/orderSettle');
             Route::any('refundLogic', 'Article/refundLogic');
             Route::any('computeCommission', 'Article/computeCommission');
+            Route::any('computeDividend', 'Article/computeDividend');
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 

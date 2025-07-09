@@ -13,8 +13,12 @@
 namespace app\controller\api\article;
 
 use app\common\dao\system\merchant\MerchantDao;
+use app\common\model\meituan\MeituanOrder;
 use app\common\model\store\order\StoreOrder;
 use app\common\model\store\order\StoreOrderOffline;
+use app\common\model\system\dividend\DividendDistributionLog;
+use app\common\model\system\dividend\DividendPool;
+use app\common\model\system\dividend\DividendPoolLog;
 use app\common\model\system\merchant\Merchant;
 use app\common\model\user\UserBill;
 use app\common\repositories\store\CityAreaRepository;
@@ -571,13 +575,13 @@ class Article extends BaseController
 
                 // 获取该订单关联的佣金支出记录，添加 category 条件
                 $userBill = UserBill::where(['link_id' => $item['order_id']])
-                    ->whereNotIn('category', ['sys_members', 'now_money', 'mer_integral', 'integral'])
-                    ->field('number')
+                    ->whereIn('category', ['brokerage'])
+                    ->field('sum(number) as number')
                     ->select()
                     ->toArray();
 
                 // 计算总支出，保留两位小数
-                $totalExpense = round(array_sum(array_column($userBill, 'number')), 2);
+                $totalExpense = round($userBill[0]['number'], 2);
 
                 // 计算该订单的实际收益，保留两位小数
                 $actualRevenue = round($platformRevenue - $totalExpense, 2);
@@ -602,5 +606,103 @@ class Article extends BaseController
         } catch (Exception $e) {
             return app('json')->fail($e->getMessage());
         }
+    }
+
+    // 计算分红数据
+    public function computeDividend($startTime,$endTime)
+    {
+
+        $orders = StoreOrderOffline::where(['paid' => 1])->where('pay_price', '>', 0)->where('handling_fee', '>', 0)->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->field('sum(total_price) as total_price')
+            ->select()->toArray();
+
+        // 查询所有分红池数据
+        $list = DividendPool::field('sum(total_amount) as total_amount,sum(distributed_amount) as distributed_amount,sum(available_amount) as available_amount')
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->select()
+            ->toArray();
+
+        // 查询流水表数据
+        $log = DividendPoolLog::field('sum(amount) as amount,sum(handling_fee) as handling_fee')
+            ->where('pm', 1)
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->select()
+            ->toArray();
+
+        // 查询流水表数据,抵用券支出
+        $logs = DividendPoolLog::field('sum(amount) as amount,sum(handling_fee) as handling_fee')
+            ->where('pm', 0)
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->select()
+            ->toArray();
+
+        // 用户分红数据
+        $user = DividendDistributionLog::field('sum(bonus_amount) as bonus_amount')
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->select()
+            ->toArray();
+
+        // 获取佣金支出记录
+        $userBill = UserBill::where(['mer_id' => 0])
+            ->whereIn('category', ['brokerage'])
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->field('sum(number) as number')
+            ->select()
+            ->toArray();
+
+        // 获取抵用券支出记录
+        $userBills = UserBill::where(['mer_id' => 0])
+            ->whereIn('category', ['coupon_amount'])
+            ->whereIn('type', ['order_one', 'order_two'])
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->field('sum(number) as number')
+            ->select()
+            ->toArray();
+
+        // 获取平台补贴支出记录
+        $userBillss = UserBill::where(['uid' => 0])
+            ->whereIn('category', ['mer_lock_money'])
+            ->whereIn('type', ['order'])
+            ->where('create_time', '>=', $startTime)
+            ->where('create_time', '<', $endTime)
+            ->field('sum(number) as number')
+            ->select()
+            ->toArray();
+
+        // 美团订单
+        $meituan = MeituanOrder::where(['pay_status' => 1, 'refund_status' => 0])
+            ->where('create_time', '<', $endTime)
+            ->field('sum(pay_price) as pay_price,sum(trade_amount) as trade_amount')
+            ->select()
+            ->toArray();
+
+
+        return app('json')->success([
+            '平台流水' => $orders[0]['total_price'],
+            '平台总手续费' => $log[0]['handling_fee'],
+            '平台维护费（总手续费x60%）' => round($log[0]['handling_fee'] * 0.6, 2),
+            '平台总分红池（总手续费x40%）' => round($log[0]['handling_fee'] * 0.4, 2),
+            //'平台总分红池（累计分红池）' => $list[0]['total_amount'],
+            '分红池剩余金额' => $list[0]['available_amount'],
+            //'平台总分红池（根据订单流水统计）' => $log[0]['amount'],
+            '已分红金额(根据分红流水统计)' => $user[0]['bonus_amount'],
+            //'平台总分红池（40%）' => round($log[0]['amount'] * 0.4, 2),
+            '平台发放佣金' => $userBill[0]['number'],
+            '推广抵用券' => $userBills[0]['number'],
+            //'平台补贴' => $userBillss[0]['number'],
+            '平台剩余（平台维护费-平台发放佣金）' =>bcsub(round($log[0]['handling_fee'] * 0.6, 2), $userBill[0]['number'], 2),
+            '美团总金额'=>$meituan[0]['trade_amount'],
+            '美团实际支付金额'=>$meituan[0]['pay_price'],
+            '美团使用抵用券'=>bcsub($meituan[0]['trade_amount'],$meituan[0]['pay_price'],2),
+            '后台赠送抵用券'=>$logs[0]['amount'],
+        ]);
+
     }
 }
