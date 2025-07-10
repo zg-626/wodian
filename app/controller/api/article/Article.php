@@ -614,7 +614,7 @@ class Article extends BaseController
 
         $orders = StoreOrderOffline::where(['paid' => 1])->where('pay_price', '>', 0)->where('handling_fee', '>', 0)->where('create_time', '>=', $startTime)
             ->where('create_time', '<', $endTime)
-            ->field('sum(total_price) as total_price')
+            ->field('sum(total_price) as total_price,sum(handling_fee) as handling_fee')
             ->select()->toArray();
 
         // 查询所有分红池数据
@@ -683,12 +683,13 @@ class Article extends BaseController
             ->select()
             ->toArray();
 
+        $handling_fee=$orders[0]['handling_fee'];
 
         return app('json')->success([
             '平台流水' => $orders[0]['total_price'],
-            '平台总手续费' => $log[0]['handling_fee'],
-            '平台维护费（总手续费x60%）' => round($log[0]['handling_fee'] * 0.6, 2),
-            '平台总分红池（总手续费x40%）' => round($log[0]['handling_fee'] * 0.4, 2),
+            '平台总手续费' => $handling_fee,
+            '平台维护费（总手续费x60%）' => round($handling_fee * 0.6, 2),
+            '平台总分红池（总手续费x40%）' => round($handling_fee * 0.4, 2),
             //'平台总分红池（累计分红池）' => $list[0]['total_amount'],
             '分红池剩余金额' => $list[0]['available_amount'],
             //'平台总分红池（根据订单流水统计）' => $log[0]['amount'],
@@ -697,7 +698,7 @@ class Article extends BaseController
             '平台发放佣金' => $userBill[0]['number'],
             '推广抵用券' => $userBills[0]['number'],
             //'平台补贴' => $userBillss[0]['number'],
-            '平台剩余（平台维护费-平台发放佣金）' =>bcsub(round($log[0]['handling_fee'] * 0.6, 2), $userBill[0]['number'], 2),
+            '平台剩余（平台维护费-平台发放佣金）' =>bcsub(round($handling_fee * 0.6, 2), $userBill[0]['number'], 2),
             '美团总金额'=>$meituan[0]['trade_amount'],
             '美团实际支付金额'=>$meituan[0]['pay_price'],
             '美团使用抵用券'=>bcsub($meituan[0]['trade_amount'],$meituan[0]['pay_price'],2),
