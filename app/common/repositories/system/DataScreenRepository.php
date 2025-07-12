@@ -15,6 +15,7 @@ namespace app\common\repositories\system;
 use app\common\dao\store\order\StoreOrderDao;
 use app\common\model\store\order\StoreGroupOrder;
 use app\common\model\store\order\StoreOrder;
+use app\common\model\user\User;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreGroupOrderRepository;
@@ -219,61 +220,74 @@ class DataScreenRepository extends BaseRepository
      */
     public function today_pay_new_old($params = [])
     {
-        return $this->cache(function() use($params) {
-//            $new_number = 0;
-//            $old_number = 0;
-
+        // 缓存键名，用于存储模拟用户数据
+        $cache_key = $this->cache_key . '_mock_user_count';
+        
+        // 获取真实用户数据
+        $real_data = $this->cache(function() use($params) {
+            // 获取今日新用户数量
             $newQuery = StoreGroupOrder::alias('g')
                 ->join('user u','u.uid = g.uid')
                 ->where('paid',1)
                 ->whereDay('g.create_time')
                 ->whereDay('u.create_time')
-//                ->field("sum(g.pay_price + g.pay_postage) as number,g.uid")
                 ->group('g.uid');
             $new_count = $newQuery->count();
 
-//            if ($new_count) {
-//                $newList = $newQuery->select()->toArray();
-//                $_number = array_column($newList,'number');
-//                $new_number = array_reduce($_number, function($sum, $value) {
-//                    return bcadd($sum,$value,2);
-//                });
-//            }
-
+            // 获取今日老用户数量
             $oldQuery = StoreGroupOrder::alias('g')
                 ->join('user u','u.uid = g.uid')
                 ->where('paid',1)
                 ->whereDay('g.create_time')
                 ->whereTime('u.create_time','<',date('Y-m-d'))
-//                ->field("sum(g.pay_price + g.pay_postage) as number,g.uid")
                 ->group('g.uid');
-
             $old_count = $oldQuery->count();
-
-//            if ($old_count) {
-//                $oldList = $oldQuery->select()->toArray();
-//                $_number = array_column($oldList,'number');
-//                $old_number = array_reduce($_number, function($sum, $value) {
-//                    return bcadd($sum,$value,2);
-//                });
-//            }
-//            $count = $new_count + $old_count;
-//            $number = bcadd($new_number,$old_number,2);
-            $today_pay_new_old = [
-//                'new_number' => $new_number,
-                //'new_count' => $new_count,
-                'new_count' => 9632,
-//                'new_rate_count' => $new_count > 0 ? (int)bcdiv($new_count,$count,2) * 100 : 0,
-//                'new_rate_number'=> $new_number > 0 ? (int)bcdiv($new_number,$number,2) * 100 : 0,
-
-//                'old_number' => $old_number,
-                //'old_count' => $old_count,
-                'old_count' => 5368,
-//                'old_rate_count'=> $old_count > 0 ? (int)bcdiv($old_count,$count,2) * 100 : 0,
-//                'old_rate_number'=> $new_number > 0 ? (int)bcdiv($old_number,$number,2) * 100 : 0,
+            
+            // 获取系统总用户数
+            $total_users = (new \app\common\model\user\User)->whereNull('cancel_time')->count();
+            
+            return [
+                'new_count' => $new_count,
+                'old_count' => $old_count,
+                'total_users' => $total_users+systemConfig('sys_data_user_add')
             ];
-            return $today_pay_new_old;
         });
+        
+        // 获取缓存中的模拟用户数据，如果不存在则初始化
+        $mock_data = Cache::get($cache_key);
+        if (!$mock_data) {
+            // 初始化模拟数据，基于真实用户数据
+            $mock_data = [
+                'new_count' => $real_data['new_count'] + mt_rand(10, 50),
+                'old_count' => $real_data['old_count'] + mt_rand(50, 200),
+                'last_access_time' => time()
+            ];
+        } else {
+            // 每次访问增加用户数
+            $time_diff = time() - $mock_data['last_access_time'];
+            // 根据时间差增加不同数量的用户，最少增加1个
+            $increment = max(1, intval($time_diff / 60)); // 每分钟至少增加1个用户
+            
+            // 70%概率增加老用户，30%概率增加新用户
+            if (mt_rand(1, 10) <= 7) {
+                $mock_data['old_count'] += $increment;
+            } else {
+                $mock_data['new_count'] += $increment;
+            }
+            
+            $mock_data['last_access_time'] = time();
+        }
+        
+        // 更新缓存，有效期7天
+        Cache::set($cache_key, $mock_data, 24 * 3600 * 7);
+        
+        // 合并真实数据和模拟数据
+        $today_pay_new_old = [
+            'new_count' => $mock_data['new_count'],
+            'old_count' => $mock_data['old_count']
+        ];
+        
+        return $today_pay_new_old;
     }
 
     /**
