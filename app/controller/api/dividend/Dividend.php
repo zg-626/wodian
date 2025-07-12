@@ -124,7 +124,8 @@ class Dividend extends BaseController
                                 $this->recordExecuteLog(2, $infoCycle['bonus_amount'], $pool['id']);
                                 record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红: ' . json_encode($infoCycle, JSON_UNESCAPED_UNICODE) . '奖池id' . $pool['id'], 'red');
                             } else {
-                                // 处理正常执行但没有分红的情况
+                                // 处理正常执行但没有分红的情况，仍然记录执行日期
+                                $this->recordExecuteLog(2, 0, $pool['id']); // 记录执行日期，金额为0
                                 record_log('时间: ' . date('Y-m-d H:i:s') . ', 系统周期分红计算无结果或无金额: 奖池id' . $pool['id'], 'red_error');
                             }
                         }
