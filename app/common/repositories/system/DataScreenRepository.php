@@ -524,25 +524,57 @@ class DataScreenRepository extends BaseRepository
     public function today_pay_info($params = [])
     {
         return $this->cache(function() use($params) {
-            /** @var StoreOrderProductRepository $storeOrderProductRepository */
-            /*$storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
-            $today_pay_info = $storeOrderProductRepository->getProductRate(0, 'today', 'paytime', 10, false);*/
-            // 线下订单
+            // 获取线上订单数据
+            $storeOrderProductRepository = app()->make(StoreOrderProductRepository::class);
+            $onlineOrders = $storeOrderProductRepository->getProductRate(0, 'week', 'paytime', 10, false)->toArray();
+
+            // 处理线上订单中product为null的情况
+            $onlineOrders = array_map(function($item) {
+                if (is_null($item['product'])) {
+                    $item['product'] = [
+                        'product_id' => 0,
+                        'store_name' => '消费',
+                        'image' => ''
+                    ];
+                }else{
+                    $item['product'] = [
+                        'store_name' => '消费',
+                    ];
+                }
+                return $item;
+            }, $onlineOrders);
+
+            // 获取线下订单数据
             $storeOrderOfflineRepository = app()->make(StoreOrderOfflineRepository::class);
-            $where = ['type', 'date', 'mer_id', 'keywords', 'status', 'username', 'order_sn', 'is_trader', 'activity_type', 'group_order_sn', 'store_name', 'spread_name', 'top_spread_name', 'filter_delivery', 'filter_product'];
+            $where = [
+                'type', 'date', 'mer_id', 'keywords', 'status', 'username', 'order_sn',
+                'is_trader', 'activity_type', 'group_order_sn', 'store_name',
+                'spread_name', 'top_spread_name', 'filter_delivery', 'filter_product'
+            ];
             $where['pay_type'] = '';
             $where['status'] = 2;
-            $where['date'] = 'today';// 日期格式：2025/05/31-2025/05/31
-            // 获取订单数据
-            $today_pay_info = $storeOrderOfflineRepository->adminGetList($where, 1, 10)['list']->toArray();
-            foreach ($today_pay_info as &$item) {
-                $item['paytime'] = $item['pay_time'];
-                $item['number'] = $item['total_price']?? '';
-                $item['product'] = [
-                    'store_name'=>'消费'
+            $where['date'] = 'today';
+
+            $offlineOrders = $storeOrderOfflineRepository->adminGetList($where, 1, 10)['list']->toArray();
+
+            // 统一格式化线下订单数据结构
+            $formattedOfflineOrders = array_map(function($item) {
+                return [
+                    'paytime' => $item['pay_time'],
+                    'number' => $item['total_price'] ?? '',
+                    'product' => ['store_name' => '消费'],
+                    'order_id' => $item['order_id'],
+                    'mer_id' => $item['mer_id'],
+                    // 保留其他可能需要的数据
+                    'create_time' => $item['create_time'] ?? null,
+                    'product_id' => null // 线下订单没有product_id
                 ];
-            }
-            // 获取模拟数据
+            }, $offlineOrders);
+
+            // 合并线上和线下订单
+            $today_pay_info = array_merge($onlineOrders, $formattedOfflineOrders);
+
+            // 获取模拟数据并合并
             $getMockData = $this->getMockData();
             $today_pay_info = array_merge($today_pay_info, $getMockData);
 
@@ -550,6 +582,7 @@ class DataScreenRepository extends BaseRepository
             usort($today_pay_info, function($a, $b) {
                 return strtotime($b['paytime']) - strtotime($a['paytime']);
             });
+
             return $today_pay_info;
         });
     }
