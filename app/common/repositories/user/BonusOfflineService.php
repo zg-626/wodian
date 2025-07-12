@@ -131,7 +131,7 @@ class BonusOfflineService extends BaseRepository
             ];
 
         } catch (\Exception $e) {
-            Log::error('周期分红任务执行失败：' . $e->getMessage());
+            Log::error('周期分红任务执行失败：' . $e->getMessage(). '，文件：'. $e->getFile(). '，行号：'. $e->getLine());
             return false; // 明确返回 false 表示执行失败
         }
     }
