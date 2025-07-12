@@ -943,7 +943,7 @@ class LklApi
             'log_date' => $param['lkl_log_date'],
         ];
 
-        record_log('Time: ' . date('Y-m-d H:i:s') . ', 可分账金额查询请求参数: ' . json_encode($sepParam), 'lkl');
+        record_log('Time: ' . date('Y-m-d H:i:s') . ', 可分账金额查询请求参数: ' . json_encode($sepParam), 'queryAmt');
 
         $config = new Configuration();
         $api = new LakalaApi($config);
