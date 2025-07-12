@@ -379,19 +379,23 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function lklSeparate($param, $can_separate_amt, $res): void
     {
         // 平台抽取的费用
-        $handling_fee = (float)bcmul($res->handling_fee, 100, 0);
-        // 总金额-分账金额>0时
-        if($can_separate_amt - $handling_fee>0){
+        //$handling_fee = (float)bcmul($res->handling_fee, 100, 0);
+        // 实际支付金额收取的手续费
+        $handling_fee = (float)bcmul(
+            ($res->pay_price * $res->commission_rate) / 100,
+            100, // 转换为分
+            0    // 小数位数
+        );
+        // 总金额>0时
+        if($can_separate_amt >0){
             $param['can_separate_amt'] = $can_separate_amt;
             $param['recv_datas'] = [
                 [
                     'recv_merchant_no' => $param['lkl_mer_cup_no'],
-                    //'separate_value' => $can_separate_amt - $handling_fee
                     'separate_value' => 1-($res['commission_rate']/100)
                 ],
                 [
                     'recv_no' =>'SR2024000078730' ,// TODO 拉卡拉分账接收方
-                    //'separate_value' => $handling_fee
                     'separate_value' => $res['commission_rate']/100
                 ]
             ];
