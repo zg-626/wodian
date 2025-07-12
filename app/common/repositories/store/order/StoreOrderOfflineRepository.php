@@ -475,7 +475,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 // 发放补贴给商家
                 $merchantRepository->addOlllineMoney(
                     $order->mer_id,
-                    'order',
+                    'dividend',
                     $order->order_id,
                     $subsidy
                 );
@@ -670,7 +670,7 @@ class StoreOrderOfflineRepository extends BaseRepository
         $merchantRepository=app()->make(MerchantRepository::class);
         // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
         if($order->deduction > 0){
-            $merchantRepository->addOlllineMoney($order->mer_id, 'order', $order->order_id, $order->deduction);
+            $merchantRepository->addOlllineMoney($order->mer_id, 'dividend', $order->order_id, $order->deduction);
         }
 
         // 赠送积分

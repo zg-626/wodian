@@ -689,18 +689,21 @@ class MerchantRepository extends BaseRepository
     public function addOlllineMoney(int $merId, string $orderType, int $orderId, float $money)
     {
         if ($money <= 0) return;
-        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,mer_money')->find();
-            app()->make(UserBillRepository::class)->incBill(0, 'mer_lock_money', $orderType, [
+        $merchant = $this->dao->search(['mer_id' => $merId])->field('mer_id,integral,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,coupon_amount')->find();
+            app()->make(UserBillRepository::class)->incBill(0, 'coupon_amount', $orderType, [
                 'link_id' => $orderId,
                 'mer_id' => $merId,
                 'status' => 1,
-                'title' => '平台补贴，给商户发放余额',
+                'title' => '平台补贴，给商户发放抵用券',
                 'number' => $money,
-                'mark' => '平台补贴，给商户发放余额',
-                'balance' => $merchant->mer_money+$money
+                'mark' => '平台补贴，给商户发放抵用券',
+                'balance' => $merchant->coupon_amount+$money
             ]);
 
-            $this->dao->addMoney($merId, $money);
+            $merchant->coupon_amount += $money;
+            $merchant->save();
+
+            //$this->dao->addMoney($merId, $money);
 
     }
 
