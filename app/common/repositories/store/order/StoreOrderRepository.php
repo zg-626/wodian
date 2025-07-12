@@ -232,6 +232,9 @@ class StoreOrderRepository extends BaseRepository
             foreach ($groupOrder->orderList as $_k => $order) {
                 $order->paid = 1;
                 $order->pay_time = $time;
+                // 赠送商户积分
+                //$this->giveMerIntegral($order->mer_id,$groupOrder);
+                app()->make(MerchantRepository::class)->addMerIntegral($order);
                 $svipDiscount = bcadd($order->svip_discount, $svipDiscount, 2);
                 if (isset($subOrders[$order->order_sn])) {
                     $order->transaction_id = $subOrders[$order->order_sn]['transaction_id'];
@@ -435,9 +438,6 @@ class StoreOrderRepository extends BaseRepository
             ]);
             // 赠送积分
             $this->giveIntegral($groupOrder,'线上');
-            // 赠送商户积分
-            //$this->giveMerIntegral($order->mer_id,$groupOrder);
-            app()->make(MerchantRepository::class)->addMerIntegral($order->mer_id, 'lock', $order->order_id, $groupOrder->give_integral);
             // 代理赠送佣金 TODO  有bug需要修复
             $this->addCommission($order->mer_id,$groupOrder);
             if (count($profitsharing)) {
