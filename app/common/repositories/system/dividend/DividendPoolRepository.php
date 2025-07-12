@@ -49,33 +49,39 @@ class DividendPoolRepository extends BaseRepository
         $count = $query->count();
         $list = $query->page($page, $limit)->select();
         foreach ($list as &$item) {
-            $initial_threshold = $item['initial_threshold'];// 当前最新累计金额
+            $current_amount = $item['initial_threshold']; // 当前最新累计金额
             // 获取当前最新周期数据
             $lastInfo=DividendPeriodLog::where('dp_id',$item['id'])->where('execute_type',2)->order('id desc')->field('next_threshold,initial_threshold')->find();
             if($lastInfo){
-                $last_next_threshold=$lastInfo['next_threshold'];// 下一个周期应该达到的金额
-                $item['initial_threshold'] = $lastInfo['initial_threshold'];// 上期开始的金额
-                if($last_next_threshold>$initial_threshold){
-                    // 差值
-                    $item['difference'] = bcsub($last_next_threshold,$initial_threshold,2);
-                    // 计算抹平差值的流水
-                    $item['water'] = round($item['difference']/0.4/0.2,2);
-                }else{
+                $target_amount = $lastInfo['next_threshold'];
+                $start_amount = $lastInfo['initial_threshold']; // 新增：获取开始值
+
+                if($target_amount > $current_amount){
+                    $item['difference'] = bcsub($target_amount, $current_amount, 2);
+                    $item['water'] = round($item['difference']/0.08, 2);
+
+                    // 新增：进度信息
+                    $item['total_difference'] = bcsub($target_amount, $start_amount, 2); // 总需要增加
+                    $item['completed'] = bcsub($current_amount, $start_amount, 2); // 已完成部分
+                    $item['progress_rate'] = round($item['completed']/$item['total_difference']*100, 2); // 完成百分比
+                } else {
                     $item['difference'] = 0;
+                    $item['water'] = 0;
+                    $item['total_difference'] = 0;
+                    $item['completed'] = bcsub($target_amount, $start_amount, 2);
+                    $item['progress_rate'] = 100;
                 }
             }else{
-                $new_amount = systemConfig('sys_red_money')??10000;
-                $item['initial_threshold'] = $new_amount;
-                if($new_amount>$initial_threshold){
+                $target_amount = systemConfig('sys_red_money')??10000;
+                if($target_amount > $current_amount){
                     // 差值
-                    $item['difference'] = bcsub($new_amount,$initial_threshold,2);
+                    $item['difference'] = bcsub($target_amount, $current_amount, 2);
                     // 计算抹平差值的流水
-                    $item['water'] = round($item['difference']/0.4/0.2,2);
+                    $item['water'] = round($item['difference']/0.4/0.2, 2);
                 }else{
                     $item['difference'] = 0;
                 }
             }
-
         }
         return compact('count', 'list');
     }
