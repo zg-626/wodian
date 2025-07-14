@@ -479,7 +479,7 @@ class StoreOrderOfflineRepository extends BaseRepository
                 // 发放补贴给商家
                 $merchantRepository->addOlllineMoney(
                     $order->mer_id,
-                    'dividend',
+                    'order',
                     $order->order_id,
                     $subsidy
                 );
