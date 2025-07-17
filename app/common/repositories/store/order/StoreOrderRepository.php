@@ -2509,69 +2509,72 @@ class StoreOrderRepository extends BaseRepository
                 if($meituanArray){
                     $order['meituanArray'] = $meituanArray;
                     // 组装orderProduct
-                    $order['orderProduct'] = [[
-                        'cart_info'=>[
-                            'product'=>[
-                                'store_name' => $meituanArray['goodsName'],
-                                'price' => $meituanArray['tradeAmount'],
-                                'product_id' => 291,
-                                'cate_id' => 364,
-                                'image' => 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
-                                'is_show' => 1,
-                                'status' => 1,
-                                'is_del' => 0,
-                                'unit_name' => '把',
-                                'mer_status' => 1,
-                                'temp_id' => 0,
-                                'give_coupon_ids' => [],
-                                'is_gift_bag' => 0,
-                                'is_used' => 1,
-                                'product_type' => 0,
-                                'old_product_id' => 0,
-                                'integral_rate' => -1,
-                                'delivery_way' => '2',
-                                'delivery_free' => 1,
-                                'type' => 0,
-                                'extend' => '',
-                                'pay_limit' => 0,
-                                'once_max_count' => 0,
-                                'once_min_count' => 0,
-                                'mer_svip_status' => 1,
-                                'svip_price_type' => 0,
-                                'refund_switch' => 1,
-                                'mer_form_id' => 0,
-                                'temp' => null
-                            ],
-                            'productAttr'=>[
-                                'image' => $meituanArray['image'] ?? 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
-                                'price' => $meituanArray['tradeAmount'],
-                                'value_id' => 2780,
-                                'extension_one' => '0.00',
-                                'extension_two' => '0.00',
-                                'product_id' => 292,
-                                'stock' => 100,
-                                'unique' => '1022e08a8a50',
-                                'sku' => '美团订单',
-                                'volume' => '0.00',
-                                'weight' => '0.00',
-                                'ot_price' => '0.00',
-                                'cost' => '0.00',
-                                'svip_price' => '0.00',
-                                'show_svip_price' => false,
-                                'bc_extension_one' => 0,
-                                'bc_extension_two' => 0,
-                                'product' =>[
+                    $order['orderProduct'] = [
+                        [
+                            'product_num' => 1,
+                            'cart_info'=>[
+                                'product'=>[
+                                    'store_name' => $meituanArray['goodsName'],
+                                    'price' => $meituanArray['tradeAmount'],
                                     'product_id' => 291,
-                                ]
-                            ],
-                            'product_type' => 0,
-                            'refund_switch' => 1,
-                            'create_time' => '2023-09-14 17:38:06',
-                            'deduction' => 0,
-                            'deduction_price' => 0,
-                            'deduction_total' => 0,
+                                    'cate_id' => 364,
+                                    'image' => 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
+                                    'is_show' => 1,
+                                    'status' => 1,
+                                    'is_del' => 0,
+                                    'unit_name' => '把',
+                                    'mer_status' => 1,
+                                    'temp_id' => 0,
+                                    'give_coupon_ids' => [],
+                                    'is_gift_bag' => 0,
+                                    'is_used' => 1,
+                                    'product_type' => 0,
+                                    'old_product_id' => 0,
+                                    'integral_rate' => -1,
+                                    'delivery_way' => '2',
+                                    'delivery_free' => 1,
+                                    'type' => 0,
+                                    'extend' => '',
+                                    'pay_limit' => 0,
+                                    'once_max_count' => 0,
+                                    'once_min_count' => 0,
+                                    'mer_svip_status' => 1,
+                                    'svip_price_type' => 0,
+                                    'refund_switch' => 1,
+                                    'mer_form_id' => 0,
+                                    'temp' => null
+                                ],
+                                'productAttr'=>[
+                                    'image' => $meituanArray['image'] ?? 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
+                                    'price' => $meituanArray['tradeAmount'],
+                                    'value_id' => 2780,
+                                    'extension_one' => '0.00',
+                                    'extension_two' => '0.00',
+                                    'product_id' => 292,
+                                    'stock' => 100,
+                                    'unique' => '1022e08a8a50',
+                                    'sku' => '美团订单',
+                                    'volume' => '0.00',
+                                    'weight' => '0.00',
+                                    'ot_price' => '0.00',
+                                    'cost' => '0.00',
+                                    'svip_price' => '0.00',
+                                    'show_svip_price' => false,
+                                    'bc_extension_one' => 0,
+                                    'bc_extension_two' => 0,
+                                    'product' =>[
+                                        'product_id' => 291,
+                                    ]
+                                ],
+                                'product_type' => 0,
+                                'refund_switch' => 1,
+                                'create_time' => '2023-09-14 17:38:06',
+                                'deduction' => 0,
+                                'deduction_price' => 0,
+                                'deduction_total' => 0,
+                            ]
                         ]
-                    ]];
+                    ];
                 }
             }
             $order->takeOrderCount = count($order['takeOrderList']);
