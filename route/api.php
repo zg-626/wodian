@@ -622,6 +622,8 @@ Route::group('api/', function () {
         Route::group('meituan', function () {
             // 交易标准三方收银台支付回调接口
             Route::any('/callback', 'Meituan/callback');
+            // 交易标准三方收银台支付回调接口
+            Route::any('/account', 'Meituan/account');
             // 交易标准三方收银台关单外部接口
             Route::any('/close', 'Meituan/close');
             // 交易标准三方收银台退款外部接口

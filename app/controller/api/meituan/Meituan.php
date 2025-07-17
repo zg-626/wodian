@@ -105,4 +105,19 @@ class Meituan extends BaseController
         return json($result);
     }
 
+
+    /**
+     * 账户实时可用余额查询
+     **/
+    public function account(WaimaiRepositories $repository)
+    {
+        $result = $repository->account();
+        // 如果结果已经是JSON字符串，直接返回
+        if (is_string($result) && is_array(json_decode($result, true)) && json_last_error() == JSON_ERROR_NONE) {
+            return response($result)->contentType('application/json');
+        }
+
+        return app('json')->success($result);
+    }
+
 }

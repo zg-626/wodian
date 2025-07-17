@@ -90,6 +90,39 @@ class WaimaiRepositories extends BaseRepository
 
 
     /**
+     * 账户实时可用余额查询
+     * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/accountQuery
+     * 账户查询可以根据企业 ID 查询归属当前企业的所有账户 ID 和账户余额。
+     * @return array
+     */
+        public function account()
+        {
+            $meituanService = new MeituanService();
+            $url = $this->onlineUrl . '/api/sqt/open/account/query';
+            $ts = $meituanService->getMillisecond();
+            $data = ['ts' => $ts, 'entId' => $this->entId];
+            $content = $meituanService->aes_encrypt($data, $this->secretKey);
+            $postData = ['accessKey' => $this->accessKey, 'content' => $content];
+            $result = $meituanService->loginFree2PostNew($url, $postData);
+            if (!$result['success']) {
+                // 处理请求失败的情况
+                record_log('请求失败: ' . ($result['error'] ?? '未知错误'), 'meituan_error');
+                return $this->response(self::$ERROR_501, '请求失败');
+            }
+
+            if (isset($result['body']['status']) && $result['body']['status'] != 0) {
+                // 处理业务逻辑错误
+                record_log('业务错误: ' . ($result['body']['msg'] ?? '未知错误'), 'meituan_error');
+                return $this->response($result['body']['status'], $result['body']['msg']);
+            }
+
+            // 处理成功响应
+            $data = $result['body']['data'] ?? null;
+            return $this->response(0, '成功', $data);
+        }
+
+
+    /**
      * 下单接口
      * https://bep-openapi.meituan.com/api/sqt/openplatform_web/site/index.html#/apiDoc/standardThirdCreateOrder
      * 用户在美团企业版下单时，美团企业版会调用【下单接口】通知客户平台，接口响应支付页面 URL，用户会跳转客户平台的支付页面进行支付。
