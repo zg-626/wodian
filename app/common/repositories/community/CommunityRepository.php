@@ -15,6 +15,7 @@ namespace app\common\repositories\community;
 use app\common\dao\community\CommunityDao;
 use app\common\repositories\BaseRepository;
 use app\common\repositories\store\order\StoreOrderProductRepository;
+use app\common\repositories\store\order\StoreOrderRepository;
 use app\common\repositories\store\product\SpuRepository;
 use app\common\repositories\system\RelevanceRepository;
 use app\common\repositories\user\UserBrokerageRepository;
@@ -278,6 +279,13 @@ class CommunityRepository extends BaseRepository
 
     public function getSpuByOrder($id, $uid)
     {
+        $order = app()->make(StoreOrderRepository::class)->get($id);
+        if (!$order) throw new  ValidateException('订单不存在');
+        // 如果是美团订单
+        if ($order['is_meituan'] == 1) {
+            return [];
+        }
+
         $where = app()->make(StoreOrderProductRepository::class)->selectWhere(['order_id' => $id]);
         if (!$where) throw new  ValidateException('商品已下架');
 
