@@ -275,7 +275,7 @@ class WaimaiRepositories extends BaseRepository
             'give_integral' => $groupOrder['give_integral'],
             'deduction' => $groupOrder['deduction'],
             'deduction_price' => $groupOrder['deduction_price'],
-            'mer_id' => 0,
+            'mer_id' => 232,
             'cost' => $groupOrder['cost'],
             'order_extend' => '',
             'coupon_id' => $groupOrder['coupon_id'],

@@ -2504,19 +2504,19 @@ class StoreOrderRepository extends BaseRepository
                 }
             }
             // TODO 处理美团订单数据
-            /*if($order->is_meituan===1){
+            if($order->is_meituan===1){
                 $meituanArray = json_decode($order->create_content,true);
                 if($meituanArray){
-                    $order->meituanArray = $meituanArray;
+                    $order['meituanArray'] = $meituanArray;
                     // 组装orderProduct
-                    $order->orderProduct = [
+                    $order['orderProduct'] = [[
                         'cart_info'=>[
                             'product'=>[
                                 'store_name' => $meituanArray['goodsName'],
                                 'price' => $meituanArray['tradeAmount'],
                                 'product_id' => 291,
                                 'cate_id' => 364,
-                                'image' => 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/4a6f1b0afbd67b5e2062447f752bece4.jpg',
+                                'image' => 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
                                 'is_show' => 1,
                                 'status' => 1,
                                 'is_del' => 0,
@@ -2543,7 +2543,7 @@ class StoreOrderRepository extends BaseRepository
                                 'temp' => null
                             ],
                             'productAttr'=>[
-                                'image' => $meituanArray['image'] ?? 'https://img.alicdn.com/imgextra/i4/2208121567021/O1CN01PjARvd21jflT4xf7H_!!2208121567021.jpg',
+                                'image' => $meituanArray['image'] ?? 'http://liuniushop.oss-cn-shanghai.aliyuncs.com/def/b6d6f202502261724058302.png',
                                 'price' => $meituanArray['tradeAmount'],
                                 'value_id' => 2780,
                                 'extension_one' => '0.00',
@@ -2559,7 +2559,10 @@ class StoreOrderRepository extends BaseRepository
                                 'svip_price' => '0.00',
                                 'show_svip_price' => false,
                                 'bc_extension_one' => 0,
-                                'bc_extension_two' => 0
+                                'bc_extension_two' => 0,
+                                'product' =>[
+                                    'product_id' => 291,
+                                ]
                             ],
                             'product_type' => 0,
                             'refund_switch' => 1,
@@ -2568,9 +2571,9 @@ class StoreOrderRepository extends BaseRepository
                             'deduction_price' => 0,
                             'deduction_total' => 0,
                         ]
-                    ];
+                    ]];
                 }
-            }*/
+            }
             $order->takeOrderCount = count($order['takeOrderList']);
             unset($order['takeOrderList']);
         }
