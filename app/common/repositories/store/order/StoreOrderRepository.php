@@ -548,11 +548,11 @@ class StoreOrderRepository extends BaseRepository
     /**
      * 计算并添加佣金
      * @param int $merId
-     * @param array $order
+     * @param  $order
      */
     public function addCommission(int $merId, $order)
     {
-        if ($order['total_price'] <= 0) {
+        if ($order['pay_price'] <= 0) {
             return;
         }
 
@@ -569,10 +569,11 @@ class StoreOrderRepository extends BaseRepository
 
         // 计算订单佣金基数
         $commission_rate = bcdiv((string)$order['commission_rate'], '100', 2);
-        $commission_money = bcmul($order['pay_price'], (string)$commission_rate, 2);
+        $commission_money = bcmul($order['pay_price'], (string)$commission_rate, 2);// 实际手续费
         // 用于发放的金额基数
         //$money = bcmul(0.6, $commission_money, 2);
-        $money = $order['handling_fee'];
+        //$money = $order['handling_fee'];
+        $money = $commission_money;
 
         // 获取商家绑定的上级信息
         $salesman = $userRepository->get($merchant->salesman_id);
