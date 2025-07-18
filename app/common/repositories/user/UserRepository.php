@@ -1288,7 +1288,7 @@ class UserRepository extends BaseRepository
         return compact('list', 'count');
     }
 
-    // 邀请的商家信息
+    // 检测商务流水
     public function getMerchantInfo(): bool
     {
         $userGroupRepository = app()->make(UserGroupRepository::class);

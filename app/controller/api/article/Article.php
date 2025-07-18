@@ -711,4 +711,30 @@ class Article extends BaseController
         ]);
 
     }
+
+    // 根据订单更新商户累计收款
+    public function updateMerchantTotalPrice()
+    {
+        $orders = StoreOrderOffline::where(['paid' => 1])->select()->toArray();
+
+        // 先按商户ID分组汇总金额
+        $merchantTotals = [];
+        foreach ($orders as $item) {
+            $merchant_id = $item['mer_id'];
+            if (!isset($merchantTotals[$merchant_id])) {
+                $merchantTotals[$merchant_id] = 0;
+            }
+            $merchantTotals[$merchant_id] += $item['pay_price'];
+        }
+
+        // 批量更新商户累计金额
+        foreach ($merchantTotals as $merchant_id => $total) {
+            (new \app\common\model\system\merchant\Merchant)
+                ->where(['mer_id' => $merchant_id])
+                ->update(['grand_money' => $total]);
+        }
+
+        return app('json')->success();
+
+    }
 }

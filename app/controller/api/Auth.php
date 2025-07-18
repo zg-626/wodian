@@ -1036,7 +1036,6 @@ class Auth extends BaseController
     }
 
 
-
     /**
      * @return mixed
      */
