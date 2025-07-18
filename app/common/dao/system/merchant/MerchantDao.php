@@ -271,6 +271,24 @@ class MerchantDao extends BaseDao
     }
 
     /**
+     * TODO 增加商户累计收款
+     * @param int $merId
+     * @param float $num
+     * @author Qinii
+     * @day 3/19/21
+     */
+    public function addGrandMoney(int $merId, float $num)
+    {
+        $field = 'grand_money';
+        $merchant = $this->getModel()::getDB()->where('mer_id', $merId)->find();
+        if ($merchant) {
+            $grand_money = bcadd($merchant[$field], $num, 2);
+            $merchant[$field] = $grand_money;
+            $merchant->save();
+        }
+    }
+
+    /**
      * TODO 增加商户佣金
      * @param int $merId
      * @param float $num

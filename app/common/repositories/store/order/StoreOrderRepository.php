@@ -581,6 +581,16 @@ class StoreOrderRepository extends BaseRepository
         // 如果商家上级是普通用户，终止
         if ($salesman['group_id'] == self::USER_GROUP['NORMAL_USER']) return;
 
+        // 累计消费100后，给绑定的商务100积分
+        if($merchant->grand_money >=100 && $merchant->is_give === 0){
+            // 如果上级分组是商务或者是高级商务
+            if ($salesman['group_id'] == self::USER_GROUP['NORMAL_SALESMAN'] ||
+                $salesman['group_id'] == self::USER_GROUP['SENIOR_SALESMAN']) {
+                $this->giveOneIntegral($merchant->salesman_id, $order);
+            }
+
+        }
+
         // 如果商家上级是省级代理商，终止发放佣金
         if ($salesman->group_id === self::USER_GROUP['AGENT_3']) return;
 
@@ -680,6 +690,23 @@ class StoreOrderRepository extends BaseRepository
         }
 
         return true;
+
+    }
+
+    public function giveOneIntegral($uid,$offlineOrder,$type='线下门店')
+    {
+        $make = app()->make(UserRepository::class);
+        $user = $make->get($uid);
+        $user->integral += 100;
+        $user->save();
+        app()->make(UserBillRepository::class)->incBill($uid, 'integral', 'lock', [
+            'link_id' => $offlineOrder['order_id'],
+            'status' => 1,
+            'title' => $type.'累计收款，增加积分',
+            'number' => 100,
+            'mark' => '商户累计收款,给用户增加积分' . 100,
+            'balance' => $user->integral
+        ]);
 
     }
 

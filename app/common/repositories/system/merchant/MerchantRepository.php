@@ -704,6 +704,16 @@ class MerchantRepository extends BaseRepository
 
     }
 
+    // 给商户增加累计收款
+    public function giveMerGrandMoney($merId, $money)
+    {
+        if ($money <= 0) {
+            return;
+        }
+
+        $this->dao->addGrandMoney($merId, $money);
+    }
+
     public function addMerIntegral($order)
     {
         $integral = $order->give_integral;

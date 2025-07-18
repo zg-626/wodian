@@ -500,6 +500,8 @@ class StoreOrderOfflineRepository extends BaseRepository
 
             // 赠送商户积分
             $merchantRepository->addMerIntegral($order);
+            // 给商户增加累计收款
+            $merchantRepository->giveMerGrandMoney($order->mer_id,$order->pay_price);
 
             // 所有身份赠送佣金
             /** @var StoreOrderRepository $storeOrderRepository */
@@ -682,6 +684,8 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         // 赠送商户积分
         $merchantRepository->addMerIntegral($order);
+        // 给商户增加累计收款
+        $merchantRepository->giveMerGrandMoney($order->mer_id,$order->pay_price);
 
         // 所有身份赠送佣金
         /** @var StoreOrderRepository $storeOrderRepository */
@@ -968,17 +972,6 @@ class StoreOrderOfflineRepository extends BaseRepository
             //                'financial_type' => 'brokerage_two',
             //                'number' => $order->extension_two,
             //            ], $order->mer_id);
-        }
-    }
-
-    public function giveMerIntegral($mer_id, $order)
-    {
-        if ($order->give_integral > 0) {
-            /**
-             * @var MerchantDao $merchant
-             */
-            $merchant = app()->make(MerchantDao::class);
-            $merchant->addIntegral($mer_id, $order->give_integral);
         }
     }
 
