@@ -609,12 +609,16 @@ class Article extends BaseController
     }
 
     // 计算分红数据
-    public function computeDividend($startTime,$endTime)
+    public function computeDividend($startTime,$endTime,$city_id)
     {
+        $where = [];
+        if($city_id !==''){
+            $where = ['city_id'=>$city_id];
+        }
 
-        $orders = StoreOrderOffline::where(['paid' => 1])->where('pay_price', '>', 0)->where('handling_fee', '>', 0)->where('create_time', '>=', $startTime)
+        $orders = StoreOrderOffline::where(['paid' => 1])->where($where)->where('create_time', '>=', $startTime)
             ->where('create_time', '<', $endTime)
-            ->field('sum(total_price) as total_price,sum(handling_fee) as handling_fee')
+            ->field('sum(total_price) as total_price,sum(handling_fee) as handling_fee,sum(pay_price) as pay_price')
             ->select()->toArray();
 
         // 查询所有分红池数据
@@ -686,7 +690,8 @@ class Article extends BaseController
         $handling_fee=$orders[0]['handling_fee'];
 
         return app('json')->success([
-            '平台流水' => $orders[0]['total_price'],
+            '平台总流水' => $orders[0]['total_price'],
+            '平台实际流水' => $orders[0]['pay_price'],
             '平台总手续费' => $handling_fee,
             '平台维护费（总手续费x60%）' => round($handling_fee * 0.6, 2),
             '平台总分红池（总手续费x40%）' => round($handling_fee * 0.4, 2),
