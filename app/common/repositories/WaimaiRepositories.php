@@ -29,11 +29,8 @@ class WaimaiRepositories extends BaseRepository
         $meituanService = new MeituanService();
         $url = $this->onlineUrl . '/api/sqt/open/login/h5/loginFree/redirection?test_open_swimlane=test-open';
         //$url = $this->onlineUrl.'/api/sqt/open/login/h5/loginFree/redirection';
-        $staffPhone = isset($params['mobile']) ? $params['mobile'] : ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
-        $staffEmail = isset($params['staffEmail']) ? $params['staffEmail'] : ''; //员工邮箱
-        $staffNum = isset($params['staffNum']) ? $params['staffNum'] : ''; //员工工号
-        $externalOrgId = isset($params['externalOrgId']) ? $params['externalOrgId'] : ''; //部门唯一标识
-        $orderId = isset($params['orderId']) ? $params['orderId'] : ''; //唯一订单号
+        $staffPhone = $params['mobile'] ?? ''; //员工手机号 1. 登录时, staffPhone/staffEmail/staffNum 三者必填一个, 与企业员工唯一识别对应
+        $policyKey = $params['policyKey'] ?? 0; //policyKey值为多入口模式下的供给规则对应参数，与供给规则中填写的值一致即可匹配
 
         $ts = $meituanService->getMillisecond();
         $staffInfo = ['staffPhone' => $staffPhone];
@@ -45,9 +42,10 @@ class WaimaiRepositories extends BaseRepository
         $geotype = isset($params['geotype']) ? $params['geotype'] : 'wgs84'; //gcj02(火星坐标系)或者wgs84(国际坐标系)
         $address = isset($params['address']) ? $params['address'] : ''; //经纬度对应的中文地址北京市朝阳区阜通东大街6号
         $location = ['longitude' => $longitude, 'latitude' => $latitude, 'geotype' => $geotype, 'address' => $address];
-        $bizParam = ['location' => $location];
-        $bizParam = [];
-        $data = ['productType' => $product_type, 'ts' => $ts, 'entId' => $this->entId, 'staffInfo' => $staffInfo, 'nonce' => $nonce, 'sceneType' => 9];
+        $wmExtra=['policyKey'=>$policyKey];
+        $bizParam = ['location' => $location,'WmExtraJson'=>$wmExtra];
+        $data = ['productType' => $product_type, 'ts' => $ts, 'entId' => $this->entId, 'staffInfo' => $staffInfo, 'nonce' => $nonce, 'sceneType' => 9,'bizParam'=>$bizParam];
+  
         $content = $meituanService->aes_encrypt($data, $this->secretKey);
         $postData = ['accessKey' => $this->accessKey, 'content' => $content];
         $result = $meituanService->loginFree2Posts($url, $postData);

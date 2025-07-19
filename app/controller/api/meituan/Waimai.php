@@ -20,7 +20,7 @@ class Waimai extends BaseController
     public function mtWaimai()
     {
         $params = $this->request->params([
-            'address',
+            'address','policyKey',
             ['product_type', 'mt_waimai'],
         ]);
         $user = $this->user;
