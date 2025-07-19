@@ -674,9 +674,50 @@ class StoreOrderOfflineRepository extends BaseRepository
 
         /** @var MerchantRepository $merchantRepository */
         $merchantRepository=app()->make(MerchantRepository::class);
+        $user = app()->make(UserRepository::class)->get($res['uid']);
         // 如果用户使用了抵扣券，给商户增加余额，用于平台补贴
         if($order->deduction > 0){
-            $merchantRepository->addOlllineMoney($order->mer_id, 'dividend', $order->order_id, $order->deduction);
+            $totalPrice = $order->total_price;
+            $feeRate = $order->commission_rate; // 手续费率
+
+            // 平台手续费(根据总金额)
+            $platformFee = $order->handling_fee;
+            // 第三方实际手续费
+            $thirdPlatformFee = round((float)$order->pay_price * (float)$feeRate / 100,2);
+
+            // 用户实际支付金额（不能为负数）
+            $actualPayment = max($totalPrice - $order->deduction, 0);
+
+            // 计算平台补贴
+            if ($actualPayment > 0) {
+                // 情况1：正常抵扣（实际支付 > 0）
+                // 补贴 = 抵扣券金额 - (平台手续费 - 第三方实际手续费)
+                // 即：补贴商家抵扣券金额，但扣除平台多承担的手续费部分
+                $subsidyAdjustment = $platformFee - $thirdPlatformFee; // 平台多承担的手续费
+                $subsidy = max($order->deduction - $subsidyAdjustment, 0);
+            } else {
+                // 情况2：零元购（实际支付 = 0）
+                // 补贴 = 抵扣券金额 - 手续费（确保手续费被覆盖）
+                $subsidy = max($order->deduction - $platformFee, 0);
+            }
+
+            // 发放补贴给商家
+            $merchantRepository->addOlllineMoney(
+                $order->mer_id,
+                'order',
+                $order->order_id,
+                $subsidy
+            );
+            // 增加使用记录
+            $userBillRepository = app()->make(UserBillRepository::class);
+            $userBillRepository->decBill($order->uid, 'coupon_amount', 'deduction', [
+                'link_id' => $order['order_id'],
+                'status' => 1,
+                'title' => '线下消费使用抵用券',
+                'number' => $order->deduction,
+                'mark' => $user->nickname. '线下消费' . (float)$order->total_price. '元,扣减抵用券' .$order->deduction,
+                'balance' => 0,
+            ]);
         }
 
         // 赠送积分
