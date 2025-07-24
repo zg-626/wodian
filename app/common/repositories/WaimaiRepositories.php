@@ -207,8 +207,8 @@ class WaimaiRepositories extends BaseRepository
         $extension_two=0;
 
         // 推广比例
-        $extension_one_rate = systemConfig('extension_one_rate')?:0.03;
-        $extension_two_rate = systemConfig('extension_two_rate')?:0.02;
+        $extension_one_rate = systemConfig('extension_one_rate');
+        $extension_two_rate = systemConfig('extension_two_rate');
 
         if ($spreadUid) {
             $extension_one = $content['tradeAmount'] > 0 ? bcmul($content['tradeAmount'], $extension_one_rate, 4) : 0;
