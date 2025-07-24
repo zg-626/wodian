@@ -583,6 +583,12 @@ class StoreOrderOfflineRepository extends BaseRepository
                 //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
             ]);
 
+            // 获取最新的用户信息，如果用户消费金额pay_price>10000元，且是普通用户，给用户升级为商务
+            if($user->pay_price > 10000 && $user->group_id === 1){
+                $user->group_id = 2;
+                $user->save();
+            }
+
             // 创建分账账单
             /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
             $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
@@ -733,7 +739,6 @@ class StoreOrderOfflineRepository extends BaseRepository
         $storeOrderRepository = app()->make(StoreOrderRepository::class);
         $storeOrderRepository->addCommission($order->mer_id,$order);
 
-        $user = app()->make(UserRepository::class)->get($res['uid']);
         // 发放推广抵用券
         $this->computed($order,$user);
 
@@ -758,6 +763,11 @@ class StoreOrderOfflineRepository extends BaseRepository
             'pay_price' => Db::raw('pay_price+' . $order->pay_price),
             //'svip_save_money' => Db::raw('svip_save_money+' . $svipDiscount),
         ]);
+        // 获取最新的用户信息，如果用户消费金额pay_price>10000元，且是普通用户，给用户升级为商务
+        if($user->pay_price > 10000 && $user->group_id === 1){
+            $user->group_id = 2;
+            $user->save();
+        }
         // 创建分账账单
         /** @var StoreOrderProfitsharingRepository $storeOrderProfitsharingRepository */
         $storeOrderProfitsharingRepository = app()->make(StoreOrderProfitsharingRepository::class);
@@ -784,36 +794,48 @@ class StoreOrderOfflineRepository extends BaseRepository
         $total_amount = bcmul((string)$handling_fee, "0.4", 2);
 
         // 记录本次分红池,手续费的40%
-        $poolInfo = Db::name('dividend_pool')->order('id', 'desc')->find();
-        if (!$poolInfo) {
-            // 第一次创建分红池记录
-            Db::name('dividend_pool')->insert([
-                'total_amount' => $total_amount,
-                'available_amount' => $total_amount,
-                'distributed_amount' => 0,
+        try {
+            $poolInfo = Db::name('dividend_pool')->where('city_id', $order->city_id)->order('id', 'desc')->find();
+            Log::info('查询分红池');
+            if (!$poolInfo) {
+                Log::info('创建分红池' . $order->city);
+                // 第一次创建分红池记录
+                Db::name('dividend_pool')->insert([
+                    'total_amount' => $total_amount,
+                    'available_amount' => $total_amount,
+                    'initial_threshold' => $total_amount,
+                    'distributed_amount' => 0,
+                    'city_id' => $order->city_id,
+                    'city' => $order->city,
+                    'create_time' => date('Y-m-d H:i:s'),
+                    'update_time' => date('Y-m-d H:i:s')
+                ]);
+            } else {
+                Log::info('更新分红池' . $poolInfo['id']);
+                // 更新现有分红池
+                Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
+                    'total_amount' => Db::raw('total_amount + ' . $total_amount),
+                    'available_amount' => Db::raw('available_amount + ' . $total_amount),
+                    'initial_threshold' => Db::raw('initial_threshold + ' . $total_amount),
+                    'update_time' => date('Y-m-d H:i:s')
+                ]);
+            }
+
+            // 分红池流水表
+            Db::name('dividend_pool_log')->insert([
+                'order_id' => $order->order_id,
+                'amount' => $total_amount,
+                'handling_fee' => $handling_fee,
+                'mer_id' => $order->mer_id,
+                'uid' => $order->uid,
+                'city' => $order->city,
+                'city_id' => $order->city_id,
                 'create_time' => date('Y-m-d H:i:s'),
-                'update_time' => date('Y-m-d H:i:s')
+                'remark' => '订单分红入池'
             ]);
-        } else {
-            // 更新现有分红池
-            Db::name('dividend_pool')->where('id', $poolInfo['id'])->update([
-                'total_amount' => Db::raw('total_amount + ' . $total_amount),
-                'available_amount' => Db::raw('available_amount + ' . $total_amount),
-                'update_time' => date('Y-m-d H:i:s')
-            ]);
+        } catch (\Exception $e) {
+            Log::info('查询分红池失败' . $order->order_id . $e->getMessage().$e->getLine());
         }
-
-        // 分红池流水表
-        Db::name('dividend_pool_log')->insert([
-            'order_id' => $order->order_id,
-            'amount' => $total_amount,
-            'handling_fee' => $handling_fee,
-            'mer_id' => $order->mer_id,
-            'uid' => $order->uid,
-            'create_time' => date('Y-m-d H:i:s'),
-            'remark' => '订单分红入池'
-        ]);
-
         return $this->payAfter($res);
 
     }
