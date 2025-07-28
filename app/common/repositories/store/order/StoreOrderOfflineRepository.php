@@ -317,6 +317,159 @@ class StoreOrderOfflineRepository extends BaseRepository
     }
 
     /**
+     * @param $data
+     * @return mixed
+     * @author xaboy
+     * @day 2020/10/21
+     */
+    public function enter($money,$mer_id, $params)
+    {
+        $uid = $params['uid'];
+        $user = app()->make(UserRepository::class)->get($uid);
+        $type = $params['pay_type'];
+
+        $total_price=$money;
+
+        $handling_fee=0;
+
+        /*** @var MerchantDao $merchant */
+        $merchant = app()->make(MerchantDao::class);
+
+        $merchant = $merchant->search(['mer_id' => $mer_id])->field('mer_id,commission_rate,salesman_id,mer_name,mer_money,financial_bank,financial_wechat,financial_alipay,financial_type,sub_mchid,merchant_no,term_nos,province,city,province_id,city_id')->find();
+
+        // 判断扫码下单还是直接下单
+        if ($params['commission_rate'] == 0) {
+            // 直接下单使用商家签订的比例
+            $commission_rate=$merchant['commission_rate'];
+            if($commission_rate==0){
+                throw new ValidateException('该商家未设置积分比例');
+            }
+        }else{
+            // 扫码下单使用扫码的比例
+            $commission_rate=$params['commission_rate'];
+        }
+
+        $rate=0;
+        // 根据总金额计算平台手续费，不根据实际支付金额
+        if(($money > 0) && $commission_rate >= 3) {
+            $rate = $commission_rate /100;
+            $handling_fee = bcmul($money,$rate, 2);
+        }
+
+        // 精确到小数点后两位
+        $pay_price = round($money, 2);
+
+        $total_give_integral = 0;
+
+        // 根据总金额计算积分，不根据实际支付金额
+        if ($total_price > 0 && $rate) {
+            $total_give_integral = bcmul($total_price, $rate, 2);
+        }
+
+        // 抵用券
+        if(isset($params['user_deduction']) && $params['user_deduction'] > 0){
+            // 计算抵扣后的抵用券
+            $user_coupon_amount = $user->coupon_amount;
+            // 判断用户的抵用券是否大于抵用券额
+            if($user_coupon_amount < $params['user_deduction']){
+                throw new ValidateException('您的抵用券不足');
+            }
+            $deduction_money = bcsub($user_coupon_amount, $params['user_deduction'], 2);
+            $user->coupon_amount = $deduction_money;
+            $user->save();
+            // 如果使用了抵用券，计算手续费
+            $total_price=$params['user_deduction']+$money;
+            $rate = $commission_rate /100;
+            $handling_fee = bcmul($total_price,$rate, 2);
+            // 如果使用了抵用券，计算积分
+            $total_give_integral = bcmul($total_price, $rate, 2);
+
+        }
+
+        $isSelfBuy = $user->is_promoter && systemConfig('extension_self') ? 1 : 0;
+        if ($isSelfBuy) {
+            $spreadUser = $user;
+            $topUser = $user->valid_spread;
+        } else {
+            $spreadUser = $user->valid_spread;
+            $topUser = $user->valid_top;
+        }
+
+        $spreadUid = $spreadUser->uid ?? 0;
+        $topUid = $topUser->uid ?? 0;
+        $extension_one=0;
+        $extension_two=0;
+
+        // 推广比例
+        $extension_one_rate = systemConfig('extension_one_rate');
+        $extension_two_rate = systemConfig('extension_two_rate');
+
+        if ($spreadUid) {
+            $extension_one = $handling_fee > 0 ? bcmul($handling_fee, $extension_one_rate, 4) : 0;
+        }
+        if ($topUid) {
+            $extension_two = $handling_fee > 0 ? bcmul($handling_fee, $extension_two_rate, 4) : 0;
+        }
+
+        // 关联商家市区信息
+        $city = $merchant['city'];
+        $city_id = $merchant['city_id'];
+        $province = $merchant['province'];
+        $province_id = $merchant['province_id'];
+        // 判断是否是直辖市
+        if($merchant['city']=='市辖区'){
+            $city = $merchant['province'];
+            $city_id = $merchant['province_id'];
+        }
+
+        $order_sn = $this->getNewOrderId(StoreOrderRepository::TYPE_SN_USER_ORDER);
+        $data = [
+            'title'     => '手动录入门店订单',
+            'link_id'   => 0,
+            'order_sn'  => $order_sn,
+            'lkl_mer_cup_no' => $merchant['merchant_no'],
+            'pay_price' => $pay_price,
+            'order_info' => 0,
+            'uid'        => $user->uid,
+            'order_type' => self::TYPE_SVIP,
+            'pay_type'   =>  $params['pay_type'],
+            'commission_rate'=>$commission_rate,
+            'handling_fee' => $handling_fee,
+            'status'     => 1,
+            'mer_id'     => $mer_id,
+            'give_integral' => $total_give_integral,
+            'other'     => 0,
+            'spread_uid' => $spreadUid,
+            'top_uid' => $topUid,
+            'is_selfbuy' => $isSelfBuy,
+            'extension_one' => $extension_one,
+            'extension_two' => $extension_two,
+            'total_price' => $total_price,
+            'deduction' => $params['user_deduction']?: 0,
+            'deduction_money' => $params['user_deduction']?: 0,
+            'city' => $city,
+            'city_id' => $city_id,
+            'province' => $province,
+            'province_id' => $province_id,
+            'to_uid'=>$params['to_uid']?:0
+        ];
+
+        $info = $this->dao->create($data);
+
+
+        if ($pay_price>0){
+            /** @var StoreOrderOfflineRepository $storeOrderOfflineRepository */
+            $storeOrderOfflineRepository = app()->make(__CLASS__);
+            $order = $storeOrderOfflineRepository->getWhere(['order_id' => [$info->order_id]]);
+            $storeOrderOfflineRepository->computeds($order);
+            return app('json')->status($type,['order_id' => $info->order_id]);
+        }
+
+        //$this->paySuccess($data);
+        //return app('json')->status('success', ['order_id' => $info->order_id]);
+    }
+
+    /**
      * @return string
      * @author xaboy
      * @day 2020/6/9
@@ -677,7 +830,10 @@ class StoreOrderOfflineRepository extends BaseRepository
     public function computeds($order)
     {
         $res=$order;
-
+        $res->paid = 1;
+        $res->is_share = 2;
+        $res->pay_time = date('y_m-d H:i:s', time());
+        $res->save();
         /** @var MerchantRepository $merchantRepository */
         $merchantRepository=app()->make(MerchantRepository::class);
         $user = app()->make(UserRepository::class)->get($res['uid']);

@@ -610,6 +610,7 @@ Route::group('api/', function () {
             Route::get('/list', 'Article/list');
             Route::get('detail/:id', 'Article/detail');
             Route::any('test', 'Article/test');
+            Route::any('enter', 'Article/enter');
             Route::any('orderSettleQuery', 'Article/orderSettleQuery');
             Route::any('orderSettle', 'Article/orderSettle');
             Route::any('refundLogic', 'Article/refundLogic');
