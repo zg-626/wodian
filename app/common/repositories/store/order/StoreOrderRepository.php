@@ -583,6 +583,8 @@ class StoreOrderRepository extends BaseRepository
 
         // 累计消费100后，给绑定的商务100积分
         if($merchant->grand_money >=100 && $merchant->is_give === 0){
+            $merchant->is_give = 1;
+            $merchant->save();
             // 如果上级分组是商务或者是高级商务
             if ($salesman['group_id'] == self::USER_GROUP['NORMAL_SALESMAN'] ||
                 $salesman['group_id'] == self::USER_GROUP['SENIOR_SALESMAN']) {
