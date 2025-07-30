@@ -38,7 +38,9 @@ class Order extends BaseController
     public function getAllList()
     {
         [$page, $limit] = $this->getPage();
-        $where = $this->request->params(['date', 'mer_id', 'pay_type','status', 'keywords', 'order_sn', 'is_trader']);
+        $where = $this->request->params(['date', 'mer_id', 'pay_type','status', 'keywords', 'order_sn', 'is_trader','group_order_sn']);
+        $where['order_sn']=$where['group_order_sn'];
+        unset($where['group_order_sn']);
         $data = $this->repository->adminGetList($where, $page, $limit);
         return app('json')->success($data);
     }
