@@ -16,6 +16,7 @@ namespace app\common\dao\user;
 
 use app\common\dao\BaseDao;
 use app\common\model\BaseModel;
+use app\common\model\store\order\StoreOrderOffline;
 use app\common\model\user\UserBill;
 
 /**
@@ -282,7 +283,14 @@ class UserBillDao extends BaseDao
                 getModelTime($query, $where['date'], 'a.create_time');
             })
             ->when(isset($where['keyword']) && $where['keyword'] !== '', function ($query) use ($where) {
-                $query->whereLike('a.uid|b.nickname|a.title', "%{$where['keyword']}%");
+                // 查询wxs类型
+                if(strpos($where['keyword'], 'wxs') !== false){
+                    // 根据订单编码查询订单id
+                    $order_id = StoreOrderOffline::getDB()->where('order_sn', $where['keyword'])->value('order_id');
+                    $query->where('a.link_id', $order_id);
+                }else{
+                    $query->whereLike('a.uid|b.nickname|a.title|a.link_id', "%{$where['keyword']}%");
+                }
             })
             ->when(isset($where['category']) && $where['category'] !== '', function ($query) use ($where) {
                 if (is_array($where['category'])){
