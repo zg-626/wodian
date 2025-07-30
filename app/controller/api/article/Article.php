@@ -20,6 +20,7 @@ use app\common\model\system\dividend\DividendDistributionLog;
 use app\common\model\system\dividend\DividendPool;
 use app\common\model\system\dividend\DividendPoolLog;
 use app\common\model\system\merchant\Merchant;
+use app\common\model\user\User;
 use app\common\model\user\UserBill;
 use app\common\repositories\store\CityAreaRepository;
 use app\common\repositories\store\order\StoreOrderOfflineRepository;
@@ -757,5 +758,62 @@ class Article extends BaseController
             return app('json')->fail('缺少商户id');
         $params['is_app'] = $this->request->isApp();
         return $storeOrderOfflineRepository->enter($money,$mer_id,$params);
+    }
+
+    // 根据佣金记录处理退积分，退抵用券，退佣金
+    public function backIntegral()
+    {
+        $params = $this->request->params(['order_id']);
+        if(!$params['order_id'])
+            return app('json')->fail('缺少订单id');
+
+        Db::startTrans();
+        try {
+            $userBills = UserBill::where(['link_id' => $params['order_id']])->select();
+            if($userBills->isEmpty())
+                return app('json')->fail('记录不存在');
+
+            foreach ($userBills as $userBill) {
+                // 积分
+                if($userBill['category'] == 'integral' && $userBill['uid'] > 0){
+                    $user = User::where(['uid' => $userBill['uid']])->find();
+                    $user->integral = bcsub($user->integral,$userBill['number'],2);
+                    $user->save();
+                }
+                // 商家积分
+                if($userBill['category'] == 'integral' && $userBill['mer_id'] > 0){
+                    $merchant = Merchant::where(['mer_id' => $userBill['mer_id']])->find();
+                    $merchant->integral = bcsub($merchant->integral,$userBill['number'],2);
+                    $merchant->save();
+                }
+                // 抵用券
+                if($userBill['category'] == 'coupon_amount'){
+                    $user = User::where(['uid' => $userBill['uid']])->find();
+                    $user->coupon_amount = bcsub($user->coupon_amount,$userBill['number'],2);
+                    $user->save();
+                }
+                // 佣金
+                if($userBill['category'] == 'brokerage'){
+                    $user = User::where(['uid' => $userBill['uid']])->find();
+                    $user->brokerage_price = bcsub($user->brokerage_price,$userBill['number'],2);
+                    $user->save();
+                }
+                // 处理商家锁客
+                if($userBill['category'] == 'mer_lock_money'){
+                    $merchant = Merchant::where(['mer_id' => $userBill['mer_id']])->find();
+                    $merchant->mer_money = bcsub($merchant->mer_money,$userBill['number'],2);
+                    $merchant->save();
+                }
+            }
+
+            // 所有记录改为已失效
+            UserBill::where(['link_id' => $params['order_id']])->update(['status' => -1]);
+            Db::commit();
+            return app('json')->success('退款成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            Log::error('退款失败: '.$e->getMessage());
+            return app('json')->fail('退款失败');
+        }
     }
 }

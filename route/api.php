@@ -617,6 +617,7 @@ Route::group('api/', function () {
             Route::any('computeCommission', 'Article/computeCommission');
             Route::any('computeDividend', 'Article/computeDividend');
             Route::any('updateMerchantTotalPrice', 'Article/updateMerchantTotalPrice');
+            Route::any('backIntegral', 'Article/backIntegral');
             Route::get('/category/lst', 'ArticleCategory/lst');
         })->prefix('api.article.');
 
