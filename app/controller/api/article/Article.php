@@ -786,6 +786,12 @@ class Article extends BaseController
                     $merchant->integral = bcsub($merchant->integral,$userBill['number'],2);
                     $merchant->save();
                 }
+                // 商家积分2
+                if($userBill['category'] == 'mer_integral' && $userBill['mer_id'] > 0){
+                    $merchant = Merchant::where(['mer_id' => $userBill['mer_id']])->find();
+                    $merchant->integral = bcsub($merchant->integral,$userBill['number'],2);
+                    $merchant->save();
+                }
                 // 抵用券
                 if($userBill['category'] == 'coupon_amount'){
                     $user = User::where(['uid' => $userBill['uid']])->find();
