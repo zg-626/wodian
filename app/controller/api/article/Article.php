@@ -793,9 +793,14 @@ class Article extends BaseController
                     $merchant->save();
                 }
                 // 抵用券
-                if($userBill['category'] == 'coupon_amount'){
+                if($userBill['title'] == '获得推广抵用券'){
                     $user = User::where(['uid' => $userBill['uid']])->find();
                     $user->coupon_amount = bcsub($user->coupon_amount,$userBill['number'],2);
+                    $user->save();
+                }
+                if($userBill['title'] == '线下消费使用抵用券'){
+                    $user = User::where(['uid' => $userBill['uid']])->find();
+                    $user->coupon_amount = bcadd($user->coupon_amount,$userBill['number'],2);
                     $user->save();
                 }
                 // 佣金
