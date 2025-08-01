@@ -266,6 +266,7 @@ class BonusOfflineService extends BaseRepository
             'should_amount' => $bonusAmount,// 应分金额
             'deduct_amount' => $deduct_amount,// 截留的金额
             'next_threshold' => round($initialThreshold * $this->growthRate,2), // 所有类型分红都记录下期开始的阈值
+            'next_should_threshold' => round($shouldAmount * $this->growthRate,2), // 下期应该开始的阈值
             'growth_rate' => $type === 1 ? 0 : ($lastLog ? $totalAmount / $lastLog['total_amount'] : 0),// 月初分红不记录增长率
             'create_time' => date('Y-m-d H:i:s')
         ]);
