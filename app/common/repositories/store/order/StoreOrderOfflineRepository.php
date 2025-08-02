@@ -1473,6 +1473,8 @@ class StoreOrderOfflineRepository extends BaseRepository
         foreach ($list as $k => $v) {
             if($list[$k]['pay_type'] == 'routine'){
                 $list[$k]['pay_type']=1;
+            }else if($list[$k]['pay_type'] == 'manual'){
+                $list[$k]['pay_type']=0;
             }else{
                 $list[$k]['pay_type']=4;
             }
