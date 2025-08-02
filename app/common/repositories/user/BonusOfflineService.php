@@ -78,7 +78,8 @@ class BonusOfflineService extends BaseRepository
                 // 非首次分红，判断是否达到当前周期的阈值且满足增长率
                 $shouldAmount = round($currentThreshold * $this->growthRate, 2);
                 if ($initialThreshold >=$shouldAmount) {
-                    $bonusAmount = round($shouldAmount - $currentThreshold, 2);// 根据额定增长率计算可分红金额，不按实际增长的金额计算
+                    $bonusAmount = round($lastBonusRecord['next_should_threshold']-$lastBonusRecord['should_threshold'], 2);
+                    //$bonusAmount = round($shouldAmount - $currentThreshold, 2);// 根据额定增长率计算可分红金额，不按实际增长的金额计算
                 }
             }
 
