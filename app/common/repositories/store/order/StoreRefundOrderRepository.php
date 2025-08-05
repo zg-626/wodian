@@ -1445,11 +1445,11 @@ class StoreRefundOrderRepository extends BaseRepository
         }
 
         //退还赠送积分
-        $this->refundGiveIntegral($refundOrder);
+        //$this->refundGiveIntegral($refundOrder);
         // 退还商家赠送积分
-        $this->refundMerGiveIntegral($refundOrder);
+        //$this->refundMerGiveIntegral($refundOrder);
         // 退还锁客佣金
-        $this->refundMerGiveBrokerage($refundOrder);
+        //$this->refundMerGiveBrokerage($refundOrder);
 
         app()->make(FinancialRecordRepository::class)->dec([
             'order_id' => $refundOrder->refund_order_id,
