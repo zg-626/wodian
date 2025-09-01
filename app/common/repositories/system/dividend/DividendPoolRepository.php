@@ -51,10 +51,10 @@ class DividendPoolRepository extends BaseRepository
         foreach ($list as &$item) {
             $current_amount = $item['initial_threshold']; // 当前最新累计金额
             // 获取当前最新周期数据
-            $lastInfo=DividendPeriodLog::where('dp_id',$item['id'])->where('execute_type',2)->order('id desc')->field('next_threshold,initial_threshold')->find();
+            $lastInfo=DividendPeriodLog::where('dp_id',$item['id'])->where('execute_type',2)->order('id desc')->field('next_threshold,next_should_threshold,initial_threshold,should_threshold')->find();
             if($lastInfo){
-                $target_amount = $lastInfo['next_threshold'];
-                $start_amount = $lastInfo['initial_threshold']; // 新增：获取开始值
+                $target_amount = $lastInfo['next_should_threshold'];
+                $start_amount = $lastInfo['should_threshold']; // 新增：获取开始值
 
                 if($target_amount > $current_amount){
                     $item['difference'] = bcsub($target_amount, $current_amount, 2);
